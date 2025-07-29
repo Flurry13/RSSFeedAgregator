@@ -1,41 +1,45 @@
-import OpenAI from "openai";
+import { InferenceClient } from '@huggingface/inference';
+import dotenv from 'dotenv';
+import { candidateTopics } from '../candidateTopics';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+dotenv.config();
 
-export async function classifyHeadlines(headlines: string[]) {
-    const prompt = `For each news headline below:
-1. Translate to English if needed.
-2. Assign a normalized topic from: [Politics, Health, Technology, Sports, Business, Science, Entertainment, Environment, Crime, Conflict, Disaster, Other].
-3. Extract a short event/topic phrase.
-4. Identify main country/region and main entity/person if possible.
+const HF_API_KEY = process.env.HF_API_KEY;
 
-Return a JSON array with:
-- original_headline
-- translated_headline
-- normalized_topic
-- generalized_event
-- region
-- main_entity
-
-Headlines:
-${headlines.map((h, i) => `${i + 1}. "${h}"`).join('\n')}
-Return only the JSON array.`;
-
-    const response = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.2,
-    });
-
-    const content = response.choices[0].message.content;
-    if (!content) {
-        throw new Error('OpenAI response content is null or undefined.');
+export async function classify(text: string) {
+    if (!HF_API_KEY) {
+        throw new Error('HF_API_KEY environment variable is required');
     }
-    const jsonStart = content.indexOf('[');
+
+    const client = new InferenceClient(HF_API_KEY);
+
     try {
-        const json = content.slice(jsonStart);
-        return JSON.parse(json);
-    } catch (e) {
-        throw new Error('Failed to parse OpenAI response as JSON: ' + content);
+        const result = await client.zeroShotClassification({
+            inputs: text,
+            model: 'facebook/bart-large-mnli',
+            parameters: {
+                candidate_labels: candidateTopics,
+                multi_label: true,
+            },
+        });
+
+        // result is an array of { label, score }
+        return {
+            text,
+            topics: result.map(r => r.label),
+            scores: result.map(r => r.score),
+            topTopics: result.slice(0, 3).map(r => ({
+                topic: r.label,
+                confidence: r.score,
+            })),
+        };
+    } catch (error) {
+        console.error('Error in topic classification:', error);
+        return {
+            text,
+            topics: ['general'],
+            scores: [1.0],
+            topTopics: [{ topic: 'general', confidence: 1.0 }],
+        };
     }
 }
