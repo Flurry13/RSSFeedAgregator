@@ -1,0 +1,37 @@
+# Git
+.git
+.gitignore
+
+# Node.js
+node_modules/
+package*.json
+tsconfig*.json
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Build artifacts
+dist/
+build/
+
+# Test files
+test_*.ts
+test_*.py 

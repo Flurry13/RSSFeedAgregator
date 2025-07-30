@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import OpenAI from 'openai';
 import { feeds } from '../feeds';
 import { DOMParser } from '@xmldom/xmldom';
-import { classifyHeadlines } from "./classify";
+import { classify } from "./classify";
 
 
 export async function getFeeds() {
@@ -63,33 +63,33 @@ export async function GET(req: NextRequest) {
     console.log(`Batch size: ${BATCH_SIZE}`);
     console.log(`Total batches: ${Math.ceil(titles.length / BATCH_SIZE)}`);
     
-    for (let i = 0; i < titles.length; i += BATCH_SIZE) {
-        const batch = titles.slice(i, i + BATCH_SIZE);
-        const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
-        const totalBatches = Math.ceil(titles.length / BATCH_SIZE);
+    // for (let i = 0; i < titles.length; i += BATCH_SIZE) {
+    //     const batch = titles.slice(i, i + BATCH_SIZE);
+    //     const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
+    //     const totalBatches = Math.ceil(titles.length / BATCH_SIZE);
         
-        console.log(`Processing batch ${batchNumber}/${totalBatches} (${batch.length} headlines)...`);
+    //     console.log(`Processing batch ${batchNumber}/${totalBatches} (${batch.length} headlines)...`);
         
-        try {
-            const result = await classifyHeadlines(batch);
-            classifiedHeadlines = classifiedHeadlines.concat(result);
-            console.log(`✅ Batch ${batchNumber} completed successfully`);
-        } catch (error) {
-            console.error(`❌ Batch ${batchNumber} failed:`, error);
-            // Add empty classifications for failed batch to maintain array alignment
-            const emptyClassifications = batch.map(() => ({
-                original_headline: '',
-                translated_headline: '',
-                normalized_topic: 'Other',
-                generalized_event: 'Unknown',
-                region: 'Unknown',
-                main_entity: 'Unknown'
-            }));
-            classifiedHeadlines = classifiedHeadlines.concat(emptyClassifications);
-        }
-    }
+    //     try {
+    //         const result = await classifyHeadlines(batch);
+    //         classifiedHeadlines = classifiedHeadlines.concat(result);
+    //         console.log(`✅ Batch ${batchNumber} completed successfully`);
+    //     } catch (error) {
+    //         console.error(`❌ Batch ${batchNumber} failed:`, error);
+    //         // Add empty classifications for failed batch to maintain array alignment
+    //         const emptyClassifications = batch.map(() => ({
+    //             original_headline: '',
+    //             translated_headline: '',
+    //             normalized_topic: 'Other',
+    //             generalized_event: 'Unknown',
+    //             region: 'Unknown',
+    //             main_entity: 'Unknown'
+    //         }));
+    //         classifiedHeadlines = classifiedHeadlines.concat(emptyClassifications);
+    //     }
+    // }
     
-    console.log(`🎉 OpenAI classification completed! Classified ${classifiedHeadlines.length} headlines`);
+    // console.log(`🎉 OpenAI classification completed! Classified ${classifiedHeadlines.length} headlines`);
     
     for (let i = 0; i < headlines.length; i++) {
         headlines[i] = { ...headlines[i], ...classifiedHeadlines[i]};

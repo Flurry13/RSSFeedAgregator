@@ -1,29 +1,31 @@
-import { InferenceClient } from '@huggingface/inference';
 import dotenv from 'dotenv';
 import { candidateTopics } from '../candidateTopics';
+import { InferenceClient } from '@huggingface/inference';
+import {
+    InferenceClientError,
+    InferenceClientProviderApiError,
+    InferenceClientProviderOutputError,
+    InferenceClientHubApiError,
+} from "@huggingface/inference";
 
 dotenv.config();
 
 const HF_API_KEY = process.env.HF_API_KEY;
+const client = new InferenceClient(HF_API_KEY);
 
 export async function classify(text: string) {
     if (!HF_API_KEY) {
         throw new Error('HF_API_KEY environment variable is required');
     }
-
-    const client = new InferenceClient(HF_API_KEY);
-
     try {
         const result = await client.zeroShotClassification({
+            model: "facebook/bart-large-mnli",
             inputs: text,
-            model: 'facebook/bart-large-mnli',
             parameters: {
                 candidate_labels: candidateTopics,
                 multi_label: true,
             },
         });
-
-        // result is an array of { label, score }
         return {
             text,
             topics: result.map(r => r.label),
@@ -32,7 +34,7 @@ export async function classify(text: string) {
                 topic: r.label,
                 confidence: r.score,
             })),
-        };
+        }
     } catch (error) {
         console.error('Error in topic classification:', error);
         return {
