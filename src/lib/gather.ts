@@ -18,8 +18,8 @@ async function translate(text: string, targetLanguage: string) {
 }
 
 export async function gather() {
-    let headlines: Array<{title: string, source: string, pubDate: string}> = [];
-    let amountBySource: Array<{source: string, amount: number}> = [];
+    const headlines: Array<{title: string, source: string, pubDate: string}> = [];
+    const amountBySource: Record<string, number> = {};
     const parser = new DOMParser();
     await Promise.all(
         feeds.slice(0, FEED_LIMIT).map(async (feed) => {
@@ -35,7 +35,7 @@ export async function gather() {
                     const srcElement = item.getElementsByTagName("link")[0];
                     const pubDateElement = item.getElementsByTagName("pubDate")[0];
                     if (titleElement && titleElement.textContent) {
-                        let title = titleElement.textContent;
+                        const title = titleElement.textContent;
                         if (feed.language !== 'en') {
                             const headline = {
                                 title: await translate(title, 'en'),
@@ -55,7 +55,7 @@ export async function gather() {
                     }
                 }
                 headlines.push(...feedHeadlines);
-                amountBySource.push({source: feed.url, amount: feedHeadlines.length});
+                amountBySource[feed.url] = feedHeadlines.length;
             } catch (error) {
                 console.error(`Error fetching ${feed.url}:`, error);
             }

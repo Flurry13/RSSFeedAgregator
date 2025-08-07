@@ -6,7 +6,10 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "debug:test": "tsx debug_test.ts",
+    "debug:hf": "tsx test_hf_api.mjs",
+    "debug:ts": "tsx --inspect debug_test.ts"
   },
   "dependencies": {
     "@google-cloud/translate": "^9.2.0",
@@ -16,6 +19,7 @@
     "axios": "^1.11.0",
     "dotenv": "^17.2.1",
     "next": "15.4.3",
+    "node-fetch": "^3.3.2",
     "openai": "^5.10.2",
     "react": "19.1.0",
     "react-dom": "19.1.0"
