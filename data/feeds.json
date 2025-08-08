@@ -1,376 +1,209 @@
 {
-  "feeds": [
-    {
-      "id": "nyt_homepage",
-      "name": "New York Times",
-      "url": "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml",
-      "group": "western",
-      "language": "en",
-      "country": "US",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "bbc_news",
-      "name": "BBC News",
-      "url": "https://feeds.bbci.co.uk/news/rss.xml",
-      "group": "western", 
-      "language": "en",
-      "country": "UK",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "wsj_world",
-      "name": "Wall Street Journal World",
-      "url": "https://feeds.a.dj.com/rss/RSSWorldNews.xml",
-      "group": "western",
-      "language": "en", 
-      "country": "US",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "npr_news",
-      "name": "NPR News",
-      "url": "https://www.npr.org/rss/rss.php?id=1001",
-      "group": "western",
-      "language": "en",
-      "country": "US", 
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "cnn_edition",
-      "name": "CNN International",
-      "url": "https://rss.cnn.com/rss/edition.rss",
-      "group": "western",
-      "language": "en",
-      "country": "US",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "fox_news",
-      "name": "Fox News",
-      "url": "https://feeds.foxnews.com/foxnews/latest",
-      "group": "western",
-      "language": "en",
-      "country": "US",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "guardian_uk",
-      "name": "The Guardian UK",
-      "url": "https://www.theguardian.com/uk/rss",
-      "group": "western",
-      "language": "en",
-      "country": "UK",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "independent_uk",
-      "name": "The Independent UK",
-      "url": "https://www.independent.co.uk/news/uk/rss",
-      "group": "western",
-      "language": "en",
-      "country": "UK",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "xinhua_english",
-      "name": "Xinhua English",
-      "url": "http://www.xinhuanet.com/english/rss/worldrss.xml",
-      "group": "nonwestern",
-      "language": "en",
-      "country": "CN",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "ria_world",
-      "name": "RIA Novosti World",
-      "url": "https://ria.ru/export/rss2/world/index.xml",
-      "group": "nonwestern",
-      "language": "ru",
-      "country": "RU",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "tass_news",
-      "name": "TASS",
-      "url": "https://tass.com/rss/v2.xml",
-      "group": "nonwestern",
-      "language": "ru",
-      "country": "RU",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "global_times",
-      "name": "Global Times",
-      "url": "https://www.globaltimes.cn/rss/world.xml",
-      "group": "nonwestern",
-      "language": "en",
-      "country": "CN",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "nhk_news",
-      "name": "NHK News",
-      "url": "https://www3.nhk.or.jp/rss/news/cat0.xml",
-      "group": "nonwestern",
-      "language": "ja",
-      "country": "JP",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "japan_times",
-      "name": "Japan Times",
-      "url": "https://www.japantimes.co.jp/feed/",
-      "group": "nonwestern",
-      "language": "en",
-      "country": "JP",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "globo_g1",
-      "name": "G1 Globo",
-      "url": "https://g1.globo.com/dynamo/rss2.xml",
-      "group": "nonwestern",
-      "language": "pt",
-      "country": "BR",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "folha_mundo",
-      "name": "Folha Mundo",
-      "url": "https://www1.folha.uol.com.br/rss/folha_mundo.xml",
-      "group": "nonwestern",
-      "language": "pt",
-      "country": "BR",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "youm7",
-      "name": "Youm7",
-      "url": "https://www.youm7.com/rss/SectionRss?SectionID=97",
-      "group": "nonwestern",
-      "language": "ar",
-      "country": "EG",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "ahram_english",
-      "name": "Al-Ahram English",
-      "url": "https://english.ahram.org.eg/Portal/1/News/rss.aspx",
-      "group": "nonwestern",
-      "language": "en",
-      "country": "EG",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "hurriyet",
-      "name": "Hürriyet",
-      "url": "https://www.hurriyet.com.tr/rss/anasayfa",
-      "group": "nonwestern",
-      "language": "tr",
-      "country": "TR",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "daily_sabah",
-      "name": "Daily Sabah",
-      "url": "https://www.dailysabah.com/rss",
-      "group": "nonwestern",
-      "language": "en",
-      "country": "TR",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "korea_net",
-      "name": "Korea.net",
-      "url": "https://www.korea.net/rss/news.xml",
-      "group": "nonwestern",
-      "language": "en",
-      "country": "KR",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "korea_times",
-      "name": "Korea Times",
-      "url": "https://www.koreatimes.co.kr/www/rss/rss.xml",
-      "group": "nonwestern",
-      "language": "en",
-      "country": "KR",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "el_universal",
-      "name": "El Universal",
-      "url": "https://www.eluniversal.com.mx/rss/ciencia.xml",
-      "group": "nonwestern",
-      "language": "es",
-      "country": "MX",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "milenio",
-      "name": "Milenio",
-      "url": "https://www.milenio.com/rss/ultima-hora",
-      "group": "nonwestern",
-      "language": "es",
-      "country": "MX",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "vanguard_ng",
-      "name": "Vanguard Nigeria",
-      "url": "https://www.vanguardngr.com/feed/",
-      "group": "nonwestern",
-      "language": "en",
-      "country": "NG",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "premium_times",
-      "name": "Premium Times",
-      "url": "https://www.premiumtimesng.com/feed",
-      "group": "nonwestern",
-      "language": "en",
-      "country": "NG",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "antara_news",
-      "name": "Antara News",
-      "url": "https://www.antaranews.com/rss/nasional",
-      "group": "nonwestern",
-      "language": "id",
-      "country": "ID",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "jakarta_post",
-      "name": "Jakarta Post",
-      "url": "https://www.thejakartapost.com/rss",
-      "group": "nonwestern",
-      "language": "en",
-      "country": "ID",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "spa_saudi",
-      "name": "Saudi Press Agency",
-      "url": "https://www.spa.gov.sa/rss/1.xml",
-      "group": "nonwestern",
-      "language": "ar",
-      "country": "SA",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "alarabiya_english",
-      "name": "Al Arabiya English",
-      "url": "https://english.alarabiya.net/.mrss/en/news.xml",
-      "group": "nonwestern",
-      "language": "en",
-      "country": "SA",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "irna_news",
-      "name": "IRNA",
-      "url": "https://www.irna.ir/rss/tp/20",
-      "group": "nonwestern",
-      "language": "fa",
-      "country": "IR",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "mehr_news",
-      "name": "Mehr News",
-      "url": "https://en.mehrnews.com/rss",
-      "group": "nonwestern",
-      "language": "en",
-      "country": "IR",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "dawn_news",
-      "name": "Dawn",
-      "url": "https://www.dawn.com/feeds/home",
-      "group": "nonwestern",
-      "language": "en",
-      "country": "PK",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "tribune_pk",
-      "name": "The Tribune Pakistan",
-      "url": "https://tribune.com.pk/feed/",
-      "group": "nonwestern",
-      "language": "en",
-      "country": "PK",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "bangkok_post",
-      "name": "Bangkok Post",
-      "url": "https://www.bangkokpost.com/rss/data/topstories.xml",
-      "group": "nonwestern",
-      "language": "en",
-      "country": "TH",
-      "enabled": true,
-      "fetch_interval": 300
-    },
-    {
-      "id": "nation_thailand",
-      "name": "The Nation Thailand",
-      "url": "https://www.nationthailand.com/rss/national",
-      "group": "nonwestern",
-      "language": "en",
-      "country": "TH",
-      "enabled": true,
-      "fetch_interval": 300
+    "feeds": [
+      {
+        "id": "nytimes_politics",
+        "name": "New York Times Politics",
+        "url": "https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml",
+        "group": "western",
+        "language": "en",
+        "country": "US"
+      },
+      {
+        "id": "fox_politics",
+        "name": "Fox News Politics",
+        "url": "http://feeds.foxnews.com/foxnews/politics",
+        "group": "western",
+        "language": "en",
+        "country": "US"
+      },
+      {
+        "id": "cbc_politics",
+        "name": "CBC News Politics",
+        "url": "https://www.cbc.ca/cmlink/rss-politics",
+        "group": "western",
+        "language": "en",
+        "country": "CA"
+      },
+      {
+        "id": "bbc_politics",
+        "name": "BBC News Politics",
+        "url": "https://feeds.bbci.co.uk/news/politics/rss.xml",
+        "group": "western",
+        "language": "en",
+        "country": "UK"
+      },
+      {
+        "id": "guardian_politics",
+        "name": "The Guardian Politics",
+        "url": "https://www.theguardian.com/politics/rss",
+        "group": "western",
+        "language": "en",
+        "country": "UK"
+      },
+      {
+        "id": "lemonde_politique",
+        "name": "Le Monde Politique",
+        "url": "https://www.lemonde.fr/politique/rss_full.xml",
+        "group": "western",
+        "language": "fr",
+        "country": "FR"
+      },
+      {
+        "id": "elpais_politica",
+        "name": "El País Política",
+        "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/politica/portada",
+        "group": "western",
+        "language": "es",
+        "country": "ES"
+      },
+      {
+        "id": "derspiegel_politik",
+        "name": "Der Spiegel Politik",
+        "url": "https://www.spiegel.de/politik/index.rss",
+        "group": "western",
+        "language": "de",
+        "country": "DE"
+      },
+      {
+        "id": "g1_politica",
+        "name": "G1 Política",
+        "url": "https://g1.globo.com/rss/g1/politica",
+        "group": "nonwestern",
+        "language": "pt",
+        "country": "BR"
+      },
+      {
+        "id": "clarin_politica",
+        "name": "Clarín Política",
+        "url": "https://www.clarin.com/rss/politica/",
+        "group": "nonwestern",
+        "language": "es",
+        "country": "AR"
+      },
+      {
+        "id": "elcomercio_politica",
+        "name": "El Comercio Política",
+        "url": "https://elcomercio.pe/politica/rss/",
+        "group": "nonwestern",
+        "language": "es",
+        "country": "PE"
+      },
+      {
+        "id": "dailymaverick_politics",
+        "name": "Daily Maverick Politics",
+        "url": "https://www.dailymaverick.co.za/section/politics/feed/",
+        "group": "nonwestern",
+        "language": "en",
+        "country": "ZA"
+      },
+      {
+        "id": "news24_politics",
+        "name": "News24 Politics",
+        "url": "https://feeds.news24.com/articles/news24/SouthAfrica/Politics/rss",
+        "group": "nonwestern",
+        "language": "en",
+        "country": "ZA"
+      },
+      {
+        "id": "jeuneafrique_politique",
+        "name": "Jeune Afrique Politique",
+        "url": "https://www.jeuneafrique.com/feed/",
+        "group": "nonwestern",
+        "language": "fr",
+        "country": "ZA"
+      },
+      {
+        "id": "aljazeera_politics",
+        "name": "Al Jazeera Politics",
+        "url": "https://www.aljazeera.com/xml/rss/all.xml",
+        "group": "nonwestern",
+        "language": "en",
+        "country": "QA"
+      },
+      {
+        "id": "haaretz_politics",
+        "name": "Haaretz Politics",
+        "url": "https://www.haaretz.co.il/cmlink/1.6940690",
+        "group": "nonwestern",
+        "language": "he",
+        "country": "IL"
+      },
+      {
+        "id": "globaltimes_politics",
+        "name": "Global Times Politics",
+        "url": "https://www.globaltimes.cn/rss/politics.xml",
+        "group": "nonwestern",
+        "language": "zh",
+        "country": "CN"
+      },
+      {
+        "id": "chinadaily_politics",
+        "name": "China Daily Politics",
+        "url": "https://www.chinadaily.com.cn/rss/politics_rss.xml",
+        "group": "nonwestern",
+        "language": "en",
+        "country": "CN"
+      },
+      {
+        "id": "thehindu_politics",
+        "name": "The Hindu Politics",
+        "url": "https://www.thehindu.com/news/national/feeder/default.rss",
+        "group": "nonwestern",
+        "language": "en",
+        "country": "IN"
+      },
+      {
+        "id": "asahi_politics",
+        "name": "Asahi Shimbun 政治",
+        "url": "https://www.asahi.com/rss/politics.rdf",
+        "group": "nonwestern",
+        "language": "ja",
+        "country": "JP"
+      },
+      {
+        "id": "abc_politics",
+        "name": "ABC News Australia Politics",
+        "url": "https://www.abc.net.au/news/feed/51120/rss.xml",
+        "group": "western",
+        "language": "en",
+        "country": "AU"
+      },
+      {
+        "id": "sbs_politics",
+        "name": "SBS News Politics",
+        "url": "https://www.sbs.com.au/news/topic/politics/rss",
+        "group": "western",
+        "language": "en",
+        "country": "AU"
+      },
+      {
+        "id": "rnz_politics",
+        "name": "Radio New Zealand Politics",
+        "url": "https://www.rnz.co.nz/rss/politics.xml",
+        "group": "western",
+        "language": "en",
+        "country": "NZ"
+      },
+      {
+        "id": "antarctic_treaty",
+        "name": "Antarctic Treaty Secretariat News",
+        "url": "https://www.ats.aq/rss/news.xml",
+        "group": "nonwestern",
+        "language": "en",
+        "country": "AQ"
+      }
+    ],
+    "metadata": {
+      "version": "1.0",
+      "last_updated": "2025-08-08T00:00:00Z",
+      "total_feeds": 24,
+      "groups": {
+        "western": 10,
+        "nonwestern": 14
+      },
+      "languages": ["en", "fr", "es", "de", "pt", "he", "zh", "ja"],
+      "countries": ["US", "CA", "UK", "FR", "ES", "DE", "BR", "AR", "PE", "ZA", "QA", "IL", "CN", "IN", "JP", "AU", "NZ", "AQ"],
+      "coverage": "Global politics coverage with Western/Non-Western balance and multilingual sources"
     }
-  ],
-  "metadata": {
-    "version": "1.1",
-    "last_updated": "2024-01-01T00:00:00Z",
-    "total_feeds": 36,
-    "groups": {
-      "western": 8,
-      "nonwestern": 28
-    },
-    "languages": ["en", "ru", "ja", "pt", "ar", "tr", "es", "id", "fa"],
-    "countries": ["US", "UK", "CN", "RU", "JP", "BR", "EG", "TR", "KR", "MX", "NG", "ID", "SA", "IR", "PK", "TH"],
-    "coverage": "Global perspective with Western/Non-Western balance for bias analysis"
   }
-} 
+  
