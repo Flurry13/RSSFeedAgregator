@@ -1,0 +1,156 @@
+{
+  "feeds": [
+    {
+      "id": "bbc_world",
+      "name": "BBC World News",
+      "url": "http://feeds.bbci.co.uk/news/world/rss.xml",
+      "country": "UK",
+      "language": "en",
+      "category": "world",
+      "leaning": "center",
+      "weight": 1.0,
+      "enabled": true,
+      "fetch_interval": 300
+    },
+    {
+      "id": "cnn_world",
+      "name": "CNN World News",
+      "url": "http://rss.cnn.com/rss/edition.rss",
+      "country": "US",
+      "language": "en", 
+      "category": "world",
+      "leaning": "center-left",
+      "weight": 1.0,
+      "enabled": true,
+      "fetch_interval": 300
+    },
+    {
+      "id": "reuters_world",
+      "name": "Reuters World News",
+      "url": "https://feeds.reuters.com/reuters/worldNews",
+      "country": "UK",
+      "language": "en",
+      "category": "world", 
+      "leaning": "center",
+      "weight": 1.2,
+      "enabled": true,
+      "fetch_interval": 180
+    },
+    {
+      "id": "ap_news",
+      "name": "Associated Press",
+      "url": "https://feeds.apnews.com/ApNewsTopNews",
+      "country": "US",
+      "language": "en",
+      "category": "general",
+      "leaning": "center",
+      "weight": 1.1,
+      "enabled": true,
+      "fetch_interval": 240
+    },
+    {
+      "id": "guardian_world",
+      "name": "The Guardian World",
+      "url": "https://www.theguardian.com/world/rss",
+      "country": "UK",
+      "language": "en",
+      "category": "world",
+      "leaning": "center-left",
+      "weight": 1.0,
+      "enabled": true,
+      "fetch_interval": 300
+    },
+    {
+      "id": "dw_english",
+      "name": "Deutsche Welle English",
+      "url": "https://rss.dw.com/xml/rss-en-all",
+      "country": "DE",
+      "language": "en",
+      "category": "world",
+      "leaning": "center",
+      "weight": 0.9,
+      "enabled": true,
+      "fetch_interval": 360
+    },
+    {
+      "id": "france24_english",
+      "name": "France24 English",
+      "url": "https://www.france24.com/en/rss",
+      "country": "FR",
+      "language": "en",
+      "category": "world",
+      "leaning": "center",
+      "weight": 0.8,
+      "enabled": true,
+      "fetch_interval": 360
+    },
+    {
+      "id": "rt_russian",
+      "name": "RT Russian",
+      "url": "https://russian.rt.com/rss",
+      "country": "RU",
+      "language": "ru",
+      "category": "world",
+      "leaning": "right",
+      "weight": 0.6,
+      "enabled": true,
+      "fetch_interval": 600
+    },
+    {
+      "id": "ria_novosti",
+      "name": "РИА Новости",
+      "url": "https://ria.ru/export/rss2/archive/index.xml",
+      "country": "RU", 
+      "language": "ru",
+      "category": "general",
+      "leaning": "right",
+      "weight": 0.6,
+      "enabled": true,
+      "fetch_interval": 600
+    },
+    {
+      "id": "xinhua_english",
+      "name": "Xinhua English",
+      "url": "http://www.xinhuanet.com/english/rss/worldrss.xml",
+      "country": "CN",
+      "language": "en",
+      "category": "world",
+      "leaning": "left",
+      "weight": 0.7,
+      "enabled": true,
+      "fetch_interval": 480
+    },
+    {
+      "id": "aljazeera_english",
+      "name": "Al Jazeera English", 
+      "url": "https://www.aljazeera.com/xml/rss/all.xml",
+      "country": "QA",
+      "language": "en",
+      "category": "world",
+      "leaning": "center-left",
+      "weight": 0.9,
+      "enabled": true,
+      "fetch_interval": 300
+    },
+    {
+      "id": "techcrunch",
+      "name": "TechCrunch",
+      "url": "https://techcrunch.com/feed/",
+      "country": "US",
+      "language": "en",
+      "category": "technology",
+      "leaning": "center",
+      "weight": 1.0,
+      "enabled": true,
+      "fetch_interval": 180
+    }
+  ],
+  "metadata": {
+    "version": "1.0",
+    "last_updated": "2024-01-01T00:00:00Z",
+    "total_feeds": 12,
+    "languages": ["en", "ru"],
+    "countries": ["UK", "US", "DE", "FR", "RU", "CN", "QA"],
+    "categories": ["world", "general", "technology"]
+  }
+} 
