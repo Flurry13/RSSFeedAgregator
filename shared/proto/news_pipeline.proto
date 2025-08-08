@@ -1,0 +1,202 @@
+syntax = "proto3";
+
+package news_pipeline;
+
+option go_package = "github.com/your-org/news-ai/shared/proto";
+
+// Classification Service
+service ClassificationService {
+  rpc ClassifyText(ClassifyRequest) returns (ClassifyResponse);
+  rpc ClassifyBatch(ClassifyBatchRequest) returns (ClassifyBatchResponse);
+}
+
+// Translation Service  
+service TranslationService {
+  rpc TranslateText(TranslateRequest) returns (TranslateResponse);
+  rpc TranslateBatch(TranslateBatchRequest) returns (TranslateBatchResponse);
+}
+
+// Embedding Service
+service EmbeddingService {
+  rpc GenerateEmbedding(EmbeddingRequest) returns (EmbeddingResponse);
+  rpc GenerateEmbeddingBatch(EmbeddingBatchRequest) returns (EmbeddingBatchResponse);
+}
+
+// Event Extraction Service
+service EventExtractionService {
+  rpc ExtractEvent(EventRequest) returns (EventResponse);
+  rpc ExtractEventBatch(EventBatchRequest) returns (EventBatchResponse);
+}
+
+// Event Grouping Service
+service EventGroupingService {
+  rpc GroupEvents(GroupEventsRequest) returns (GroupEventsResponse);
+}
+
+// Health Service
+service HealthService {
+  rpc Check(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+// Messages for Classification
+message ClassifyRequest {
+  string text = 1;
+  repeated string candidate_labels = 2;
+  bool multi_label = 3;
+  float confidence_threshold = 4;
+}
+
+message ClassifyResponse {
+  repeated TopicResult topics = 1;
+  float processing_time = 2;
+  string model_version = 3;
+}
+
+message ClassifyBatchRequest {
+  repeated string texts = 1;
+  repeated string candidate_labels = 2;
+  bool multi_label = 3;
+  float confidence_threshold = 4;
+}
+
+message ClassifyBatchResponse {
+  repeated ClassifyResponse results = 1;
+  float total_processing_time = 2;
+  int32 success_count = 3;
+  int32 error_count = 4;
+}
+
+message TopicResult {
+  string label = 1;
+  float confidence = 2;
+  int32 rank = 3;
+}
+
+// Messages for Translation
+message TranslateRequest {
+  string text = 1;
+  string source_language = 2;
+  string target_language = 3;
+}
+
+message TranslateResponse {
+  string translated_text = 1;
+  string detected_language = 2;
+  float confidence = 3;
+  float processing_time = 4;
+}
+
+message TranslateBatchRequest {
+  repeated string texts = 1;
+  string source_language = 2;
+  string target_language = 3;
+}
+
+message TranslateBatchResponse {
+  repeated TranslateResponse results = 1;
+  float total_processing_time = 2;
+}
+
+// Messages for Embeddings
+message EmbeddingRequest {
+  string text = 1;
+  string model_name = 2;
+}
+
+message EmbeddingResponse {
+  repeated float embedding = 1;
+  int32 dimension = 2;
+  float processing_time = 3;
+}
+
+message EmbeddingBatchRequest {
+  repeated string texts = 1;
+  string model_name = 2;
+}
+
+message EmbeddingBatchResponse {
+  repeated EmbeddingResponse results = 1;
+  float total_processing_time = 2;
+}
+
+// Messages for Event Extraction
+message EventRequest {
+  string text = 1;
+  string language = 2;
+}
+
+message EventResponse {
+  repeated Event events = 1;
+  float processing_time = 2;
+}
+
+message EventBatchRequest {
+  repeated string texts = 1;
+  string language = 2;
+}
+
+message EventBatchResponse {
+  repeated EventResponse results = 1;
+  float total_processing_time = 2;
+}
+
+message Event {
+  string id = 1;
+  string text = 2;
+  string subject = 3;
+  string predicate = 4;
+  string object = 5;
+  repeated Entity entities = 6;
+  string event_type = 7;
+  float confidence = 8;
+  string location = 9;
+  string timestamp = 10;
+}
+
+message Entity {
+  string text = 1;
+  string label = 2;
+  float confidence = 3;
+  int32 start = 4;
+  int32 end = 5;
+}
+
+// Messages for Event Grouping
+message GroupEventsRequest {
+  repeated Event events = 1;
+  float similarity_threshold = 2;
+  int32 min_cluster_size = 3;
+}
+
+message GroupEventsResponse {
+  repeated EventGroup groups = 1;
+  int32 total_groups = 2;
+  float processing_time = 3;
+}
+
+message EventGroup {
+  string group_id = 1;
+  repeated string event_ids = 2;
+  string representative_event_id = 3;
+  float cohesion_score = 4;
+  int32 event_count = 5;
+  string summary = 6;
+  repeated string keywords = 7;
+}
+
+// Health Check Messages
+message HealthCheckRequest {
+  string service = 1;
+}
+
+message HealthCheckResponse {
+  enum ServingStatus {
+    UNKNOWN = 0;
+    SERVING = 1;
+    NOT_SERVING = 2;
+    SERVICE_UNKNOWN = 3;
+  }
+  ServingStatus status = 1;
+  string message = 2;
+  map<string, string> details = 3;
+} 

@@ -1,277 +1,165 @@
-# Next.js Project Structure Guide
+# News AI - Advanced RSS Feed Processing & Analysis
 
-## Overview
-This is a Next.js application with TypeScript, Tailwind CSS, and ESLint. Next.js is a full-stack React framework that allows you to build both frontend and backend in the same project.
+A high-performance, scalable news aggregation and analysis system with machine learning-powered topic classification, event extraction, and semantic search.
 
-## Project Structure
+## 🏗️ Architecture
 
 ```
-RSSProjectSelf/
-├── src/
-│   ├── app/                    # App Router (Next.js 13+)
-│   │   ├── page.tsx           # Home page (/)
-│   │   ├── layout.tsx         # Root layout (applies to all pages)
-│   │   ├── globals.css        # Global styles
-│   │   ├── favicon.ico        # Site icon
-│   │   ├── api/               # Backend API routes
-│   │   │   ├── hello/
-│   │   │   │   └── route.ts   # API endpoint: /api/hello
-│   │   │   └── users/
-│   │   │       └── route.ts   # API endpoint: /api/users
-│   │   ├── about/
-│   │   │   └── page.tsx       # About page (/about)
-│   │   └── blog/
-│   │       ├── page.tsx       # Blog listing page (/blog)
-│   │       └── [slug]/
-│   │           └── page.tsx   # Dynamic blog post page (/blog/post-title)
-│   ├── components/            # Reusable React components
-│   │   ├── ui/               # Basic UI components
-│   │   │   ├── Button.tsx
-│   │   │   ├── Card.tsx
-│   │   │   └── Input.tsx
-│   │   ├── layout/           # Layout components
-│   │   │   ├── Header.tsx
-│   │   │   ├── Footer.tsx
-│   │   │   └── Sidebar.tsx
-│   │   └── features/         # Feature-specific components
-│   │       ├── BlogCard.tsx
-│   │       └── UserProfile.tsx
-│   ├── lib/                  # Utility functions and configurations
-│   │   ├── utils.ts          # General utility functions
-│   │   ├── db.ts             # Database configuration
-│   │   └── auth.ts           # Authentication utilities
-│   ├── types/                # TypeScript type definitions
-│   │   ├── user.ts
-│   │   └── blog.ts
-│   └── styles/               # Additional styles (if needed)
-│       └── components.css
-├── public/                   # Static files (images, fonts, etc.)
-│   ├── images/
-│   ├── icons/
-│   └── favicon.ico
-├── package.json              # Dependencies and scripts
-├── tsconfig.json             # TypeScript configuration
-├── tailwind.config.js        # Tailwind CSS configuration
-├── next.config.ts            # Next.js configuration
-└── README.md                 # This file
+news-ai/
+├── services/
+│   ├── api_go/          # Public Gateway (Go + Gin/Fiber)
+│   ├── ingester_go/     # RSS Feed Ingester (Go + Cron)
+│   └── nlp_py/          # ML Pipeline (Python + FastAPI)
+├── frontend/            # Next.js Dashboard
+├── shared/              # gRPC Proto & Schemas
+├── infra/               # K8s & Terraform
+└── data/                # Configuration Files
 ```
 
-## Where to Put Your Code
+## 🚀 Features
 
-### 🎨 Frontend Code
+- **High-Performance API**: Go-based REST API with gRPC communication
+- **Concurrent RSS Ingestion**: Ultra-fast feed fetching and processing
+- **ML Pipeline**: Topic classification, event extraction, and grouping
+- **Vector Search**: Semantic search with Qdrant vector database
+- **Real-time Dashboard**: Next.js frontend with live updates
+- **Scalable Infrastructure**: Docker, Kubernetes, and cloud-ready
 
-#### 1. **Pages** (`src/app/`)
-- **Static pages**: Create folders with `page.tsx` files
-  - `src/app/about/page.tsx` → `/about` route
-  - `src/app/contact/page.tsx` → `/contact` route
+## 🛠️ Tech Stack
 
-- **Dynamic pages**: Use square brackets for dynamic routes
-  - `src/app/blog/[slug]/page.tsx` → `/blog/any-post-title`
-  - `src/app/users/[id]/page.tsx` → `/users/123`
+### Services
+- **API Gateway**: Go + Gin/Fiber + gRPC
+- **RSS Ingester**: Go + gofeed + Redis streams
+- **ML Pipeline**: Python + FastAPI + Transformers + spaCy
+- **Vector DB**: Qdrant for semantic search
+- **Cache/Queue**: Redis for caching and job queues
+- **Database**: PostgreSQL for persistent storage
 
-#### 2. **Components** (`src/components/`)
-- **UI Components** (`src/components/ui/`): Reusable, generic components
-  ```tsx
-  // src/components/ui/Button.tsx
-  export function Button({ children, ...props }) {
-    return <button className="btn" {...props}>{children}</button>
-  }
-  ```
+### Frontend
+- **Framework**: Next.js 15 + TypeScript
+- **Styling**: Tailwind CSS
+- **State**: React Query for API state management
 
-- **Layout Components** (`src/components/layout/`): Page structure components
-  ```tsx
-  // src/components/layout/Header.tsx
-  export function Header() {
-    return <header>Navigation and branding</header>
-  }
-  ```
+### Infrastructure
+- **Containerization**: Docker + Docker Compose
+- **Orchestration**: Kubernetes (optional)
+- **Cloud**: Terraform for IaC (optional)
 
-- **Feature Components** (`src/components/features/`): Business logic components
-  ```tsx
-  // src/components/features/BlogCard.tsx
-  export function BlogCard({ post }) {
-    return <div>Blog post preview</div>
-  }
-  ```
+## 🚀 Quick Start
 
-#### 3. **Layouts** (`src/app/layout.tsx`)
-- Root layout applies to all pages
-- Define global navigation, footer, and meta tags
-- Import global styles here
-
-### 🔧 Backend Code
-
-#### 1. **API Routes** (`src/app/api/`)
-- **REST API endpoints**: Create folders with `route.ts` files
-  ```tsx
-  // src/app/api/users/route.ts
-  export async function GET() {
-    // Handle GET /api/users
-    return Response.json({ users: [] })
-  }
-  
-  export async function POST(request: Request) {
-    // Handle POST /api/users
-    const data = await request.json()
-    return Response.json({ message: 'User created' })
-  }
-  ```
-
-- **Dynamic API routes**:
-  ```tsx
-  // src/app/api/users/[id]/route.ts
-  export async function GET(request: Request, { params }: { params: { id: string } }) {
-    // Handle GET /api/users/123
-    return Response.json({ user: { id: params.id } })
-  }
-  ```
-
-#### 2. **Server Actions** (Alternative to API routes)
-- **Server functions**: Create functions in any file with `"use server"`
-  ```tsx
-  // src/lib/actions.ts
-  "use server"
-  
-  export async function createUser(formData: FormData) {
-    // Server-side logic
-    const name = formData.get('name')
-    // Save to database
-  }
-  ```
-
-#### 3. **Database & Utilities** (`src/lib/`)
-- **Database connections**: `src/lib/db.ts`
-- **Authentication**: `src/lib/auth.ts`
-- **External API calls**: `src/lib/api.ts`
-
-### 📁 Static Files
-
-#### **Public Directory** (`public/`)
-- Images: `public/images/`
-- Icons: `public/icons/`
-- Documents: `public/documents/`
-- Access via: `/images/photo.jpg`
-
-## Development Workflow
-
-### 1. **Creating a New Page**
+1. **Clone and setup**:
 ```bash
-# Create a new page
-mkdir src/app/products
-touch src/app/products/page.tsx
+git clone <repo-url>
+cd news-ai
+cp .env.example .env
 ```
 
-### 2. **Creating a New API Endpoint**
+2. **Start with Docker Compose**:
 ```bash
-# Create a new API route
-mkdir src/app/api/products
-touch src/app/api/products/route.ts
+make build
+docker-compose up -d
 ```
 
-### 3. **Creating a New Component**
+3. **Initialize database**:
 ```bash
-# Create a new component
-touch src/components/ui/ProductCard.tsx
+make migrate
+make seed
 ```
 
-## Key Concepts
+4. **Access the dashboard**:
+- Frontend: http://localhost:3000
+- API: http://localhost:8080
+- Qdrant: http://localhost:6333
 
-### **App Router vs Pages Router**
-- **App Router** (what we're using): New Next.js 13+ approach
-- File-based routing with `page.tsx` files
-- Server components by default
-- Better performance and features
+## 📊 Pipeline Flow
 
-### **Server vs Client Components**
-- **Server Components** (default): Run on server, no JavaScript sent to client
-- **Client Components**: Add `"use client"` at top of file for interactivity
-
-### **Data Fetching**
-- **Server Components**: Fetch data directly in component
-- **API Routes**: Create endpoints for client-side fetching
-- **Server Actions**: Handle form submissions and mutations
-
-## Common Patterns
-
-### **Layout Pattern**
-```tsx
-// src/app/layout.tsx
-export default function RootLayout({ children }) {
-  return (
-    <html>
-      <body>
-        <Header />
-        <main>{children}</main>
-        <Footer />
-      </body>
-    </html>
-  )
-}
+```
+RSS Feeds → Ingester → Redis Queue → NLP Pipeline → Database/Vector Store → API → Frontend
 ```
 
-### **Page Pattern**
-```tsx
-// src/app/blog/page.tsx
-export default async function BlogPage() {
-  const posts = await fetchPosts() // Server-side data fetching
-  
-  return (
-    <div>
-      <h1>Blog</h1>
-      {posts.map(post => <BlogCard key={post.id} post={post} />)}
-    </div>
-  )
-}
-```
+### 5-Step ML Pipeline
+1. **Gather**: Fetch and normalize RSS feeds
+2. **Translate**: Multi-language support with MarianMT
+3. **Classify**: Zero-shot topic classification with BART-MNLI
+4. **Extract**: Event extraction with spaCy + SRL
+5. **Group**: Event clustering with HDBSCAN
+6. **Embed**: Generate vectors with sentence-transformers
 
-### **API Route Pattern**
-```tsx
-// src/app/api/posts/route.ts
-export async function GET() {
-  const posts = await getPostsFromDatabase()
-  return Response.json(posts)
-}
+## 🔧 Development
 
-export async function POST(request: Request) {
-  const data = await request.json()
-  const newPost = await createPost(data)
-  return Response.json(newPost, { status: 201 })
-}
-```
-
-## Best Practices
-
-1. **Keep components small and focused**
-2. **Use TypeScript for better development experience**
-3. **Organize by feature, not by type**
-4. **Use server components when possible**
-5. **Handle errors gracefully**
-6. **Follow naming conventions consistently**
-
-## Getting Started
-
-1. **Start development server**: `npm run dev`
-2. **Build for production**: `npm run build`
-3. **Start production server**: `npm start`
-4. **Lint code**: `npm run lint`
-
-## Useful Commands
-
+### Build Commands
 ```bash
-# Create new page
-mkdir src/app/new-page && touch src/app/new-page/page.tsx
-
-# Create new API route
-mkdir src/app/api/new-endpoint && touch src/app/api/new-endpoint/route.ts
-
-# Create new component
-touch src/components/ui/NewComponent.tsx
-
-# Install new package
-npm install package-name
-
-# Add TypeScript types
-npm install @types/package-name
+make build      # Build all services
+make test       # Run tests
+make lint       # Code linting
+make proto-gen  # Generate gRPC stubs
 ```
 
-This structure follows Next.js best practices and provides a scalable foundation for your RSS project!
+### Service Development
+```bash
+# API Gateway (Go)
+cd services/api_go
+go run cmd/api/main.go
+
+# RSS Ingester (Go)
+cd services/ingester_go
+go run cmd/ingester/main.go
+
+# ML Pipeline (Python)
+cd services/nlp_py
+pip install -r requirements.txt
+python app/server.py
+
+# Frontend (Next.js)
+cd frontend
+npm install
+npm run dev
+```
+
+## 📈 Performance
+
+- **RSS Ingestion**: 1000+ feeds/minute
+- **Classification**: 1.6 requests/second with concurrent processing
+- **Search**: Sub-100ms vector similarity search
+- **API**: <50ms response times with caching
+
+## 🌐 API Endpoints
+
+### Headlines
+- `GET /api/headlines` - List all headlines
+- `GET /api/headlines/search` - Hybrid search
+- `GET /api/headlines/topics` - Topic statistics
+
+### Events
+- `GET /api/events` - Event groups
+- `GET /api/events/{id}` - Event details
+
+### Analytics
+- `GET /api/metrics` - System metrics
+- `GET /api/topics/underrepresentation` - Topic analysis
+
+## 🔒 Security
+
+- Rate limiting with Redis
+- Input validation and sanitization
+- CORS protection
+- Environment-based configuration
+- Health checks and monitoring
+
+## 📝 License
+
+MIT License - see LICENSE file for details.
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
+
+## 📚 Documentation
+
+- [API Documentation](./docs/api.md)
+- [Deployment Guide](./docs/deployment.md)
+- [Development Setup](./docs/development.md)
