@@ -19,7 +19,7 @@
       {
         "id": "cbc_politics",
         "name": "CBC News Politics",
-        "url": "https://www.cbc.ca/cmlink/rss-politics",
+        "url": "https://www.cbc.ca/webfeed/rss/rss-politics",
         "group": "western",
         "language": "en",
         "country": "CA"
@@ -51,7 +51,7 @@
       {
         "id": "elpais_politica",
         "name": "El País Política",
-        "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/politica/portada",
+        "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/internacional/portada",
         "group": "western",
         "language": "es",
         "country": "ES"
@@ -83,7 +83,7 @@
       {
         "id": "elcomercio_politica",
         "name": "El Comercio Política",
-        "url": "https://elcomercio.pe/politica/rss/",
+        "url": "https://elcomercio.pe/arc/outboundfeeds/rss/category/politica/?outputType=xml",
         "group": "nonwestern",
         "language": "es",
         "country": "PE"
@@ -92,14 +92,6 @@
         "id": "dailymaverick_politics",
         "name": "Daily Maverick Politics",
         "url": "https://www.dailymaverick.co.za/section/politics/feed/",
-        "group": "nonwestern",
-        "language": "en",
-        "country": "ZA"
-      },
-      {
-        "id": "news24_politics",
-        "name": "News24 Politics",
-        "url": "https://feeds.news24.com/articles/news24/SouthAfrica/Politics/rss",
         "group": "nonwestern",
         "language": "en",
         "country": "ZA"
@@ -123,23 +115,23 @@
       {
         "id": "haaretz_politics",
         "name": "Haaretz Politics",
-        "url": "https://www.haaretz.co.il/cmlink/1.6940690",
+        "url": "https://www.haaretz.com/srv/haaretz-latest-headlines",
         "group": "nonwestern",
         "language": "he",
         "country": "IL"
       },
       {
-        "id": "globaltimes_politics",
-        "name": "Global Times Politics",
-        "url": "https://www.globaltimes.cn/rss/politics.xml",
+        "id": "xinhua_world",
+        "name": "Xinhua World",
+        "url": "http://www.xinhuanet.com/english/rss/worldrss.xml",
         "group": "nonwestern",
         "language": "zh",
         "country": "CN"
       },
       {
-        "id": "chinadaily_politics",
-        "name": "China Daily Politics",
-        "url": "https://www.chinadaily.com.cn/rss/politics_rss.xml",
+        "id": "chinadaily_world",
+        "name": "China Daily World",
+        "url": "https://www.chinadaily.com.cn/rss/world_rss.xml",
         "group": "nonwestern",
         "language": "en",
         "country": "CN"
@@ -155,7 +147,7 @@
       {
         "id": "asahi_politics",
         "name": "Asahi Shimbun 政治",
-        "url": "https://www.asahi.com/rss/politics.rdf",
+        "url": "https://www.asahi.com/rss/asahi/politics.rdf",
         "group": "nonwestern",
         "language": "ja",
         "country": "JP"
@@ -170,8 +162,8 @@
       },
       {
         "id": "sbs_politics",
-        "name": "SBS News Politics",
-        "url": "https://www.sbs.com.au/news/topic/politics/rss",
+        "name": "SBS News World",
+        "url": "https://www.sbs.com.au/news/topic/world/feed",
         "group": "western",
         "language": "en",
         "country": "AU"
@@ -183,14 +175,6 @@
         "group": "western",
         "language": "en",
         "country": "NZ"
-      },
-      {
-        "id": "antarctic_treaty",
-        "name": "Antarctic Treaty Secretariat News",
-        "url": "https://www.ats.aq/rss/news.xml",
-        "group": "nonwestern",
-        "language": "en",
-        "country": "AQ"
       }
     ],
     "metadata": {
