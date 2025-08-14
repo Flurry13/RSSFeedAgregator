@@ -287,8 +287,8 @@ class VectorDatabase:
             metric='precomputed'
         )
         
-        # Convert similarity to distance
-        distance_matrix = 1 - similarity_matrix
+        # Convert similarity to distance (ensure non-negative)
+        distance_matrix = np.maximum(0, 1 - similarity_matrix)
         cluster_labels = clustering.fit_predict(distance_matrix)
         
         # Group by cluster
