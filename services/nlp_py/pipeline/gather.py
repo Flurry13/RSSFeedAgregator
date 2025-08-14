@@ -1,106 +1,47 @@
-import os
 import json
-import asyncio
-import aiohttp
-from typing import List, Dict, Any
-from xml.etree import ElementTree as ET
-from google.cloud import translate_v2 as translate
+import os
+import feedparser
+import time
 
-# Load feeds data
+# Load feeds from JSON file
 def load_feeds():
-    try:
-        with open('data/feeds.json', 'r') as f:
-            data = json.load(f)
-            return data.get('feeds', [])
-    except FileNotFoundError:
-        # Fallback feeds if file doesn't exist
-        return [
-            {
-                "url": "http://feeds.bbci.co.uk/news/world/rss.xml",
-                "language": "en"
-            },
-            {
-                "url": "http://rss.cnn.com/rss/edition.rss", 
-                "language": "en"
-            }
-        ]
-
-# Initialize translation client
-translate_client = translate.Client() if os.getenv('GOOGLE_TRANSLATE_API_KEY') else None
-
-FEED_LIMIT = 999
-HEADLINE_LIMIT = 999
-
-async def translate_text(text: str, target_language: str = 'en') -> str:
-    """Translate text to target language"""
-    if not translate_client:
-        return text  # Return original if no translation available
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
+    feeds_path = os.path.join(project_root, 'data', 'feeds.json')
     
-    try:
-        result = translate_client.translate(text, target_language=target_language)
-        return result['translatedText']
-    except Exception as e:
-        print(f"Translation error: {e}")
-        return text
+    with open(feeds_path, 'r') as f:
+        data = json.load(f)
+        return data.get('feeds', [])
 
-async def fetch_feed(session: aiohttp.ClientSession, feed: Dict[str, Any]) -> List[Dict[str, str]]:
-    """Fetch and parse a single RSS feed"""
+feedList = load_feeds()
+
+def gather():
     headlines = []
     
-    try:
-        async with session.get(feed['url'], timeout=30) as response:
-            xml_content = await response.text()
+    for item in feedList:
+        try:
+            feed = feedparser.parse(item['url'])
             
-        # Parse XML
-        root = ET.fromstring(xml_content)
-        
-        # Find all items
-        items = root.findall('.//item')
-        
-        for i, item in enumerate(items[:HEADLINE_LIMIT]):
-            title_elem = item.find('title')
-            link_elem = item.find('link')
-            pub_date_elem = item.find('pubDate')
-            
-            if title_elem is not None and title_elem.text:
-                title = title_elem.text.strip()
-                
-                # Translate if not English
-                if feed.get('language', 'en') != 'en':
-                    title = await translate_text(title, 'en')
-                
+            for entry in feed.entries:
                 headline = {
-                    'title': title,
-                    'source': link_elem.text if link_elem is not None and link_elem.text else feed['url'],
-                    'pubDate': pub_date_elem.text if pub_date_elem is not None and pub_date_elem.text else "Date not available"
+                    'title': getattr(entry, 'title', 'No title'),
+                    'link': getattr(entry, 'link', 'No link'),
+                    'language': item['language'],
+                    'source': item['name'],
+                    'group': item['group'],
+                    'country': item['country']
                 }
                 headlines.append(headline)
-                
-    except Exception as error:
-        print(f"Error fetching {feed['url']}: {error}")
+        except Exception as e:
+            print(f"Error processing {item['name']}: {str(e)}")
+            continue
     
     return headlines
 
-async def gather() -> Dict[str, Any]:
-    """Gather headlines from RSS feeds"""
-    feeds = load_feeds()
-    all_headlines = []
-    amount_by_source = {}
+if __name__ == "__main__":
+    result = gather()
+    print(f"Collected {len(result)} headlines")
     
-    async with aiohttp.ClientSession() as session:
-        # Process feeds concurrently
-        tasks = [fetch_feed(session, feed) for feed in feeds[:FEED_LIMIT]]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        for i, headlines in enumerate(results):
-            if isinstance(headlines, Exception):
-                continue
-                
-            feed_url = feeds[i]['url']
-            all_headlines.extend(headlines)
-            amount_by_source[feed_url] = len(headlines)
-    
-    return {
-        'headlines': all_headlines,
-        'amountBySource': amount_by_source
-    } 
+    # Show first few as examples
+    for i, headline in enumerate(result[:5]):
+        print(f"{i+1}. {headline['title']} ({headline['source']}, {headline['language']})")
