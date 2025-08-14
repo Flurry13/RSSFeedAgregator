@@ -1,352 +1,155 @@
 """
 Translation Module
-Multi-language translation using MarianMT models and Google Translate API
+Multi-language translation using Google Cloud Translate API
 """
 
 import os
 import time
-import asyncio
 from typing import Dict, List, Optional, Any
-from transformers import MarianMTModel, MarianTokenizer
-from google.cloud import translate_v2 as translate
+from google.cloud import translate
 from dotenv import load_dotenv
-import torch
+from gather import gather
 
 load_dotenv()
 
-# Configuration
-GOOGLE_API_KEY = os.getenv('GOOGLE_TRANSLATE_API_KEY')
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
-# Language detection patterns (simple heuristics)
-LANGUAGE_PATTERNS = {
-    'ru': ['а', 'в', 'с', 'и', 'н', 'т', 'р', 'о', 'л', 'к'],
-    'de': ['der', 'die', 'das', 'und', 'ist', 'ein', 'zu', 'von'],
-    'fr': ['le', 'la', 'les', 'de', 'et', 'un', 'une', 'à', 'dans'],
-    'es': ['el', 'la', 'de', 'y', 'en', 'un', 'una', 'con', 'por'],
-    'zh': ['的', '了', '在', '是', '我', '有', '和', '就', '不'],
-}
-
 class Translator:
-    """Multi-language translation service"""
-    
     def __init__(self):
-        self.google_client = self._init_google_client()
-        self.marian_models = {}  # Cache for MarianMT models
+        """Initialize Google Cloud Translate client"""
+        # Use the modern TranslationServiceClient
+        self.client = translate.TranslationServiceClient()
+        self.target_language = 'en'
         
-    def _init_google_client(self):
-        """Initialize Google Translate client"""
+        # Get project ID from gcloud config or environment
+        self.project_id = os.getenv('GOOGLE_CLOUD_PROJECT_ID') or self._get_project_id()
+        self.location = "global"
+        
+        if not self.project_id:
+            raise ValueError("Google Cloud project ID not found. Set GOOGLE_CLOUD_PROJECT_ID environment variable or run 'gcloud config set project YOUR_PROJECT_ID'")
+    
+    def _get_project_id(self):
+        """Get project ID from gcloud config"""
         try:
-            if GOOGLE_API_KEY:
-                return translate.Client()
-            else:
-                print("⚠️  Google Translate API key not found, using local models only")
-                return None
-        except Exception as e:
-            print(f"❌ Failed to initialize Google Translate: {e}")
+            import subprocess
+            result = subprocess.run(['gcloud', 'config', 'get-value', 'project'], 
+                                 capture_output=True, text=True, check=True)
+            return result.stdout.strip()
+        except:
             return None
     
-    def detect_language(self, text: str) -> str:
-        """
-        Detect language using Google API or simple heuristics
-        
-        Args:
-            text: Text to analyze
-            
-        Returns:
-            Language code (e.g., 'en', 'ru', 'de')
-        """
-        if self.google_client:
-            try:
-                result = self.google_client.detect_language(text)
-                return result['language']
-            except Exception as e:
-                print(f"❌ Language detection failed: {e}")
-        
-        # Fallback to simple pattern matching
-        text_lower = text.lower()
-        for lang, patterns in LANGUAGE_PATTERNS.items():
-            matches = sum(1 for pattern in patterns if pattern in text_lower)
-            if matches >= 3:  # Threshold for detection
-                return lang
-        
-        return 'en'  # Default to English
-    
-    def _get_marian_model(self, source_lang: str, target_lang: str = 'en'):
-        """Get or load MarianMT model for language pair"""
-        model_key = f"{source_lang}-{target_lang}"
-        
-        if model_key in self.marian_models:
-            return self.marian_models[model_key]
-        
-        try:
-            model_name = f"Helsinki-NLP/opus-mt-{source_lang}-{target_lang}"
-            print(f"🔧 Loading MarianMT model: {model_name}")
-            
-            tokenizer = MarianTokenizer.from_pretrained(model_name)
-            model = MarianMTModel.from_pretrained(model_name)
-            
-            if DEVICE == "cuda":
-                model = model.to(DEVICE)
-            
-            self.marian_models[model_key] = (tokenizer, model)
-            print(f"✅ MarianMT model loaded: {model_name}")
-            
-            return self.marian_models[model_key]
-            
-        except Exception as e:
-            print(f"❌ Failed to load MarianMT model for {source_lang}-{target_lang}: {e}")
+    def translate_text(self, text: str, source_lang: str) -> Optional[str]:
+        """Translate text to English using Google Cloud Translate API"""
+        if not text or text.strip() == '':
             return None
-    
-    def translate_with_marian(self, text: str, source_lang: str, target_lang: str = 'en') -> Dict[str, Any]:
-        """
-        Translate using MarianMT local model
-        
-        Args:
-            text: Text to translate
-            source_lang: Source language code
-            target_lang: Target language code
             
-        Returns:
-            Translation result dictionary
-        """
-        start_time = time.time()
-        
-        model_data = self._get_marian_model(source_lang, target_lang)
-        if not model_data:
-            return {
-                'translated_text': text,
-                'detected_language': source_lang,
-                'confidence': 0.0,
-                'processing_time': time.time() - start_time,
-                'method': 'fallback'
-            }
-        
-        tokenizer, model = model_data
-        
+        # If already English, return original
+        if source_lang == 'en':
+            return text
+            
         try:
-            # Tokenize and translate
-            inputs = tokenizer(text, return_tensors="pt", padding=True, truncation=True)
-            if DEVICE == "cuda":
-                inputs = {k: v.to(DEVICE) for k, v in inputs.items()}
-            
-            with torch.no_grad():
-                outputs = model.generate(**inputs, max_length=512, num_beams=4)
-            
-            translated = tokenizer.decode(outputs[0], skip_special_tokens=True)
-            
-            return {
-                'translated_text': translated,
-                'detected_language': source_lang,
-                'confidence': 0.9,  # MarianMT doesn't provide confidence scores
-                'processing_time': time.time() - start_time,
-                'method': 'marian'
-            }
-            
-        except Exception as e:
-            print(f"❌ MarianMT translation failed: {e}")
-            return {
-                'translated_text': text,
-                'detected_language': source_lang,
-                'confidence': 0.0,
-                'processing_time': time.time() - start_time,
-                'method': 'fallback'
-            }
-    
-    def translate_with_google(self, text: str, source_lang: str = 'auto', target_lang: str = 'en') -> Dict[str, Any]:
-        """
-        Translate using Google Translate API
-        
-        Args:
-            text: Text to translate
-            source_lang: Source language ('auto' for detection)
-            target_lang: Target language code
-            
-        Returns:
-            Translation result dictionary
-        """
-        start_time = time.time()
-        
-        if not self.google_client:
-            return self.translate_with_marian(text, source_lang, target_lang)
-        
-        try:
-            result = self.google_client.translate(
-                text,
-                source_language=source_lang if source_lang != 'auto' else None,
-                target_language=target_lang
+            # Build the request for the modern API
+            request = translate.TranslateTextRequest(
+                parent=f"projects/{self.project_id}/locations/{self.location}",
+                contents=[text],
+                mime_type="text/plain",
+                source_language_code=source_lang,
+                target_language_code=self.target_language
             )
             
-            return {
-                'translated_text': result['translatedText'],
-                'detected_language': result.get('detectedSourceLanguage', source_lang),
-                'confidence': 0.95,  # Google Translate is generally high confidence
-                'processing_time': time.time() - start_time,
-                'method': 'google'
-            }
+            # Make the translation request
+            response = self.client.translate_text(request=request)
+            
+            # Extract the translated text
+            if response.translations:
+                return response.translations[0].translated_text
+            return None
             
         except Exception as e:
-            print(f"❌ Google Translate failed: {e}")
-            # Fallback to MarianMT
-            detected_lang = self.detect_language(text)
-            return self.translate_with_marian(text, detected_lang, target_lang)
+            print(f"Translation failed for text '{text[:50]}...': {str(e)}")
+            return None
     
-    def translate(self, text: str, source_lang: str = 'auto', target_lang: str = 'en', prefer_local: bool = False) -> Dict[str, Any]:
-        """
-        Translate text with automatic method selection
+    def translate_headlines(self, headlines: List[Dict]) -> List[Dict]:
+        """Translate a list of headlines to English"""
+        translated_headlines = []
         
-        Args:
-            text: Text to translate
-            source_lang: Source language ('auto' for detection)
-            target_lang: Target language code
-            prefer_local: Use local models instead of API
-            
-        Returns:
-            Translation result dictionary
-        """
-        # Skip translation if already in target language
-        if source_lang == target_lang:
-            return {
-                'translated_text': text,
-                'detected_language': source_lang,
-                'confidence': 1.0,
-                'processing_time': 0.0,
-                'method': 'no_translation_needed'
-            }
+        print(f"Starting translation of {len(headlines)} headlines...")
         
-        # Detect language if auto
-        if source_lang == 'auto':
-            source_lang = self.detect_language(text)
-            if source_lang == target_lang:
-                return {
-                    'translated_text': text,
-                    'detected_language': source_lang,
-                    'confidence': 1.0,
-                    'processing_time': 0.0,
-                    'method': 'no_translation_needed'
-                }
+        for i, headline in enumerate(headlines):
+            try:
+                # Skip if no title
+                if not headline.get('title'):
+                    continue
+                
+                original_title = headline['title']
+                source_language = headline.get('language', 'unknown')
+                
+                # Skip if language is unknown
+                if source_language == 'unknown':
+                    headline['translated'] = False
+                    translated_headlines.append(headline)
+                    continue
+                
+                # Translate title if not already in English
+                translated_title = self.translate_text(original_title, source_language)
+                
+                if translated_title and translated_title != original_title:
+                    # Create new headline with translated title
+                    translated_headline = headline.copy()
+                    translated_headline['title'] = translated_title
+                    translated_headline['original_title'] = original_title
+                    translated_headline['translated'] = True
+                    translated_headlines.append(translated_headline)
+                    
+                    print(f"Translated [{i+1}/{len(headlines)}]: {original_title[:50]}... → {translated_title[:50]}...")
+                else:
+                    # Keep original if translation failed or not needed
+                    headline['translated'] = False
+                    translated_headlines.append(headline)
+                
+                # Rate limiting to avoid hitting API limits
+                time.sleep(0.1)  # 100ms delay between requests
+                
+            except Exception as e:
+                print(f"Error processing headline {i+1}: {str(e)}")
+                # Keep original headline on error
+                headline['translated'] = False
+                translated_headlines.append(headline)
         
-        # Choose translation method
-        if prefer_local or not self.google_client:
-            return self.translate_with_marian(text, source_lang, target_lang)
-        else:
-            return self.translate_with_google(text, source_lang, target_lang)
-    
-    async def translate_batch(self, texts: List[str], source_lang: str = 'auto', target_lang: str = 'en', prefer_local: bool = False) -> List[Dict[str, Any]]:
-        """
-        Translate multiple texts concurrently
+        print(f"Translation completed. {len([h for h in translated_headlines if h.get('translated')])} headlines translated.")
+        return translated_headlines
+
+def main():
+    """Main function to test translation"""
+    try:
+        # Initialize translator
+        translator = Translator()
         
-        Args:
-            texts: List of texts to translate
-            source_lang: Source language ('auto' for detection)
-            target_lang: Target language code
-            prefer_local: Use local models instead of API
-            
-        Returns:
-            List of translation results
-        """
-        if not texts:
-            return []
+        # Get headlines from gather module
+        print("Gathering headlines...")
+        headlines = gather()
         
-        print(f"🌐 Starting batch translation of {len(texts)} texts ({source_lang} → {target_lang})")
-        start_time = time.time()
+        if not headlines:
+            print("No headlines to translate")
+            return
         
-        # Process translations concurrently
-        tasks = [
-            asyncio.create_task(self._translate_async(text, source_lang, target_lang, prefer_local))
-            for text in texts
-        ]
+        print(f"Gathered {len(headlines)} headlines")
         
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        # Translate headlines
+        translated_headlines = translator.translate_headlines(headlines)
         
-        # Handle exceptions
-        final_results = []
-        for i, result in enumerate(results):
-            if isinstance(result, Exception):
-                print(f"❌ Translation {i+1} failed: {result}")
-                final_results.append({
-                    'translated_text': texts[i],
-                    'detected_language': source_lang,
-                    'confidence': 0.0,
-                    'processing_time': 0.0,
-                    'method': 'failed'
-                })
+        # Show some examples
+        print("\n=== Translation Examples ===")
+        for i, headline in enumerate(translated_headlines[:5]):
+            if headline.get('translated'):
+                print(f"{i+1}. {headline['title']} (translated from {headline.get('language', 'unknown')})")
             else:
-                final_results.append(result)
+                print(f"{i+1}. {headline['title']} (already in English)")
         
-        total_time = time.time() - start_time
-        success_rate = len([r for r in final_results if r['method'] != 'failed']) / len(final_results)
+        return translated_headlines
         
-        print(f"🎉 Batch translation completed: {len(final_results)} texts in {total_time:.2f}s")
-        print(f"📊 Success rate: {success_rate:.1%}")
-        
-        return final_results
-    
-    async def _translate_async(self, text: str, source_lang: str, target_lang: str, prefer_local: bool) -> Dict[str, Any]:
-        """Async wrapper for translation"""
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self.translate, text, source_lang, target_lang, prefer_local)
+    except Exception as e:
+        print(f"Translation process failed: {str(e)}")
+        return None
 
-
-# Global translator instance
-_translator = None
-
-def get_translator() -> Translator:
-    """Get or create global translator instance"""
-    global _translator
-    if _translator is None:
-        _translator = Translator()
-    return _translator
-
-def translate_text(text: str, source_lang: str = 'auto', target_lang: str = 'en', prefer_local: bool = False) -> Dict[str, Any]:
-    """
-    Translate text (convenience function)
-    
-    Args:
-        text: Text to translate
-        source_lang: Source language ('auto' for detection)
-        target_lang: Target language code
-        prefer_local: Use local models instead of API
-        
-    Returns:
-        Translation result dictionary
-    """
-    translator = get_translator()
-    return translator.translate(text, source_lang, target_lang, prefer_local)
-
-async def translate_batch(texts: List[str], source_lang: str = 'auto', target_lang: str = 'en', prefer_local: bool = False) -> List[Dict[str, Any]]:
-    """
-    Translate multiple texts (convenience function)
-    
-    Args:
-        texts: List of texts to translate
-        source_lang: Source language ('auto' for detection)
-        target_lang: Target language code
-        prefer_local: Use local models instead of API
-        
-    Returns:
-        List of translation results
-    """
-    translator = get_translator()
-    return await translator.translate_batch(texts, source_lang, target_lang, prefer_local)
-
-# Example usage
 if __name__ == "__main__":
-    # Test translation
-    test_texts = [
-        "Hola, ¿cómo estás?",  # Spanish
-        "Bonjour, comment allez-vous?",  # French
-        "Guten Tag, wie geht es Ihnen?"  # German
-    ]
-    
-    # Single translation
-    result = translate_text(test_texts[0])
-    print("Single translation result:", result)
-    
-    # Batch translation
-    async def test_batch():
-        results = await translate_batch(test_texts)
-        for i, result in enumerate(results):
-            print(f"Text {i+1}: {result['translated_text']} (confidence: {result['confidence']:.1%})")
-    
-    asyncio.run(test_batch()) 
+    main()
+
