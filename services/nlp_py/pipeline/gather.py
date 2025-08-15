@@ -112,6 +112,17 @@ def parse_feed_with_timeout(url, timeout=30):
     
     return result[0]
 
+def _extract_published(entry) -> str:
+    """Return ISO8601-like published timestamp if available, else empty string."""
+    try:
+        ts = getattr(entry, 'published_parsed', None) or getattr(entry, 'updated_parsed', None)
+        if ts:
+            return time.strftime('%Y-%m-%dT%H:%M:%SZ', ts)
+        s = getattr(entry, 'published', None) or getattr(entry, 'updated', None)
+        return s or ''
+    except Exception:
+        return ''
+
 def gather():
     """
     Gather headlines from all configured RSS feeds.
@@ -132,6 +143,7 @@ def gather():
             - source: Name of the RSS feed source
             - group: Category/group of the feed
             - country: Country code for the feed source
+            - published: ISO8601 string or feed-provided date string
             
     Note:
         If a feed fails to parse, an error message is printed but processing
@@ -192,7 +204,8 @@ def gather():
                         'language': item['language'],
                         'source': item['name'],
                         'group': item['group'],
-                        'country': item['country']
+                        'country': item['country'],
+                        'published': _extract_published(entry),
                     }
                     headlines.append(headline)
                     entry_count += 1
