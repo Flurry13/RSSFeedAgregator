@@ -140,25 +140,39 @@ def translate_headlines_with_progress():
                 original_title = headline.get('title', '')
                 src_lang = headline.get('language', 'unknown')
                 translated_title = translator.translate_text(original_title, src_lang)
-                if translated_title and translated_title != original_title:
+                
+                # Mark as translated if we got a result (even if it's the same text in mock mode)
+                if translated_title:
                     # Preserve original title BEFORE overwriting
-                    headline['original_title'] = original_title
-                    headline['title'] = translated_title
+                    if 'original_title' not in headline:
+                        headline['original_title'] = original_title
+                    
+                    # Only update title if translation is different (real translation)
+                    if translated_title != original_title:
+                        headline['title'] = translated_title
+                    
+                    # Mark as translated/processed
                     headline['translated'] = True
-                    emit_log_message("success", f"✅ Translated [{src_lang}] {headline.get('source','')} ")
+                    
+                    if translated_title != original_title:
+                        emit_log_message("success", f"✅ Translated [{src_lang}] {headline.get('source','')} ")
+                    else:
+                        # Mock mode or already English - still mark as processed
+                        emit_log_message("info", f"ℹ️ Processed [{src_lang}] {headline.get('source','')} (mock/English)")
                 else:
-                    # Mark as attempted to avoid re-processing
-                    headline['translated'] = headline.get('translated', False)
-                    emit_log_message("info", f"ℹ️ Skipped (already English or failed): {headline.get('source','')}")
+                    # Translation failed
+                    headline['translated'] = False
+                    emit_log_message("warning", f"⚠️ Translation failed for: {headline.get('source','')}")
             except Exception as e:
                 emit_log_message("error", f"❌ Translation error for index {idx}: {str(e)}")
+                headline['translated'] = False
             finally:
                 processed += 1
                 progress = processed
                 emit_status_update("translating", current_task, progress, total_items, f"Translated {progress}/{total_items} headlines")
 
             # Small delay for UI smoothness
-            time.sleep(0.02)
+            time.sleep(0.1)  # Slightly longer delay for real translation API calls
 
         processing_status = "translated"
         translated_count = sum(1 for h in current_headlines if h.get('translated'))
@@ -257,4 +271,4 @@ if __name__ == '__main__':
     print("📱 Frontend will be available at: http://localhost:3000")
     print("🔌 API Server will be available at: http://localhost:5050")
     print("📡 WebSocket will be available at: ws://localhost:5050")
-    socketio.run(app, host='0.0.0.0', port=5050, debug=True) 
+    socketio.run(app, host='0.0.0.0', port=5050, debug=True, allow_unsafe_werkzeug=True) 

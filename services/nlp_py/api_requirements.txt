@@ -7,7 +7,8 @@ python-engineio==4.7.1
 
 # Core RSS and Translation Dependencies
 feedparser==6.0.10
-google-cloud-translate==3.21.1
+deep-translator==1.11.4  # Free Google Translate API wrapper
+google-cloud-translate==3.21.1  # Optional: official Google Cloud Translate
 python-dotenv==1.0.0
 
 # Utilities
