@@ -30,11 +30,29 @@ export default {
           700: '#334155',
           800: '#1e293b',
           900: '#0f172a',
+        },
+        glass: {
+          light: 'rgba(255, 255, 255, 0.1)',
+          medium: 'rgba(255, 255, 255, 0.05)',
+          dark: 'rgba(0, 0, 0, 0.2)',
         }
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },
+      backdropBlur: {
+        xs: '2px',
+      },
+      animation: {
+        'gradient-shift': 'gradientShift 15s ease infinite',
+        'glass-shimmer': 'shimmer 3s ease-in-out infinite',
+      },
+      keyframes: {
+        shimmer: {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.8' },
+        }
+      }
     },
   },
   plugins: [],

@@ -127,21 +127,47 @@ def translate_headlines_with_progress():
 
         processing_status = "translating"
         current_task = "Translating headlines"
-        processed = 0
         progress = 0
         emit_status_update("translating", current_task, progress, total_items, f"Starting translation of {total_items} headlines...")
         emit_log_message("info", f"🌍 Starting translation process for {total_items} headlines...")
 
         translator = Translator()
 
+        # OPTIMIZED: Prepare batch data in single pass
+        texts_to_translate = []
+        langs_to_translate = []
         for idx in translatable_indices:
             headline = current_headlines[idx]
+            texts_to_translate.append(headline.get('title', ''))
+            langs_to_translate.append(headline.get('language', 'unknown'))
+        
+        emit_log_message("info", f"📦 Prepared batch of {len(texts_to_translate)} texts for translation")
+        
+        # OPTIMIZED: Single batch translation call
+        try:
+            translated_texts = translator.translate_batch(texts_to_translate, langs_to_translate)
+            emit_log_message("success", f"✅ Batch translation completed")
+        except Exception as e:
+            emit_log_message("error", f"❌ Batch translation failed: {str(e)}, falling back to individual translation")
+            # Fallback to individual translation
+            translated_texts = []
+            for text, lang in zip(texts_to_translate, langs_to_translate):
+                try:
+                    translated = translator.translate_text(text, lang)
+                    translated_texts.append(translated if translated else text)
+                except Exception as ind_error:
+                    emit_log_message("error", f"❌ Individual translation error: {str(ind_error)}")
+                    translated_texts.append(text)
+        
+        # OPTIMIZED: Update headlines in single loop
+        processed = 0
+        for idx, translated_title in zip(translatable_indices, translated_texts):
+            headline = current_headlines[idx]
+            original_title = headline.get('title', '')
+            src_lang = headline.get('language', 'unknown')
+            
             try:
-                original_title = headline.get('title', '')
-                src_lang = headline.get('language', 'unknown')
-                translated_title = translator.translate_text(original_title, src_lang)
-                
-                # Mark as translated if we got a result (even if it's the same text in mock mode)
+                # Mark as translated if we got a result
                 if translated_title:
                     # Preserve original title BEFORE overwriting
                     if 'original_title' not in headline:
@@ -150,14 +176,11 @@ def translate_headlines_with_progress():
                     # Only update title if translation is different (real translation)
                     if translated_title != original_title:
                         headline['title'] = translated_title
-                    
-                    # Mark as translated/processed
-                    headline['translated'] = True
-                    
-                    if translated_title != original_title:
+                        headline['translated'] = True
                         emit_log_message("success", f"✅ Translated [{src_lang}] {headline.get('source','')} ")
                     else:
                         # Mock mode or already English - still mark as processed
+                        headline['translated'] = True
                         emit_log_message("info", f"ℹ️ Processed [{src_lang}] {headline.get('source','')} (mock/English)")
                 else:
                     # Translation failed
@@ -169,10 +192,9 @@ def translate_headlines_with_progress():
             finally:
                 processed += 1
                 progress = processed
-                emit_status_update("translating", current_task, progress, total_items, f"Translated {progress}/{total_items} headlines")
-
-            # Small delay for UI smoothness
-            time.sleep(0.1)  # Slightly longer delay for real translation API calls
+                # Update progress less frequently for better performance
+                if processed % 10 == 0 or processed == total_items:
+                    emit_status_update("translating", current_task, progress, total_items, f"Translated {progress}/{total_items} headlines")
 
         processing_status = "translated"
         translated_count = sum(1 for h in current_headlines if h.get('translated'))
