@@ -11,5 +11,8 @@ deep-translator==1.11.4  # Free Google Translate API wrapper
 google-cloud-translate==3.21.1  # Optional: official Google Cloud Translate
 python-dotenv==1.0.0
 
+# Database
+psycopg2-binary==2.9.9  # PostgreSQL adapter
+
 # Utilities
 requests==2.31.0 

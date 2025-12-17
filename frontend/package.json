@@ -12,6 +12,7 @@
     "lint:fix": "eslint . --ext js,jsx,ts,tsx --fix"
   },
   "dependencies": {
+    "@types/react-window": "^1.8.8",
     "axios": "^1.6.0",
     "clsx": "^2.0.0",
     "date-fns": "^2.30.0",
@@ -19,6 +20,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.8.0",
+    "react-window": "^2.2.2",
     "socket.io-client": "^4.8.1",
     "tailwind-merge": "^1.14.0"
   },

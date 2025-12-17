@@ -33,6 +33,8 @@ import os
 import feedparser
 import time
 import threading
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from urllib.request import urlopen
 from urllib.error import URLError
 
@@ -123,17 +125,175 @@ def _extract_published(entry) -> str:
     except Exception:
         return ''
 
-def gather():
+def process_single_feed(feed_item, feed_index, total_feeds):
+    """
+    Process a single RSS feed and return headlines.
+    Extracted from gather() for parallel processing.
+    
+    Args:
+        feed_item: Feed configuration dictionary
+        feed_index: Index of this feed (for progress reporting)
+        total_feeds: Total number of feeds being processed
+        
+    Returns:
+        tuple: (headlines_list, feed_name, success_bool)
+    """
+    headlines = []
+    
+    try:
+        print(f"Processing {feed_index}/{total_feeds}: {feed_item['name']}")
+        
+        # Skip problematic feeds
+        if feed_item['name'] in PROBLEMATIC_FEEDS:
+            print(f"Skipping problematic feed: {feed_item['name']}")
+            return (headlines, feed_item['name'], False)
+        
+        # Use timeout wrapper for feed parsing
+        feed = parse_feed_with_timeout(feed_item['url'], timeout=15)
+        
+        if feed is None:
+            print(f"Skipping {feed_item['name']} due to parsing issues")
+            return (headlines, feed_item['name'], False)
+        
+        # Check if feed parsing was successful
+        if hasattr(feed, 'status') and feed.status != 200:
+            print(f"Warning: Feed {feed_item['name']} returned status {feed.status}")
+        
+        # Check if entries exist
+        if not hasattr(feed, 'entries') or not feed.entries:
+            print(f"Warning: No entries found in {feed_item['name']}")
+            return (headlines, feed_item['name'], False)
+        
+        entry_count = 0
+        for entry in feed.entries:
+            try:
+                # More robust attribute extraction with CDATA handling
+                title = getattr(entry, 'title', None)
+                link = getattr(entry, 'link', None)
+                
+                # Clean CDATA content if present
+                if title and isinstance(title, str):
+                    title = title.strip()
+                    # Remove any remaining CDATA markers
+                    if title.startswith('<![CDATA[') and title.endswith(']]>'):
+                        title = title[9:-3].strip()
+                
+                if link and isinstance(link, str):
+                    link = link.strip()
+                
+                # Skip entries without essential data
+                if not title or not link:
+                    continue
+                
+                headline = {
+                    'title': title,
+                    'link': link,
+                    'language': feed_item['language'],
+                    'source': feed_item['name'],
+                    'group': feed_item['group'],
+                    'country': feed_item['country'],
+                    'published': _extract_published(entry),
+                }
+                headlines.append(headline)
+                entry_count += 1
+                
+            except Exception as entry_error:
+                print(f"Error processing entry in {feed_item['name']}: {str(entry_error)}")
+                continue
+        
+        print(f"Added {entry_count} headlines from {feed_item['name']}")
+        return (headlines, feed_item['name'], True)
+        
+    except Exception as e:
+        # Log error but return empty list
+        print(f"Error processing {feed_item['name']}: {str(e)}")
+        return (headlines, feed_item['name'], False)
+
+async def gather_feed_async(feed_item, feed_index, total_feeds, executor):
+    """
+    Async wrapper for processing a single feed.
+    
+    Args:
+        feed_item: Feed configuration dictionary
+        feed_index: Index of this feed
+        total_feeds: Total number of feeds
+        executor: ThreadPoolExecutor for running blocking operations
+        
+    Returns:
+        tuple: (headlines_list, feed_name, success_bool)
+    """
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(
+        executor,
+        process_single_feed,
+        feed_item,
+        feed_index,
+        total_feeds
+    )
+
+async def gather_all_feeds_async(feeds, max_concurrent=20):
+    """
+    Gather headlines from all feeds concurrently.
+    
+    Args:
+        feeds: List of feed configuration dictionaries
+        max_concurrent: Maximum number of concurrent feed fetches
+        
+    Returns:
+        list: Combined list of all headlines
+    """
+    total_feeds = len(feeds)
+    all_headlines = []
+    
+    print(f"🚀 Starting parallel RSS gathering for {total_feeds} feeds (max {max_concurrent} concurrent)")
+    start_time = time.time()
+    
+    # Create thread pool executor for blocking operations
+    with ThreadPoolExecutor(max_workers=max_concurrent) as executor:
+        # Create tasks for all feeds
+        tasks = [
+            gather_feed_async(feed, idx + 1, total_feeds, executor)
+            for idx, feed in enumerate(feeds)
+        ]
+        
+        # Wait for all tasks to complete
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    # Process results
+    success_count = 0
+    error_count = 0
+    
+    for result in results:
+        if isinstance(result, Exception):
+            print(f"❌ Task failed with exception: {str(result)}")
+            error_count += 1
+            continue
+        
+        headlines, feed_name, success = result
+        if success:
+            all_headlines.extend(headlines)
+            success_count += 1
+        else:
+            error_count += 1
+    
+    elapsed_time = time.time() - start_time
+    
+    print(f"✅ Parallel gathering completed in {elapsed_time:.2f}s")
+    print(f"📊 Success: {success_count}/{total_feeds} feeds, Errors: {error_count}")
+    print(f"📰 Total headlines collected: {len(all_headlines)}")
+    
+    return all_headlines
+
+def gather(use_async=True, max_concurrent=20):
     """
     Gather headlines from all configured RSS feeds.
     
-    This function iterates through all configured RSS feeds, parses each one,
-    and extracts headline information. Each headline is enriched with metadata
-    from the feed configuration (language, source, group, country).
+    This function processes RSS feeds either sequentially (legacy) or in parallel (optimized).
+    Each headline is enriched with metadata from the feed configuration.
     
-    The function includes error handling to ensure that if one feed fails,
-    the others can still be processed successfully. It also includes timeout
-    protection and blacklist functionality for problematic feeds.
+    Args:
+        use_async: If True, use parallel async processing. If False, use sequential (default: True)
+        max_concurrent: Maximum number of concurrent feed fetches when using async (default: 20)
     
     Returns:
         list: List of headline dictionaries, each containing:
@@ -149,81 +309,33 @@ def gather():
         If a feed fails to parse, an error message is printed but processing
         continues with the remaining feeds. This ensures robustness.
     """
-    headlines = []
-    total_feeds = len(feedList)
-    
-    for feed_index, item in enumerate(feedList, 1):
+    if use_async:
+        # Use new parallel async implementation
         try:
-            print(f"Processing {feed_index}/{total_feeds}: {item['name']}")
-            
-            # Skip problematic feeds
-            if item['name'] in PROBLEMATIC_FEEDS:
-                print(f"Skipping problematic feed: {item['name']}")
-                continue
-            
-            # Use timeout wrapper for feed parsing
-            feed = parse_feed_with_timeout(item['url'], timeout=15)
-            
-            if feed is None:
-                print(f"Skipping {item['name']} due to parsing issues")
-                continue
-            
-            # Check if feed parsing was successful
-            if hasattr(feed, 'status') and feed.status != 200:
-                print(f"Warning: Feed {item['name']} returned status {feed.status}")
-            
-            # Check if entries exist
-            if not hasattr(feed, 'entries') or not feed.entries:
-                print(f"Warning: No entries found in {item['name']}")
-                continue
-            
-            entry_count = 0
-            for entry in feed.entries:
-                try:
-                    # More robust attribute extraction with CDATA handling
-                    title = getattr(entry, 'title', None)
-                    link = getattr(entry, 'link', None)
-                    
-                    # Clean CDATA content if present
-                    if title and isinstance(title, str):
-                        title = title.strip()
-                        # Remove any remaining CDATA markers
-                        if title.startswith('<![CDATA[') and title.endswith(']]>'):
-                            title = title[9:-3].strip()
-                    
-                    if link and isinstance(link, str):
-                        link = link.strip()
-                    
-                    # Skip entries without essential data
-                    if not title or not link:
-                        continue
-                    
-                    headline = {
-                        'title': title,
-                        'link': link,
-                        'language': item['language'],
-                        'source': item['name'],
-                        'group': item['group'],
-                        'country': item['country'],
-                        'published': _extract_published(entry),
-                    }
-                    headlines.append(headline)
-                    entry_count += 1
-                    
-                except Exception as entry_error:
-                    print(f"Error processing entry in {item['name']}: {str(entry_error)}")
-                    continue
-            
-            print(f"Added {entry_count} headlines from {item['name']}")
-            
+            # Check if we're already in an event loop
+            try:
+                loop = asyncio.get_running_loop()
+                # We're in an async context, create task
+                return asyncio.create_task(gather_all_feeds_async(feedList, max_concurrent))
+            except RuntimeError:
+                # No event loop, create one
+                return asyncio.run(gather_all_feeds_async(feedList, max_concurrent))
         except Exception as e:
-            # Log error but continue processing other feeds
-            # This ensures that a single feed failure doesn't stop the entire process
-            print(f"Error processing {item['name']}: {str(e)}")
-            continue
+            print(f"⚠️  Async gathering failed: {str(e)}, falling back to sequential")
+            use_async = False
     
-    print(f"Total headlines collected: {len(headlines)}")
-    return headlines
+    # Legacy sequential implementation (fallback)
+    if not use_async:
+        print("Using sequential RSS gathering (legacy mode)")
+        headlines = []
+        total_feeds = len(feedList)
+        
+        for feed_index, item in enumerate(feedList, 1):
+            result_headlines, feed_name, success = process_single_feed(item, feed_index, total_feeds)
+            headlines.extend(result_headlines)
+        
+        print(f"Total headlines collected: {len(headlines)}")
+        return headlines
 
 # Main execution block - runs when script is executed directly
 if __name__ == "__main__":

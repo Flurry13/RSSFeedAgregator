@@ -2,6 +2,7 @@
 """
 Flask API Server for RSS Feed Aggregator
 Integrates gather and translate modules with real-time frontend updates
+Now with PostgreSQL database persistence
 """
 
 from flask import Flask, jsonify, request
@@ -18,6 +19,25 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'pipeline'))
 
 from gather import gather
 from translate import Translator
+
+# Database integration
+try:
+    from database import init_connection_pool, test_connection
+    from repositories import HeadlineRepository
+    DB_ENABLED = init_connection_pool(min_conn=2, max_conn=10)
+    if DB_ENABLED:
+        DB_ENABLED = test_connection()
+        if DB_ENABLED:
+            print("✅ Database integration enabled")
+        else:
+            print("⚠️  Database connection test failed, running without persistence")
+    else:
+        print("⚠️  Database pool initialization failed, running without persistence")
+except Exception as e:
+    print(f"⚠️  Database module not available: {e}")
+    print("   Running without database persistence")
+    DB_ENABLED = False
+    HeadlineRepository = None
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend communication
@@ -84,21 +104,33 @@ def gather_headlines_with_progress():
                     emit_status_update("gathering", current_task, int(cur), int(tot), f"Processing feed {cur}/{tot}")
                 except Exception:
                     pass
-            elif message.startswith("Added "):
+            elif message.startswith("Added ") or message.startswith("✅"):
                 emit_log_message("success", f"✅ {message}")
-            elif message.startswith("Warning:") or message.startswith("Skipping"):
+            elif message.startswith("Warning:") or message.startswith("Skipping") or message.startswith("⚠️"):
                 emit_log_message("warning", f"⚠️ {message}")
-            elif message.startswith("Error"):
+            elif message.startswith("Error") or message.startswith("❌"):
                 emit_log_message("error", f"❌ {message}")
+            elif message.startswith("🚀") or message.startswith("📊"):
+                emit_log_message("info", message)
 
         import builtins
         builtins.print = progress_print
-        headlines = gather()
+        headlines = gather(use_async=True, max_concurrent=20)  # Use parallel gathering
         builtins.print = original_print
 
         current_headlines = headlines or []
         processing_status = "gathered"
         progress = total_feeds
+        
+        # OPTIMIZED: Save to database if enabled
+        if DB_ENABLED and HeadlineRepository and current_headlines:
+            emit_log_message("info", f"💾 Saving {len(current_headlines)} headlines to database...")
+            try:
+                result = HeadlineRepository.bulk_insert_headlines(current_headlines)
+                emit_log_message("success", f"✅ Database: {result['inserted']} new, {result['duplicates']} duplicates")
+            except Exception as db_error:
+                emit_log_message("warning", f"⚠️  Database save failed: {str(db_error)}")
+        
         emit_status_update("gathered", "RSS feeds gathered", progress, total_feeds, f"Successfully collected {len(current_headlines)} headlines")
         emit_log_message("success", f"🎉 Collected {len(current_headlines)} headlines")
         emit_headline_update(current_headlines, f"Collected {len(current_headlines)} headlines")
@@ -212,10 +244,39 @@ def translate_headlines_with_progress():
 # API Endpoints
 @app.route('/api/headlines', methods=['GET'])
 def get_headlines():
+    """
+    Get headlines - returns in-memory cache or fetches from database
+    """
+    # Check for database mode
+    source = request.args.get('source', 'memory')  # 'memory' or 'database'
+    limit = int(request.args.get('limit', 100))
+    offset = int(request.args.get('offset', 0))
+    
+    if source == 'database' and DB_ENABLED and HeadlineRepository:
+        try:
+            db_headlines = HeadlineRepository.get_recent_headlines(limit=limit, offset=offset)
+            total_count = HeadlineRepository.get_headline_count()
+            return jsonify({
+                "headlines": db_headlines,
+                "status": "database",
+                "count": len(db_headlines),
+                "total": total_count,
+                "source": "postgresql"
+            })
+        except Exception as e:
+            return jsonify({
+                "error": f"Database query failed: {str(e)}",
+                "fallback": "memory",
+                "headlines": current_headlines,
+                "count": len(current_headlines)
+            }), 500
+    
+    # Default: return in-memory headlines
     return jsonify({
         "headlines": current_headlines,
         "status": processing_status,
-        "count": len(current_headlines)
+        "count": len(current_headlines),
+        "source": "memory"
     })
 
 @app.route('/api/status', methods=['GET'])
