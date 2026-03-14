@@ -1,10 +1,12 @@
 """
 Translation Module
 Supports both real translation (via deep-translator) and mock mode
-With batch translation support and LRU caching for performance optimization
+With batch translation support and Redis-backed caching for persistence across restarts
 """
 
+import hashlib
 import os
+import redis
 import time
 from typing import Dict, List, Optional, Any
 from functools import lru_cache
@@ -13,6 +15,33 @@ from dotenv import load_dotenv
 from gather import gather
 
 load_dotenv()
+
+# ---------------------------------------------------------------------------
+# Redis cache helpers
+# ---------------------------------------------------------------------------
+
+_redis = None
+
+
+def _get_redis():
+    """Lazily initialise the Redis connection."""
+    global _redis
+    if _redis is None:
+        host = os.getenv("REDIS_HOST", "localhost")
+        port = int(os.getenv("REDIS_PORT", 6379))
+        try:
+            _redis = redis.Redis(host=host, port=port, decode_responses=True)
+            _redis.ping()
+        except Exception as e:
+            print(f"⚠️  Redis unavailable ({e}), translation cache will be in-process only")
+            _redis = None
+    return _redis
+
+
+def _cache_key(text: str, lang: str) -> str:
+    """Return a Redis key for the given (text, lang) pair."""
+    digest = hashlib.md5(f"{lang}:{text}".encode()).hexdigest()
+    return f"trans:{digest}"
 
 class Translator:
     def __init__(self, use_real_translation: bool = True):
@@ -57,19 +86,30 @@ class Translator:
         return self._translator_cache[source_lang]
     
     def translate_text(self, text: str, source_lang: str) -> Optional[str]:
-        """Translate text from source language to English with caching"""
+        """Translate text from source language to English with Redis-backed caching"""
         if not text or text.strip() == '':
             return None
-            
+
         # If already English, return original
         if source_lang == 'en' or source_lang == 'unknown':
             return text
-        
-        # Check cache first
+
+        # Check Redis cache first
+        rkey = _cache_key(text, source_lang)
+        r = _get_redis()
+        if r is not None:
+            try:
+                cached = r.get(rkey)
+                if cached is not None:
+                    return cached
+            except Exception:
+                pass  # Redis error — fall through to in-process cache
+
+        # Check in-process cache
         cache_key = (text, source_lang)
         if cache_key in self._translation_cache:
             return self._translation_cache[cache_key]
-        
+
         try:
             if self.use_real_translation and self.translator:
                 # Use real translation
@@ -79,13 +119,23 @@ class Translator:
                     translated = translator_instance.translate(text)
                     if translated and translated != text:
                         print(f"✅ Translated [{source_lang}] '{text[:50]}...' → '{translated[:50]}...'")
-                        # Cache the result
+                        # Cache in-process and in Redis (30-day TTL)
                         self._translation_cache[cache_key] = translated
+                        if r is not None:
+                            try:
+                                r.set(rkey, translated, ex=60 * 60 * 24 * 30)
+                            except Exception:
+                                pass
                         return translated
                     else:
                         # Translation returned same text (might be error)
                         print(f"⚠️  Translation returned same text for [{source_lang}]: {text[:50]}...")
                         self._translation_cache[cache_key] = text
+                        if r is not None:
+                            try:
+                                r.set(rkey, text, ex=60 * 60 * 24 * 30)
+                            except Exception:
+                                pass
                         return text
                 else:
                     return text
