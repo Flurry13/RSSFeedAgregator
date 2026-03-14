@@ -54,3 +54,4 @@ pipeline_test_env/
 *.egg-info/
 dist/
 build/
+.superpowers/
