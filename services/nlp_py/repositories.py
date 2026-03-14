@@ -101,7 +101,7 @@ class SourceRepository:
                     """
                     UPDATE sources
                     SET last_fetched_at = NOW(),
-                        last_error = %(error)s,
+                        fetch_error = %(error)s,
                         updated_at = NOW()
                     WHERE id = %(source_id)s
                     """,
@@ -163,12 +163,12 @@ class SourceRepository:
                     "page": page,
                     "limit": limit,
                     "total": total,
-                    "pages": max(1, -(-total // limit)),  # ceiling division
+                    "total_pages": max(1, -(-total // limit)),
                 },
             }
         except Exception as e:
             print(f"Error fetching paginated sources: {e}")
-            return {"data": [], "pagination": {"page": page, "limit": limit, "total": 0, "pages": 0}}
+            return {"data": [], "pagination": {"page": page, "limit": limit, "total": 0, "total_pages": 0}}
 
 
 # ---------------------------------------------------------------------------
@@ -202,7 +202,7 @@ class HeadlineRepository:
                             %(language)s, %(published_at)s,
                             NOW(), NOW()
                         )
-                        ON CONFLICT (url) DO NOTHING
+                        ON CONFLICT (url, source_id) DO NOTHING
                         RETURNING id
                         """,
                         {
@@ -292,12 +292,12 @@ class HeadlineRepository:
                     "page": page,
                     "limit": limit,
                     "total": total,
-                    "pages": max(1, -(-total // limit)),
+                    "total_pages": max(1, -(-total // limit)),
                 },
             }
         except Exception as e:
             print(f"Error fetching paginated headlines: {e}")
-            return {"data": [], "pagination": {"page": page, "limit": limit, "total": 0, "pages": 0}}
+            return {"data": [], "pagination": {"page": page, "limit": limit, "total": 0, "total_pages": 0}}
 
     @staticmethod
     def get_count() -> int:
@@ -517,12 +517,12 @@ class EventClusterRepository:
                     "page": page,
                     "limit": limit,
                     "total": total,
-                    "pages": max(1, -(-total // limit)),
+                    "total_pages": max(1, -(-total // limit)),
                 },
             }
         except Exception as e:
             print(f"Error fetching paginated clusters: {e}")
-            return {"data": [], "pagination": {"page": page, "limit": limit, "total": 0, "pages": 0}}
+            return {"data": [], "pagination": {"page": page, "limit": limit, "total": 0, "total_pages": 0}}
 
     @staticmethod
     def get_by_id(cluster_id: int) -> Optional[Dict]:
@@ -565,10 +565,9 @@ class AnalyticsRepository:
     """Aggregation queries for dashboard analytics."""
 
     _PERIOD_MAP = {
-        "1d": "1 day",
+        "24h": "24 hours",
         "7d": "7 days",
         "30d": "30 days",
-        "90d": "90 days",
     }
 
     @staticmethod
@@ -611,7 +610,7 @@ class AnalyticsRepository:
                 # Source breakdown
                 cursor.execute(
                     """
-                    SELECT s.name AS source_name, COUNT(h.id) AS count
+                    SELECT s.id AS source_id, s.name, COUNT(h.id) AS count
                     FROM headlines h
                     LEFT JOIN sources s ON h.source_id = s.id
                     WHERE h.created_at >= NOW() - %(interval)s::INTERVAL
@@ -638,7 +637,7 @@ class AnalyticsRepository:
                 # Daily volume
                 cursor.execute(
                     """
-                    SELECT DATE(created_at) AS day, COUNT(*) AS count
+                    SELECT DATE(created_at) AS date, COUNT(*) AS count
                     FROM headlines
                     WHERE created_at >= NOW() - %(interval)s::INTERVAL
                     GROUP BY day
@@ -651,4 +650,5 @@ class AnalyticsRepository:
         except Exception as e:
             print(f"Error fetching analytics: {e}")
 
+        result["period"] = period
         return result

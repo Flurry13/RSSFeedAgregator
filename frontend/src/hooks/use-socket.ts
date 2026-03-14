@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
 import type { PipelineStatus } from "@/lib/api";
 
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? "http://localhost:8000";
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? "http://localhost:8081";
 const MAX_LOGS = 100;
 
 export interface LogMessage {
@@ -89,11 +89,11 @@ export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
       });
     });
 
-    socket.on("pipeline_status", (data: PipelineStatus) => {
+    socket.on("status_update", (data: PipelineStatus) => {
       setStatus(data);
     });
 
-    socket.on("pipeline_log", (entry: Omit<LogMessage, "id">) => {
+    socket.on("log_message", (entry: Omit<LogMessage, "id">) => {
       addLog(entry);
     });
 

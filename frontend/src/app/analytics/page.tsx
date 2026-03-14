@@ -43,7 +43,7 @@ const tooltipStyle = {
 
 const labelStyle = { color: "#a1a1aa", fontSize: 11 };
 
-function TopicsChart({ data }: { data: AnalyticsData["topics"] }) {
+function TopicsChart({ data }: { data: AnalyticsData["topic_distribution"] }) {
   return (
     <div>
       <h2 className="text-zinc-400 text-sm font-medium mb-4">Topics</h2>
@@ -69,7 +69,7 @@ function TopicsChart({ data }: { data: AnalyticsData["topics"] }) {
   );
 }
 
-function LanguagesChart({ data }: { data: AnalyticsData["languages"] }) {
+function LanguagesChart({ data }: { data: AnalyticsData["language_breakdown"] }) {
   return (
     <div>
       <h2 className="text-zinc-400 text-sm font-medium mb-4">Languages</h2>
@@ -141,13 +141,12 @@ function VolumeChart({ data }: { data: AnalyticsData["daily_volume"] }) {
   );
 }
 
-function SourcesChart({ data }: { data: AnalyticsData["top_sources"] }) {
-  const mapped = data.map((d) => ({ ...d, name: d.source }));
+function SourcesChart({ data }: { data: AnalyticsData["source_breakdown"] }) {
   return (
     <div>
       <h2 className="text-zinc-400 text-sm font-medium mb-4">Top Sources</h2>
       <ResponsiveContainer width="100%" height={220}>
-        <BarChart data={mapped} layout="vertical" margin={{ left: 10 }}>
+        <BarChart data={data} layout="vertical" margin={{ left: 10 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
           <XAxis
             type="number"
@@ -213,16 +212,16 @@ export default function AnalyticsPage() {
             ) : (
               <div className="space-y-8">
                 <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5">
-                  <TopicsChart data={data.topics} />
+                  <TopicsChart data={data.topic_distribution} />
                 </div>
                 <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5">
-                  <LanguagesChart data={data.languages} />
+                  <LanguagesChart data={data.language_breakdown} />
                 </div>
                 <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5">
                   <VolumeChart data={data.daily_volume} />
                 </div>
                 <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5">
-                  <SourcesChart data={data.top_sources} />
+                  <SourcesChart data={data.source_breakdown} />
                 </div>
               </div>
             )}

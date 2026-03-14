@@ -34,7 +34,7 @@ function useStats(refreshTrigger: number) {
         setStats({
           headlineCount: headlines.pagination.total,
           sourceCount: sources.pagination.total,
-          topics: analytics.topics.slice(0, 5),
+          topics: (analytics.topic_distribution || []).slice(0, 5),
         });
       })
       .catch(() => {});

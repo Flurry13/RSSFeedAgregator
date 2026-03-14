@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8081";
 
 export interface Pagination {
   page: number;
@@ -35,10 +35,10 @@ export interface Event {
 
 export interface AnalyticsData {
   period: string;
-  topics: { topic: string; count: number }[];
-  languages: { language: string; count: number }[];
+  topic_distribution: { topic: string; count: number }[];
+  language_breakdown: { language: string; count: number }[];
   daily_volume: { date: string; count: number }[];
-  top_sources: { source: string; count: number }[];
+  source_breakdown: { source_id: number; name: string; count: number }[];
 }
 
 export interface Source {
@@ -138,7 +138,7 @@ export const api = {
     },
     update(id: number, data: Partial<Source>): Promise<Source> {
       return request(`/api/sources/${id}`, {
-        method: "PATCH",
+        method: "PUT",
         body: JSON.stringify(data),
       });
     },
@@ -152,16 +152,16 @@ export const api = {
       return request("/api/pipeline/status");
     },
     gather(): Promise<{ ok: boolean }> {
-      return request("/api/pipeline/gather", { method: "POST" });
+      return request("/api/gather", { method: "POST" });
     },
     translate(): Promise<{ ok: boolean }> {
-      return request("/api/pipeline/translate", { method: "POST" });
+      return request("/api/translate", { method: "POST" });
     },
     classify(): Promise<{ ok: boolean }> {
-      return request("/api/pipeline/classify", { method: "POST" });
+      return request("/api/classify", { method: "POST" });
     },
     run(): Promise<{ ok: boolean }> {
-      return request("/api/pipeline/run", { method: "POST" });
+      return request("/api/run", { method: "POST" });
     },
   },
 
