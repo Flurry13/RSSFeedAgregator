@@ -24,11 +24,6 @@ DEFAULT_TOPICS = [
     'entertainment', 'world', 'business', 'education', 'art'
 ]
 
-# Rate limiting configuration
-REQUESTS_PER_SECOND = 3
-MAX_RETRIES = 5
-INITIAL_RETRY_DELAY = 1000  # ms
-MAX_RETRY_DELAY = 30000  # ms
 
 class TopicClassifier:
     """Topic classification using zero-shot classification"""

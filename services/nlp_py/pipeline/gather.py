@@ -85,6 +85,27 @@ def load_feeds():
 # This ensures feeds are available immediately when the module is imported
 feedList = load_feeds()
 
+def load_feeds_from_db():
+    """Load active feed sources from the database."""
+    try:
+        import sys, os
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+        from repositories import SourceRepository
+        sources = SourceRepository.get_all(active_only=True)
+        return [
+            {
+                "id": s["id"],
+                "name": s["name"],
+                "url": s["url"],
+                "language": s.get("language", "en"),
+                "country": s.get("country", ""),
+                "group": s.get("group_name", ""),
+            }
+            for s in sources
+        ]
+    except Exception:
+        return None
+
 # Blacklist of problematic feeds that cause hanging
 PROBLEMATIC_FEEDS = ['CBC News Politics']
 
@@ -193,6 +214,7 @@ def process_single_feed(feed_item, feed_index, total_feeds):
                     'group': feed_item['group'],
                     'country': feed_item['country'],
                     'published': _extract_published(entry),
+                    'source_id': feed_item.get('id'),
                 }
                 headlines.append(headline)
                 entry_count += 1
@@ -309,6 +331,9 @@ def gather(use_async=True, max_concurrent=20):
         If a feed fails to parse, an error message is printed but processing
         continues with the remaining feeds. This ensures robustness.
     """
+    db_feeds = load_feeds_from_db()
+    feeds = db_feeds if db_feeds is not None else feedList
+
     if use_async:
         # Use new parallel async implementation
         try:
@@ -316,24 +341,24 @@ def gather(use_async=True, max_concurrent=20):
             try:
                 loop = asyncio.get_running_loop()
                 # We're in an async context, create task
-                return asyncio.create_task(gather_all_feeds_async(feedList, max_concurrent))
+                return asyncio.create_task(gather_all_feeds_async(feeds, max_concurrent))
             except RuntimeError:
                 # No event loop, create one
-                return asyncio.run(gather_all_feeds_async(feedList, max_concurrent))
+                return asyncio.run(gather_all_feeds_async(feeds, max_concurrent))
         except Exception as e:
             print(f"⚠️  Async gathering failed: {str(e)}, falling back to sequential")
             use_async = False
-    
+
     # Legacy sequential implementation (fallback)
     if not use_async:
         print("Using sequential RSS gathering (legacy mode)")
         headlines = []
-        total_feeds = len(feedList)
-        
-        for feed_index, item in enumerate(feedList, 1):
+        total_feeds = len(feeds)
+
+        for feed_index, item in enumerate(feeds, 1):
             result_headlines, feed_name, success = process_single_feed(item, feed_index, total_feeds)
             headlines.extend(result_headlines)
-        
+
         print(f"Total headlines collected: {len(headlines)}")
         return headlines
 

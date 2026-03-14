@@ -9,7 +9,7 @@ Includes similarity search, clustering, and efficient storage operations.
 """
 
 import logging
-import numpy as np
+import numpy as np  # type: ignore
 import json
 import pickle
 from typing import List, Dict, Any, Optional, Tuple, Union
@@ -21,12 +21,17 @@ from dataclasses import dataclass, asdict
 import warnings
 
 try:
-    from sklearn.metrics.pairwise import cosine_similarity
-    from sklearn.cluster import DBSCAN
+    from sklearn.metrics.pairwise import cosine_similarity  # type: ignore
+    from sklearn.cluster import DBSCAN  # type: ignore
 except ImportError as e:
     logging.error(f"Required dependencies not found: {e}")
     logging.error("Install with: pip install scikit-learn")
     raise
+
+try:
+    import pandas as pd  # type: ignore
+except ImportError:
+    pd = None  # pandas is optional, only needed for CSV export
 
 logger = logging.getLogger(__name__)
 
@@ -421,7 +426,8 @@ class VectorDatabase:
                     pickle.dump(export_data, f)
                 
             elif format == "csv":
-                import pandas as pd
+                if pd is None:
+                    raise ImportError("pandas is required for CSV export. Install with: pip install pandas")
                 
                 # Create DataFrame
                 data = []

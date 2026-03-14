@@ -1,127 +1,36 @@
-# RSS Feed Aggregator Frontend
-
-A modern, responsive React frontend for the RSS Feed Aggregation and Translation System.
-
-## Features
-
-- 🎯 **Dashboard** - Overview with statistics and recent headlines
-- 📰 **Feeds** - Browse and search through all collected headlines with filtering
-- 🌍 **Translations** - Monitor translation status and manage the translation process
-- 🔍 **Advanced Search** - Search by title, source, language, and more
-- 📱 **Responsive Design** - Works perfectly on desktop, tablet, and mobile
-- 🎨 **Modern UI** - Clean, intuitive interface built with Tailwind CSS
-
-## Tech Stack
-
-- **React 18** - Modern React with hooks
-- **TypeScript** - Type-safe development
-- **Vite** - Fast build tool and dev server
-- **Tailwind CSS** - Utility-first CSS framework
-- **React Router** - Client-side routing
-- **Lucide React** - Beautiful icons
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
 
-### Prerequisites
-
-- Node.js 16+ 
-- npm or yarn
-
-### Installation
-
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-2. **Start development server:**
-   ```bash
-   npm run dev
-   ```
-
-3. **Open your browser:**
-   Navigate to `http://localhost:3000`
-
-### Build for Production
+First, run the development server:
 
 ```bash
-npm run build
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-The built files will be in the `dist/` directory.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## Project Structure
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-```
-frontend/
-├── src/
-│   ├── components/          # Reusable UI components
-│   │   └── Header.tsx      # Navigation header
-│   ├── context/            # React context providers
-│   │   └── HeadlinesContext.tsx  # Headlines data management
-│   ├── pages/              # Page components
-│   │   ├── Dashboard.tsx   # Main dashboard
-│   │   ├── Feeds.tsx       # Headlines browsing
-│   │   └── Translations.tsx # Translation management
-│   ├── App.tsx             # Main app component
-│   ├── main.tsx            # React entry point
-│   └── index.css           # Global styles
-├── public/                  # Static assets
-├── package.json            # Dependencies and scripts
-├── tailwind.config.js      # Tailwind CSS configuration
-├── tsconfig.json           # TypeScript configuration
-└── vite.config.ts          # Vite configuration
-```
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## API Integration
+## Learn More
 
-The frontend expects a backend API with the following endpoints:
+To learn more about Next.js, take a look at the following resources:
 
-- `GET /api/headlines` - Fetch all headlines
-- `POST /api/translate` - Trigger headline translation
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-## Customization
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-### Styling
-- Modify `tailwind.config.js` for theme customization
-- Update `src/index.css` for global styles
-- Use Tailwind utility classes for component styling
+## Deploy on Vercel
 
-### Components
-- Add new components in `src/components/`
-- Create new pages in `src/pages/`
-- Extend the context in `src/context/` for additional features
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-## Development
-
-### Available Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
-- `npm run lint:fix` - Fix ESLint issues
-
-### Code Quality
-
-- TypeScript for type safety
-- ESLint for code linting
-- Prettier for code formatting (recommended)
-
-## Browser Support
-
-- Chrome 90+
-- Firefox 88+
-- Safari 14+
-- Edge 90+
-
-## Contributing
-
-1. Follow the existing code style
-2. Add TypeScript types for new features
-3. Test on multiple screen sizes
-4. Ensure accessibility standards are met
-
-## License
-
-This project is part of the RSS Feed Aggregator system. 
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

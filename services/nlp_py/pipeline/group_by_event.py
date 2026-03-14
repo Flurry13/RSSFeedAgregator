@@ -12,11 +12,11 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 
-import numpy as np
-from sklearn.preprocessing import normalize
-from sklearn.metrics.pairwise import cosine_similarity
-import hdbscan
-from sentence_transformers import SentenceTransformer
+import numpy as np  # type: ignore
+from sklearn.preprocessing import normalize  # type: ignore
+from sklearn.metrics.pairwise import cosine_similarity  # type: ignore
+import hdbscan  # type: ignore
+from sentence_transformers import SentenceTransformer  # type: ignore
 
 # Import event extraction functionality
 try:

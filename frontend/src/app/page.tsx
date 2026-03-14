@@ -1,192 +1,186 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from "react";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Loading } from "@/components/loading";
+import { api, type Headline } from "@/lib/api";
+import { useSocket } from "@/hooks/use-socket";
+import { Search } from "lucide-react";
 
-interface Classification {
-  text: string;
-  topics: string[];
-  scores: number[];
-  topTopics: Array<{
-    topic: string;
-    confidence: number;
-  }>;
-}
+const TOPICS = [
+  "all",
+  "politics",
+  "technology",
+  "business",
+  "science",
+  "health",
+  "sports",
+  "entertainment",
+  "world",
+];
 
-interface Headline {
-  title: string;
-  source: string;
-  pubDate: string;
-  classification: Classification;
-}
+const PAGE_SIZE = 20;
 
-interface ApiResponse {
-  headlines: Headline[];
-  amountBySource: Record<string, number>;
-  total: number;
-  note?: string;
-}
-
-export default function Home() {
-  const [data, setData] = useState<ApiResponse | null>(null);
+export default function FeedPage() {
+  const [headlines, setHeadlines] = useState<Headline[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [search, setSearch] = useState("");
+  const [topic, setTopic] = useState("all");
+  const [searchInput, setSearchInput] = useState("");
 
-  useEffect(() => {
-    const fetchData = async () => {
+  const fetchHeadlines = useCallback(
+    async (nextPage: number, replace: boolean) => {
+      if (nextPage === 1) setLoading(true);
+      else setLoadingMore(true);
       try {
-        const response = await fetch('/api/logic');
-        if (!response.ok) {
-          throw new Error('Failed to fetch data');
-        }
-        const result = await response.json();
-        setData(result);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
+        const res = await api.headlines.list({
+          page: nextPage,
+          limit: PAGE_SIZE,
+          q: search || undefined,
+          topic: topic !== "all" ? topic : undefined,
+        });
+        setHeadlines((prev) => (replace ? res.data : [...prev, ...res.data]));
+        setTotalPages(res.pagination.total_pages);
+        setPage(nextPage);
       } finally {
         setLoading(false);
+        setLoadingMore(false);
       }
-    };
+    },
+    [search, topic]
+  );
 
-    fetchData();
-  }, []);
+  useEffect(() => {
+    fetchHeadlines(1, true);
+  }, [fetchHeadlines]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-4 border-blue-600 mx-auto"></div>
-          <p className="mt-6 text-lg text-gray-700">Analyzing news with AI...</p>
-          <p className="mt-2 text-sm text-gray-500">Processing RSS feeds and classifying headlines</p>
-        </div>
-      </div>
-    );
-  }
+  const onHeadlinesUpdate = useCallback(() => {
+    fetchHeadlines(1, true);
+  }, [fetchHeadlines]);
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center">
-        <div className="text-center max-w-md">
-          <div className="text-red-600 text-6xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Error</h1>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
+  useSocket({ onHeadlinesUpdate });
 
-  if (!data) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600">No data available</p>
-        </div>
-      </div>
-    );
-  }
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearch(searchInput);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">
-            🤖 News AI
-          </h1>
-          <p className="text-xl text-gray-600 mb-2">
-            Advanced RSS Feed Analysis Platform
-          </p>
-          <div className="flex justify-center items-center gap-4 text-sm text-gray-500">
-            <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full">
-              ✅ {data.total} headlines processed
-            </span>
-            <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
-              📡 {Object.keys(data.amountBySource).length} sources
-            </span>
-            <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full">
-              🎯 AI-powered classification
-            </span>
-          </div>
-          {data.note && (
-            <div className="mt-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg text-sm text-yellow-800">
-              💡 {data.note}
-            </div>
-          )}
-        </div>
+    <div className="max-w-3xl mx-auto px-4 py-8">
+      <h1 className="text-2xl font-semibold text-zinc-100 mb-6">Feed</h1>
 
-        {/* Source Summary */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8 border border-gray-200">
-          <h2 className="text-2xl font-semibold mb-6 text-gray-800">📊 Source Overview</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Object.entries(data.amountBySource).map(([source, count]) => (
-              <div key={source} className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
-                <div className="font-medium text-sm text-gray-900 truncate mb-1">
-                  🌐 {new URL(source).hostname}
-                </div>
-                <div className="text-3xl font-bold text-blue-600 mb-1">{count}</div>
-                <div className="text-xs text-gray-500">headlines analyzed</div>
-              </div>
+      {/* Filters */}
+      <div className="flex gap-3 mb-6">
+        <form onSubmit={handleSearch} className="flex-1 flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+            <Input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search headlines…"
+              className="pl-9 bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-600"
+            />
+          </div>
+          <Button type="submit" variant="secondary" className="bg-zinc-800 text-zinc-200 hover:bg-zinc-700">
+            Search
+          </Button>
+        </form>
+
+        <Select value={topic} onValueChange={(v) => setTopic(v ?? "all")}>
+          <SelectTrigger className="w-40 bg-zinc-900 border-zinc-800 text-zinc-300">
+            <SelectValue placeholder="Topic" />
+          </SelectTrigger>
+          <SelectContent className="bg-zinc-900 border-zinc-800">
+            {TOPICS.map((t) => (
+              <SelectItem
+                key={t}
+                value={t}
+                className="text-zinc-300 focus:bg-zinc-800 capitalize"
+              >
+                {t === "all" ? "All topics" : t}
+              </SelectItem>
             ))}
-          </div>
-        </div>
+          </SelectContent>
+        </Select>
+      </div>
 
-        {/* Headlines */}
-        <div className="space-y-6">
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4">📰 Classified Headlines</h2>
-          {data.headlines.map((headline, index) => (
-            <div key={index} className="bg-white rounded-xl shadow-lg p-6 border border-gray-200 hover:shadow-xl transition-shadow">
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-xl font-semibold text-gray-900 flex-1 mr-4 leading-relaxed">
-                  {headline.title}
-                </h3>
-                <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                  {new Date(headline.pubDate).toLocaleDateString()}
-                </div>
+      {/* List */}
+      {loading ? (
+        <Loading message="Loading headlines…" />
+      ) : headlines.length === 0 ? (
+        <p className="text-zinc-500 text-sm text-center py-12">No headlines found.</p>
+      ) : (
+        <div className="space-y-4">
+          {headlines.map((h) => (
+            <article
+              key={h.id}
+              className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 hover:border-zinc-700 transition-colors"
+            >
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                {h.topic && (
+                  <Badge className="bg-zinc-800 text-zinc-300 border-zinc-700 text-xs capitalize">
+                    {h.topic}
+                  </Badge>
+                )}
+                {h.language && (
+                  <Badge
+                    variant="outline"
+                    className="border-zinc-700 text-zinc-500 text-xs uppercase"
+                  >
+                    {h.language}
+                  </Badge>
+                )}
               </div>
-              
-              <div className="flex items-center justify-between mb-4">
-                <div className="text-sm text-blue-600 font-medium">
-                  🔗 {new URL(headline.source).hostname}
-                </div>
+              <a
+                href={h.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-zinc-100 font-medium text-base leading-snug hover:text-zinc-300 transition-colors"
+              >
+                {h.title}
+              </a>
+              {h.description && (
+                <p className="text-zinc-400 text-sm mt-1 line-clamp-2">{h.description}</p>
+              )}
+              <div className="flex items-center gap-2 mt-3 text-xs text-zinc-600">
+                <span>{h.source_name}</span>
+                {h.published_at && (
+                  <>
+                    <span>·</span>
+                    <span>{new Date(h.published_at).toLocaleDateString()}</span>
+                  </>
+                )}
               </div>
-
-              {/* AI Classification */}
-              <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-200">
-                <div className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                  🎯 AI Classification Results:
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {headline.classification.topTopics.map((topic, topicIndex) => {
-                    const confidenceLevel = topic.confidence > 0.9 ? 'high' : topic.confidence > 0.7 ? 'medium' : 'low';
-                    const colorClass = confidenceLevel === 'high' ? 'bg-green-100 text-green-800 border-green-300' :
-                                     confidenceLevel === 'medium' ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
-                                     'bg-gray-100 text-gray-800 border-gray-300';
-                    
-                    return (
-                      <span
-                        key={topicIndex}
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${colorClass}`}
-                      >
-                        {topic.topic} ({(topic.confidence * 100).toFixed(1)}%)
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
+            </article>
           ))}
         </div>
+      )}
 
-        {/* Footer */}
-        <div className="mt-12 text-center text-gray-500 text-sm">
-          <p>Powered by News AI • Next.js • Machine Learning • Real-time Analysis</p>
+      {/* Load more */}
+      {!loading && page < totalPages && (
+        <div className="flex justify-center mt-8">
+          <Button
+            variant="outline"
+            onClick={() => fetchHeadlines(page + 1, false)}
+            disabled={loadingMore}
+            className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+          >
+            {loadingMore ? "Loading…" : "Load more"}
+          </Button>
         </div>
-      </div>
+      )}
     </div>
   );
 }
