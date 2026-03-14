@@ -1,360 +1,578 @@
-#!/usr/bin/env python3
-"""
-Flask API Server for RSS Feed Aggregator
-Integrates gather and translate modules with real-time frontend updates
-Now with PostgreSQL database persistence
-"""
-
-from flask import Flask, jsonify, request  # type: ignore
-from flask_cors import CORS  # type: ignore
-from flask_socketio import SocketIO, emit  # type: ignore
-import threading
-import time
+"""RSSFeed2 API Server — Flask + Flask-SocketIO."""
 import json
+import logging
 import os
 import sys
+import threading
+import time
+from datetime import datetime
 
-# Add the pipeline directory to the path
-sys.path.append(os.path.join(os.path.dirname(__file__), 'pipeline'))
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+from flask_socketio import SocketIO, emit
 
-from gather import gather  # type: ignore
-from translate import Translator  # type: ignore
+sys.path.append(os.path.join(os.path.dirname(__file__), "pipeline"))
 
-# Database integration
-try:
-    from database import init_connection_pool, test_connection
-    from repositories import HeadlineRepository
-    DB_ENABLED = init_connection_pool(min_conn=2, max_conn=10)
-    if DB_ENABLED:
-        DB_ENABLED = test_connection()
-        if DB_ENABLED:
-            print("✅ Database integration enabled")
-        else:
-            print("⚠️  Database connection test failed, running without persistence")
-    else:
-        print("⚠️  Database pool initialization failed, running without persistence")
-except Exception as e:
-    print(f"⚠️  Database module not available: {e}")
-    print("   Running without database persistence")
-    DB_ENABLED = False
-    HeadlineRepository = None
+from database import init_connection_pool, get_db_cursor
+from model_loader import preload_models
+from repositories import (
+    AnalyticsRepository,
+    EventClusterRepository,
+    HeadlineRepository,
+    SourceRepository,
+)
+
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO").upper())
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for frontend communication
-socketio = SocketIO(app, cors_allowed_origins="*")
+cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+CORS(app, origins=cors_origins)
+socketio = SocketIO(app, cors_allowed_origins=cors_origins, async_mode="threading")
 
-# Global state
-current_headlines = []
-processing_status = "idle"
-current_task = ""
-progress = 0
-total_items = 0
+# Pipeline state (in-memory)
+pipeline_status = {
+    "stage": None,
+    "status": "idle",
+    "progress": 0,
+    "total": 0,
+    "message": "",
+    "last_run": None,
+    "last_duration_ms": None,
+}
+log_buffer = []
+MAX_LOG_BUFFER = 100
 
-def emit_status_update(status, task, progress=0, total=0, message=""):
-    data = {
-        "status": status,
-        "task": task,
-        "progress": int(progress),
-        "total": int(total),
-        "message": message,
-        "timestamp": time.time()
-    }
-    socketio.emit('status_update', data)
-    print(f"Status: {status} | Task: {task} | Progress: {progress}/{total} | {message}")
 
-def emit_headline_update(headlines, message=""):
-    data = {
-        "headlines": headlines,
-        "message": message,
-        "timestamp": time.time()
-    }
-    socketio.emit('headlines_update', data)
+def emit_status(stage, status, progress=0, total=0, message=""):
+    pipeline_status.update(
+        stage=stage, status=status, progress=progress, total=total, message=message
+    )
+    socketio.emit("status_update", pipeline_status)
 
-def emit_log_message(level, message):
-    data = {
+
+def emit_log(level, message):
+    entry = {
         "level": level,
         "message": message,
-        "timestamp": time.time()
+        "timestamp": datetime.utcnow().isoformat(),
     }
-    socketio.emit('log_message', data)
+    log_buffer.append(entry)
+    if len(log_buffer) > MAX_LOG_BUFFER:
+        log_buffer.pop(0)
+    socketio.emit("log_message", entry)
 
-def gather_headlines_with_progress():
-    global current_headlines, processing_status, current_task, progress, total_items
-    try:
-        processing_status = "gathering"
-        current_task = "Gathering RSS feeds"
-        progress = 0
-        emit_status_update("gathering", current_task, progress, 0, "Starting RSS feed collection...")
-        emit_log_message("info", "🚀 Starting RSS feed collection process...")
 
-        from gather import feedList  # type: ignore
-        total_feeds = len(feedList)
-        total_items = total_feeds
-        emit_status_update("gathering", current_task, progress, total_feeds, f"Found {total_feeds} RSS feeds to process")
+# --- Health ---
 
-        # Capture prints from gather()
-        original_print = print
-        def progress_print(*args, **kwargs):
-            message = " ".join(str(arg) for arg in args)
-            original_print(message)
-            if "Processing" in message and "/" in message:
-                try:
-                    parts = message.split("Processing ")[1].split(":")[0]
-                    cur, tot = parts.split("/")
-                    emit_status_update("gathering", current_task, int(cur), int(tot), f"Processing feed {cur}/{tot}")
-                except Exception:
-                    pass
-            elif message.startswith("Added ") or message.startswith("✅"):
-                emit_log_message("success", f"✅ {message}")
-            elif message.startswith("Warning:") or message.startswith("Skipping") or message.startswith("⚠️"):
-                emit_log_message("warning", f"⚠️ {message}")
-            elif message.startswith("Error") or message.startswith("❌"):
-                emit_log_message("error", f"❌ {message}")
-            elif message.startswith("🚀") or message.startswith("📊"):
-                emit_log_message("info", message)
 
-        import builtins
-        builtins.print = progress_print
-        headlines = gather(use_async=True, max_concurrent=20)  # Use parallel gathering
-        builtins.print = original_print
+@app.route("/health")
+def health():
+    return jsonify({"status": "ok"})
 
-        current_headlines = headlines or []
-        processing_status = "gathered"
-        progress = total_feeds
-        
-        # OPTIMIZED: Save to database if enabled
-        if DB_ENABLED and HeadlineRepository and current_headlines:
-            emit_log_message("info", f"💾 Saving {len(current_headlines)} headlines to database...")
-            try:
-                result = HeadlineRepository.bulk_insert_headlines(current_headlines)
-                emit_log_message("success", f"✅ Database: {result['inserted']} new, {result['duplicates']} duplicates")
-            except Exception as db_error:
-                emit_log_message("warning", f"⚠️  Database save failed: {str(db_error)}")
-        
-        emit_status_update("gathered", "RSS feeds gathered", progress, total_feeds, f"Successfully collected {len(current_headlines)} headlines")
-        emit_log_message("success", f"🎉 Collected {len(current_headlines)} headlines")
-        emit_headline_update(current_headlines, f"Collected {len(current_headlines)} headlines")
-        return current_headlines
-    except Exception as e:
-        processing_status = "error"
-        msg = f"Error during gathering: {str(e)}"
-        emit_status_update("error", "Gathering failed", 0, 0, msg)
-        emit_log_message("error", f"💥 {msg}")
-        raise
 
-def translate_headlines_with_progress():
-    global current_headlines, processing_status, current_task, progress, total_items
-    try:
-        if not current_headlines:
-            emit_log_message("warning", "⚠️ No headlines to translate. Please gather headlines first.")
-            return []
+# --- Headlines ---
 
-        # Determine items requiring translation
-        translatable_indices = [idx for idx, h in enumerate(current_headlines)
-                                if h.get('language') != 'en' and not h.get('translated')]
-        total_items = len(translatable_indices)
-        if total_items == 0:
-            emit_log_message("info", "ℹ️ All headlines are already in English or previously translated")
-            return current_headlines
 
-        processing_status = "translating"
-        current_task = "Translating headlines"
-        progress = 0
-        emit_status_update("translating", current_task, progress, total_items, f"Starting translation of {total_items} headlines...")
-        emit_log_message("info", f"🌍 Starting translation process for {total_items} headlines...")
-
-        translator = Translator()
-
-        # OPTIMIZED: Prepare batch data in single pass
-        texts_to_translate = []
-        langs_to_translate = []
-        for idx in translatable_indices:
-            headline = current_headlines[idx]
-            texts_to_translate.append(headline.get('title', ''))
-            langs_to_translate.append(headline.get('language', 'unknown'))
-        
-        emit_log_message("info", f"📦 Prepared batch of {len(texts_to_translate)} texts for translation")
-        
-        # OPTIMIZED: Single batch translation call
-        try:
-            translated_texts = translator.translate_batch(texts_to_translate, langs_to_translate)
-            emit_log_message("success", f"✅ Batch translation completed")
-        except Exception as e:
-            emit_log_message("error", f"❌ Batch translation failed: {str(e)}, falling back to individual translation")
-            # Fallback to individual translation
-            translated_texts = []
-            for text, lang in zip(texts_to_translate, langs_to_translate):
-                try:
-                    translated = translator.translate_text(text, lang)
-                    translated_texts.append(translated if translated else text)
-                except Exception as ind_error:
-                    emit_log_message("error", f"❌ Individual translation error: {str(ind_error)}")
-                    translated_texts.append(text)
-        
-        # OPTIMIZED: Update headlines in single loop
-        processed = 0
-        for idx, translated_title in zip(translatable_indices, translated_texts):
-            headline = current_headlines[idx]
-            original_title = headline.get('title', '')
-            src_lang = headline.get('language', 'unknown')
-            
-            try:
-                # Mark as translated if we got a result
-                if translated_title:
-                    # Preserve original title BEFORE overwriting
-                    if 'original_title' not in headline:
-                        headline['original_title'] = original_title
-                    
-                    # Only update title if translation is different (real translation)
-                    if translated_title != original_title:
-                        headline['title'] = translated_title
-                        headline['translated'] = True
-                        emit_log_message("success", f"✅ Translated [{src_lang}] {headline.get('source','')} ")
-                    else:
-                        # Mock mode or already English - still mark as processed
-                        headline['translated'] = True
-                        emit_log_message("info", f"ℹ️ Processed [{src_lang}] {headline.get('source','')} (mock/English)")
-                else:
-                    # Translation failed
-                    headline['translated'] = False
-                    emit_log_message("warning", f"⚠️ Translation failed for: {headline.get('source','')}")
-            except Exception as e:
-                emit_log_message("error", f"❌ Translation error for index {idx}: {str(e)}")
-                headline['translated'] = False
-            finally:
-                processed += 1
-                progress = processed
-                # Update progress less frequently for better performance
-                if processed % 10 == 0 or processed == total_items:
-                    emit_status_update("translating", current_task, progress, total_items, f"Translated {progress}/{total_items} headlines")
-
-        processing_status = "translated"
-        translated_count = sum(1 for h in current_headlines if h.get('translated'))
-        emit_status_update("translated", "Translation completed", total_items, total_items, f"Translation completed! {translated_count} headlines translated")
-        emit_log_message("success", f"🎉 Translation completed! {translated_count} headlines translated")
-        emit_headline_update(current_headlines, f"Translation completed - {translated_count} headlines translated")
-        return current_headlines
-    except Exception as e:
-        processing_status = "error"
-        msg = f"Error during translation: {str(e)}"
-        emit_status_update("error", "Translation failed", 0, 0, msg)
-        emit_log_message("error", f"💥 {msg}")
-        raise
-
-# API Endpoints
-@app.route('/api/headlines', methods=['GET'])
+@app.route("/api/headlines")
 def get_headlines():
-    """
-    Get headlines - returns in-memory cache or fetches from database
-    """
-    # Check for database mode
-    source = request.args.get('source', 'memory')  # 'memory' or 'database'
-    limit = int(request.args.get('limit', 100))
-    offset = int(request.args.get('offset', 0))
-    
-    if source == 'database' and DB_ENABLED and HeadlineRepository:
+    page = request.args.get("page", 1, type=int)
+    limit = min(request.args.get("limit", 50, type=int), 200)
+    sort = request.args.get("sort", "published_at")
+    order = request.args.get("order", "desc")
+    topic = request.args.get("topic")
+    language = request.args.get("language")
+    source_id = request.args.get("source_id", type=int)
+    q = request.args.get("q")
+    result = HeadlineRepository.get_paginated(
+        page=page,
+        limit=limit,
+        sort=sort,
+        order=order,
+        topic=topic,
+        language=language,
+        source_id=source_id,
+        q=q,
+    )
+    return jsonify(result)
+
+
+# --- Events ---
+
+
+@app.route("/api/events")
+def get_events():
+    page = request.args.get("page", 1, type=int)
+    limit = min(request.args.get("limit", 50, type=int), 200)
+    event_type = request.args.get("event_type")
+    since = request.args.get("since")
+    result = EventClusterRepository.get_paginated(
+        page=page, limit=limit, event_type=event_type, since=since
+    )
+    return jsonify(result)
+
+
+@app.route("/api/events/<int:event_id>")
+def get_event_detail(event_id):
+    cluster = EventClusterRepository.get_by_id(event_id)
+    if not cluster:
+        return jsonify({"error": "Event cluster not found"}), 404
+    return jsonify(cluster)
+
+
+# --- Analytics ---
+
+
+@app.route("/api/analytics")
+def get_analytics():
+    period = request.args.get("period", "7d")
+    if period not in ("24h", "7d", "30d"):
+        period = "7d"
+    result = AnalyticsRepository.get_analytics(period)
+    return jsonify(result)
+
+
+# --- Sources CRUD ---
+
+
+@app.route("/api/sources", methods=["GET"])
+def list_sources():
+    page = request.args.get("page", 1, type=int)
+    limit = min(request.args.get("limit", 50, type=int), 200)
+    active = (
+        request.args.get("active", type=lambda v: v.lower() == "true")
+        if "active" in request.args
+        else None
+    )
+    language = request.args.get("language")
+    group_name = request.args.get("group_name")
+    result = SourceRepository.get_paginated(
+        page=page,
+        limit=limit,
+        active=active,
+        language=language,
+        group_name=group_name,
+    )
+    return jsonify(result)
+
+
+@app.route("/api/sources", methods=["POST"])
+def create_source():
+    data = request.get_json()
+    if not data or not data.get("name") or not data.get("url"):
+        return jsonify({"error": "name and url are required"}), 400
+    source = SourceRepository.create(data)
+    if not source:
+        return jsonify({"error": "Failed to create source"}), 500
+    return jsonify(source), 201
+
+
+@app.route("/api/sources/<int:source_id>", methods=["GET"])
+def get_source(source_id):
+    source = SourceRepository.get_by_id(source_id)
+    if not source:
+        return jsonify({"error": "Source not found"}), 404
+    return jsonify(source)
+
+
+@app.route("/api/sources/<int:source_id>", methods=["PUT"])
+def update_source(source_id):
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Request body required"}), 400
+    source = SourceRepository.update(source_id, data)
+    if not source:
+        return jsonify({"error": "Source not found"}), 404
+    return jsonify(source)
+
+
+@app.route("/api/sources/<int:source_id>", methods=["DELETE"])
+def delete_source(source_id):
+    if SourceRepository.delete(source_id):
+        return "", 204
+    return jsonify({"error": "Source not found"}), 404
+
+
+# --- Pipeline Control ---
+
+
+@app.route("/api/pipeline/status")
+def get_pipeline_status():
+    return jsonify(pipeline_status)
+
+
+@app.route("/api/gather", methods=["POST"])
+def start_gather():
+    if pipeline_status["status"] == "running":
+        return jsonify({"error": "Pipeline already running"}), 409
+
+    def _run():
+        from gather import gather
+
+        start = time.time()
+        emit_status("gather", "running", message="Gathering RSS feeds...")
+        emit_log("info", "Starting RSS gathering")
         try:
-            db_headlines = HeadlineRepository.get_recent_headlines(limit=limit, offset=offset)
-            total_count = HeadlineRepository.get_headline_count()
-            return jsonify({
-                "headlines": db_headlines,
-                "status": "database",
-                "count": len(db_headlines),
-                "total": total_count,
-                "source": "postgresql"
-            })
+            headlines = gather()
+            emit_log("info", f"Gathered {len(headlines)} headlines")
+            result = HeadlineRepository.bulk_insert(headlines)
+            emit_log("info", f"Inserted {result['inserted']}, skipped {result['skipped']}")
+            emit_status(
+                "gather",
+                "idle",
+                progress=len(headlines),
+                total=len(headlines),
+                message=f"Gathered {len(headlines)} headlines",
+            )
+            socketio.emit(
+                "headlines_update",
+                {"count": len(headlines), "new_headlines": result["inserted"]},
+            )
         except Exception as e:
-            return jsonify({
-                "error": f"Database query failed: {str(e)}",
-                "fallback": "memory",
-                "headlines": current_headlines,
-                "count": len(current_headlines)
-            }), 500
-    
-    # Default: return in-memory headlines
-    return jsonify({
-        "headlines": current_headlines,
-        "status": processing_status,
-        "count": len(current_headlines),
-        "source": "memory"
-    })
+            emit_status("gather", "error", message=str(e))
+            emit_log("error", f"Gather failed: {e}")
+        finally:
+            elapsed = int((time.time() - start) * 1000)
+            pipeline_status["last_run"] = datetime.utcnow().isoformat()
+            pipeline_status["last_duration_ms"] = elapsed
 
-@app.route('/api/status', methods=['GET'])
-def get_status():
-    return jsonify({
-        "status": processing_status,
-        "task": current_task,
-        "progress": progress,
-        "total": total_items,
-        "headlines_count": len(current_headlines)
-    })
+    threading.Thread(target=_run, daemon=True).start()
+    return jsonify({"message": "Gathering started"})
 
-@app.route('/api/gather', methods=['POST'])
-def start_gathering():
-    auto_translate = request.args.get('translate', default='1') in ('1', 'true', 'yes')
 
-    def gather_worker():
+@app.route("/api/translate", methods=["POST"])
+def start_translate():
+    if pipeline_status["status"] == "running":
+        return jsonify({"error": "Pipeline already running"}), 409
+
+    def _run():
+        from translate import Translator
+
+        start = time.time()
+        emit_status("translate", "running", message="Translating headlines...")
+        emit_log("info", "Starting translation")
         try:
-            gather_headlines_with_progress()
-            if auto_translate:
-                emit_log_message("info", "▶️ Auto-translate enabled: starting translation after gather...")
-                translate_headlines_with_progress()
+            translator = Translator()
+            result = HeadlineRepository.get_paginated(limit=200)
+            headlines = [
+                h
+                for h in result["data"]
+                if h.get("language") != "en" and not h.get("translated_title")
+            ]
+            emit_log("info", f"Found {len(headlines)} headlines to translate")
+
+            for i, h in enumerate(headlines):
+                translated = translator.translate_text(h["title"], h.get("language", "en"))
+                if translated:
+                    HeadlineRepository.update_translation(h["id"], translated)
+                emit_status(
+                    "translate",
+                    "running",
+                    progress=i + 1,
+                    total=len(headlines),
+                    message=f"Translating {i + 1}/{len(headlines)}",
+                )
+
+            emit_status(
+                "translate",
+                "idle",
+                progress=len(headlines),
+                total=len(headlines),
+                message=f"Translated {len(headlines)} headlines",
+            )
+            emit_log("info", f"Translation complete — {len(headlines)} headlines")
         except Exception as e:
-            emit_log_message("error", f"💥 Gathering process failed: {str(e)}")
+            emit_status("translate", "error", message=str(e))
+            emit_log("error", f"Translation failed: {e}")
+        finally:
+            elapsed = int((time.time() - start) * 1000)
+            pipeline_status["last_run"] = datetime.utcnow().isoformat()
+            pipeline_status["last_duration_ms"] = elapsed
 
-    thread = threading.Thread(target=gather_worker)
-    thread.daemon = True
-    thread.start()
+    threading.Thread(target=_run, daemon=True).start()
+    return jsonify({"message": "Translation started"})
 
-    return jsonify({"message": "Gathering process started", "status": "started", "auto_translate": auto_translate})
 
-@app.route('/api/translate', methods=['POST'])
-def start_translation():
-    def translate_worker():
+@app.route("/api/classify", methods=["POST"])
+def start_classify():
+    if pipeline_status["status"] == "running":
+        return jsonify({"error": "Pipeline already running"}), 409
+
+    def _run():
+        start = time.time()
+        emit_status("classify", "running", message="Classifying headlines...")
+        emit_log("info", "Starting classification")
         try:
-            translate_headlines_with_progress()
+            from model_loader import get_classifier
+
+            classifier = get_classifier()
+            result = HeadlineRepository.get_paginated(limit=200)
+            headlines = [h for h in result["data"] if not h.get("topic")]
+            emit_log("info", f"Found {len(headlines)} headlines to classify")
+
+            for i, h in enumerate(headlines):
+                text = h.get("translated_title") or h["title"]
+                classification = classifier.classify_single(text)
+                topic = (
+                    classification.get("labels", ["other"])[0]
+                    if classification.get("labels")
+                    else "other"
+                )
+                confidence = (
+                    classification.get("scores", [0.0])[0]
+                    if classification.get("scores")
+                    else 0.0
+                )
+                HeadlineRepository.update_topic(h["id"], topic, confidence)
+                emit_status(
+                    "classify",
+                    "running",
+                    progress=i + 1,
+                    total=len(headlines),
+                    message=f"Classifying {i + 1}/{len(headlines)}",
+                )
+
+            emit_status(
+                "classify",
+                "idle",
+                progress=len(headlines),
+                total=len(headlines),
+                message=f"Classified {len(headlines)} headlines",
+            )
+            emit_log("info", f"Classification complete — {len(headlines)} headlines")
         except Exception as e:
-            emit_log_message("error", f"💥 Translation process failed: {str(e)}")
+            emit_status("classify", "error", message=str(e))
+            emit_log("error", f"Classification failed: {e}")
+        finally:
+            elapsed = int((time.time() - start) * 1000)
+            pipeline_status["last_run"] = datetime.utcnow().isoformat()
+            pipeline_status["last_duration_ms"] = elapsed
 
-    thread = threading.Thread(target=translate_worker)
-    thread.daemon = True
-    thread.start()
+    threading.Thread(target=_run, daemon=True).start()
+    return jsonify({"message": "Classification started"})
 
-    return jsonify({"message": "Translation process started", "status": "started"})
 
-@app.route('/api/feeds', methods=['GET'])
-def get_feeds():
+@app.route("/api/run", methods=["POST"])
+def run_full_pipeline():
+    if pipeline_status["status"] == "running":
+        return jsonify({"error": "Pipeline already running"}), 409
+
+    def _run():
+        from gather import gather
+        from translate import Translator
+        from parallel_pipeline import (
+            run_parallel_ml,
+            classify_batch_wrapper,
+            extract_batch_wrapper,
+            embed_batch_wrapper,
+        )
+
+        start = time.time()
+        emit_log("info", "Starting full pipeline")
+
+        try:
+            # Stage 1: Gather
+            emit_status("gather", "running", message="Gathering RSS feeds...")
+            headlines = gather()
+            emit_log("info", f"Gathered {len(headlines)} headlines")
+            result = HeadlineRepository.bulk_insert(headlines)
+            emit_log(
+                "info", f"Inserted {result['inserted']}, skipped {result['skipped']}"
+            )
+
+            # Stage 2: Translate
+            emit_status(
+                "translate",
+                "running",
+                progress=0,
+                total=len(headlines),
+                message="Translating...",
+            )
+            translator = Translator()
+            headlines = translator.translate_headlines(headlines)
+            emit_log("info", "Translation complete")
+
+            # Stage 3: Parallel ML (classify + extract + embed)
+            emit_status(
+                "ml_parallel",
+                "running",
+                progress=0,
+                total=3,
+                message="Running classify, extract, embed in parallel...",
+            )
+            headlines = run_parallel_ml(
+                headlines,
+                classify_fn=classify_batch_wrapper,
+                extract_fn=extract_batch_wrapper,
+                embed_fn=embed_batch_wrapper,
+                progress_callback=lambda **kw: emit_status(**kw),
+            )
+            emit_log("info", "Parallel ML stage complete")
+
+            # Stage 4: Store ML results to DB
+            emit_status("store", "running", message="Persisting ML results...")
+            for h in headlines:
+                hid = h.get("id") or h.get("source_id")
+                if not hid:
+                    continue
+                if h.get("topic"):
+                    HeadlineRepository.update_topic(
+                        hid, h["topic"], h.get("topic_confidence", 0.0)
+                    )
+                if h.get("entities"):
+                    HeadlineRepository.update_entities(
+                        hid, h["entities"], h.get("event_type", "other")
+                    )
+                if h.get("embedding_id"):
+                    HeadlineRepository.update_embedding_id(hid, h["embedding_id"])
+            emit_log("info", "ML results persisted to DB")
+
+            # Stage 5: Group events into clusters
+            emit_status("group", "running", message="Clustering events...")
+            try:
+                from group_by_event import EventGrouper
+
+                grouper = EventGrouper()
+                texts = [h.get("translated_title") or h["title"] for h in headlines]
+                h_ids = [str(h.get("id", i)) for i, h in enumerate(headlines)]
+                grouping_result = grouper.create_event_groups(
+                    texts, headline_ids=h_ids
+                )
+
+                groups = grouping_result.get("groups", [])
+                for g in groups:
+                    member_ids = [
+                        int(mid)
+                        for mid in g.get("member_ids", [])
+                        if str(mid).isdigit()
+                    ]
+                    scores = g.get("similarity_scores", [0.5] * len(member_ids))
+                    if member_ids:
+                        EventClusterRepository.create_cluster(
+                            label=g.get("summary", {}).get("keywords", ["Event"])[0]
+                            if isinstance(g.get("summary"), dict)
+                            else "Event cluster",
+                            event_type=g.get("event_type", "other"),
+                            key_entities=g.get("summary", {}).get(
+                                "top_entities", {}
+                            ),
+                            summary=str(g.get("summary", "")),
+                            start_time=g.get("time_span", {}).get("start"),
+                            end_time=g.get("time_span", {}).get("end"),
+                            headline_ids=member_ids,
+                            similarity_scores=scores[: len(member_ids)],
+                        )
+                emit_log("info", f"Created {len(groups)} event clusters")
+            except Exception as e:
+                emit_log("warn", f"Event clustering failed (non-fatal): {e}")
+
+            elapsed = int((time.time() - start) * 1000)
+            pipeline_status["last_run"] = datetime.utcnow().isoformat()
+            pipeline_status["last_duration_ms"] = elapsed
+
+            emit_status(None, "idle", message="Pipeline complete")
+            socketio.emit(
+                "pipeline_complete",
+                {
+                    "duration_ms": elapsed,
+                    "headlines_gathered": len(headlines),
+                    "translated": sum(
+                        1 for h in headlines if h.get("translated_title")
+                    ),
+                    "classified": sum(1 for h in headlines if h.get("topic")),
+                },
+            )
+            socketio.emit(
+                "headlines_update",
+                {"count": len(headlines), "new_headlines": result["inserted"]},
+            )
+
+        except Exception as e:
+            emit_status(None, "error", message=str(e))
+            emit_log("error", f"Pipeline failed: {e}")
+
+    threading.Thread(target=_run, daemon=True).start()
+    return jsonify({"message": "Full pipeline started"})
+
+
+# --- Search ---
+
+
+@app.route("/api/search")
+def search():
+    q = request.args.get("q", "")
+    limit = min(request.args.get("limit", 20, type=int), 100)
+    if not q:
+        return jsonify({"error": "q parameter required"}), 400
+
     try:
-        from gather import feedList  # type: ignore
-        return jsonify({
-            "feeds": feedList,
-            "count": len(feedList)
-        })
+        from model_loader import get_embedder
+
+        embedder = get_embedder()
+        query_embedding = embedder.embed_single_text(q)
+
+        from qdrant_client import QdrantClient
+
+        qdrant = QdrantClient(
+            host=os.getenv("QDRANT_HOST", "localhost"),
+            port=int(os.getenv("QDRANT_PORT", 6333)),
+        )
+        results = qdrant.search(
+            collection_name="headlines",
+            query_vector=query_embedding.tolist(),
+            limit=limit,
+        )
+        data = []
+        for r in results:
+            headline_id = r.payload.get("headline_id") if r.payload else None
+            if headline_id:
+                with get_db_cursor() as cur:
+                    cur.execute(
+                        """SELECT h.*, s.name as source_name, s.country
+                           FROM headlines h JOIN sources s ON h.source_id = s.id
+                           WHERE h.id = %s""",
+                        (headline_id,),
+                    )
+                    headline = cur.fetchone()
+                if headline:
+                    data.append({"headline": dict(headline), "score": r.score})
+        return jsonify({"data": data, "query": q})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@socketio.on('connect')
+
+# --- WebSocket ---
+
+
+@socketio.on("connect")
 def handle_connect():
-    emit('connected', {'message': 'Connected to RSS Feed Aggregator'})
-    emit_log_message("info", "🔌 Frontend connected")
-    emit('status_update', {
-        "status": processing_status,
-        "task": current_task,
-        "progress": progress,
-        "total": total_items,
-        "timestamp": time.time()
-    })
-    # Send current headlines immediately on connect
-    if current_headlines:
-        emit_headline_update(current_headlines, f"Loaded {len(current_headlines)} existing headlines")
+    emit_log("info", "Client connected")
 
-@socketio.on('disconnect')
+
+@socketio.on("disconnect")
 def handle_disconnect():
-    emit_log_message("info", "🔌 Frontend disconnected")
+    emit_log("info", "Client disconnected")
 
-if __name__ == '__main__':
-    print("🚀 Starting RSS Feed Aggregator API Server...")
-    print("📱 Frontend will be available at: http://localhost:3000")
-    print("🔌 API Server will be available at: http://localhost:5050")
-    print("📡 WebSocket will be available at: ws://localhost:5050")
-    socketio.run(app, host='0.0.0.0', port=5050, debug=True, allow_unsafe_werkzeug=True) 
+
+@socketio.on("subscribe_status")
+def handle_subscribe():
+    emit("status_update", pipeline_status)
+
+
+@socketio.on("unsubscribe_status")
+def handle_unsubscribe():
+    pass
+
+
+# --- Startup ---
+
+if __name__ == "__main__":
+    logger.info("Initializing database connection pool...")
+    init_connection_pool()
+
+    logger.info("Preloading ML models...")
+    preload_models()
+
+    port = int(os.getenv("NLP_PORT", 8081))
+    logger.info("Starting server on port %d", port)
+    socketio.run(app, host="0.0.0.0", port=port, debug=False, allow_unsafe_werkzeug=True)
