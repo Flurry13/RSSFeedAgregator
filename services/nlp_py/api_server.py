@@ -5,9 +5,9 @@ Integrates gather and translate modules with real-time frontend updates
 Now with PostgreSQL database persistence
 """
 
-from flask import Flask, jsonify, request
-from flask_cors import CORS
-from flask_socketio import SocketIO, emit
+from flask import Flask, jsonify, request  # type: ignore
+from flask_cors import CORS  # type: ignore
+from flask_socketio import SocketIO, emit  # type: ignore
 import threading
 import time
 import json
@@ -17,8 +17,8 @@ import sys
 # Add the pipeline directory to the path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'pipeline'))
 
-from gather import gather
-from translate import Translator
+from gather import gather  # type: ignore
+from translate import Translator  # type: ignore
 
 # Database integration
 try:
@@ -87,7 +87,7 @@ def gather_headlines_with_progress():
         emit_status_update("gathering", current_task, progress, 0, "Starting RSS feed collection...")
         emit_log_message("info", "🚀 Starting RSS feed collection process...")
 
-        from gather import feedList
+        from gather import feedList  # type: ignore
         total_feeds = len(feedList)
         total_items = total_feeds
         emit_status_update("gathering", current_task, progress, total_feeds, f"Found {total_feeds} RSS feeds to process")
@@ -325,7 +325,7 @@ def start_translation():
 @app.route('/api/feeds', methods=['GET'])
 def get_feeds():
     try:
-        from gather import feedList
+        from gather import feedList  # type: ignore
         return jsonify({
             "feeds": feedList,
             "count": len(feedList)
@@ -344,6 +344,9 @@ def handle_connect():
         "total": total_items,
         "timestamp": time.time()
     })
+    # Send current headlines immediately on connect
+    if current_headlines:
+        emit_headline_update(current_headlines, f"Loaded {len(current_headlines)} existing headlines")
 
 @socketio.on('disconnect')
 def handle_disconnect():
