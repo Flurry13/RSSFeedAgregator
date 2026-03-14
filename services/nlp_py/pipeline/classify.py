@@ -88,7 +88,8 @@ class TopicClassifier:
                 'model_version': self.model_name
             }
             
-            print(f"✅ Top topics: {', '.join([f\"{t['topic']} ({t['confidence']:.1%})\" for t in classification['topTopics']])}")
+            topics_str = ', '.join(f"{t['topic']} ({t['confidence']:.1%})" for t in classification['topTopics'])
+            print(f"Top topics: {topics_str}")
             
             return classification
             
