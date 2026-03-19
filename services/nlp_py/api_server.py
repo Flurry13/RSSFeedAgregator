@@ -1,4 +1,6 @@
 """RSSFeed2 API Server — Flask + Flask-SocketIO."""
+import csv
+import io
 import logging
 import os
 import sys
@@ -99,6 +101,35 @@ def get_headlines():
         sentiment=sentiment,
     )
     return jsonify(result)
+
+
+@app.route("/api/headlines/export")
+def export_headlines():
+    fmt = request.args.get("format", "csv")
+    period = request.args.get("period", "24h")
+    if period not in ("24h", "7d", "30d"):
+        period = "24h"
+    topic = request.args.get("topic")
+    sentiment = request.args.get("sentiment")
+    category = request.args.get("category")
+
+    rows = HeadlineRepository.get_for_export(period, topic, sentiment, category)
+
+    if fmt == "json":
+        return jsonify(rows)
+
+    output = io.StringIO()
+    fields = ["title", "url", "source_name", "category", "topic", "topic_confidence",
+              "sentiment", "sentiment_score", "published_at"]
+    writer = csv.DictWriter(output, fieldnames=fields, extrasaction="ignore")
+    writer.writeheader()
+    for row in rows:
+        writer.writerow(row)
+
+    resp = app.make_response(output.getvalue())
+    resp.headers["Content-Type"] = "text/csv"
+    resp.headers["Content-Disposition"] = f'attachment; filename="headlines_{period}.csv"'
+    return resp
 
 
 # --- Events ---

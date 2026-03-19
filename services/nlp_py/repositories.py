@@ -439,6 +439,46 @@ class HeadlineRepository:
             print(f"Error updating embedding_id for headline {headline_id}: {e}")
             return False
 
+    @staticmethod
+    def get_for_export(
+        period: str = "24h",
+        topic: Optional[str] = None,
+        sentiment: Optional[str] = None,
+        category: Optional[str] = None,
+        limit: int = 10000,
+    ) -> List[Dict]:
+        interval_map = {"24h": "24 hours", "7d": "7 days", "30d": "30 days"}
+        interval = interval_map.get(period, "24 hours")
+        conditions = ["h.created_at >= NOW() - %(interval)s::INTERVAL"]
+        params: Dict[str, Any] = {"interval": interval, "limit": limit}
+        if topic:
+            conditions.append("h.topic = %(topic)s")
+            params["topic"] = topic
+        if sentiment:
+            conditions.append("h.sentiment = %(sentiment)s")
+            params["sentiment"] = sentiment
+        if category:
+            conditions.append("s.category = %(category)s")
+            params["category"] = category
+        where = " AND ".join(conditions)
+        try:
+            with get_db_cursor() as cursor:
+                cursor.execute(
+                    f"""SELECT h.title, h.url, h.topic, h.topic_confidence,
+                               h.sentiment, h.sentiment_score, h.published_at,
+                               s.name AS source_name, s.category
+                        FROM headlines h
+                        JOIN sources s ON h.source_id = s.id
+                        WHERE {where}
+                        ORDER BY h.published_at DESC NULLS LAST
+                        LIMIT %(limit)s""",
+                    params,
+                )
+                return [dict(r) for r in cursor.fetchall()]
+        except Exception as e:
+            print(f"Error fetching export data: {e}")
+            return []
+
 
 # ---------------------------------------------------------------------------
 
