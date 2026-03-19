@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loading } from "@/components/loading";
 import { api, type Event, type Headline } from "@/lib/api";
@@ -9,35 +8,61 @@ import { ArrowLeft, Layers } from "lucide-react";
 
 const PAGE_SIZE = 20;
 
+const EVENT_TYPE_COLORS: Record<string, string> = {
+  earnings_report: "#ff8800",
+  policy_decision: "#ffd700",
+  market_move: "#00ff88",
+  deal: "#ff44aa",
+  regulatory_action: "#4488ff",
+  crypto_event: "#aa77ff",
+  other: "#666",
+};
+
+function eventTypeBg(type: string): string {
+  return EVENT_TYPE_COLORS[type.toLowerCase()] ?? "#00ff88";
+}
+
 function EventCard({
   event,
   onClick,
+  index,
 }: {
   event: Event;
   onClick: () => void;
+  index: number;
 }) {
   return (
     <button
       onClick={onClick}
-      className="w-full text-left bg-zinc-900 border border-zinc-800 rounded-lg p-4 hover:border-zinc-600 transition-colors"
+      className="animate-fade-in-up w-full text-left border-2 border-[#333] bg-[#111] px-4 py-3 hover:border-[#00ff88] transition-colors group"
+      style={{ animationDelay: `${index * 30}ms` }}
     >
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <span className="text-zinc-100 font-medium text-sm leading-snug">
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <span className="font-mono text-sm font-bold leading-snug text-[#e8e8e0] group-hover:text-[#00ff88] transition-colors">
           {event.label}
         </span>
         {event.event_type && (
-          <Badge className="bg-zinc-800 text-zinc-400 border-zinc-700 text-xs shrink-0 capitalize">
+          <span
+            className="inline-block px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border-2 shrink-0 text-black"
+            style={{
+              backgroundColor: eventTypeBg(event.event_type),
+              borderColor: eventTypeBg(event.event_type),
+            }}
+          >
             {event.event_type}
-          </Badge>
+          </span>
         )}
       </div>
-      <div className="flex items-center gap-3 text-xs text-zinc-600">
-        <span className="flex items-center gap-1">
+      <div className="flex items-center gap-4 font-mono text-xs">
+        <span className="flex items-center gap-1.5 text-[#00ff88]">
           <Layers className="w-3 h-3" />
-          {event.headline_count} headlines
+          <span className="font-bold text-sm">{event.headline_count}</span>
+          <span className="text-[#555]">headlines</span>
         </span>
         {event.created_at && (
-          <span>{new Date(event.created_at).toLocaleDateString()}</span>
+          <span className="text-[#444]">
+            {new Date(event.created_at).toLocaleDateString()}
+          </span>
         )}
       </div>
     </button>
@@ -51,15 +76,15 @@ function EventDetail({
   event: Event;
   onBack: () => void;
 }) {
-  const [headlines, setHeadlines] = useState<Headline[]>(event.headlines ?? []);
-  const [loading, setLoading] = useState(!event.headlines);
+  const [headlines, setHeadlines] = useState<Headline[]>(event.members ?? event.headlines ?? []);
+  const [loading, setLoading] = useState(!event.members && !event.headlines);
 
   useEffect(() => {
-    if (event.headlines) return;
+    if (event.members || event.headlines) return;
     setLoading(true);
     api.events
       .get(event.id)
-      .then((full) => setHeadlines(full.headlines ?? []))
+      .then((full) => setHeadlines(full.members ?? full.headlines ?? []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [event]);
@@ -68,55 +93,66 @@ function EventDetail({
     <div>
       <button
         onClick={onBack}
-        className="flex items-center gap-1 text-zinc-500 hover:text-zinc-300 text-sm mb-4 transition-colors"
+        className="flex items-center gap-1.5 text-[#555] hover:text-[#00ff88] font-mono text-xs mb-6 transition-colors tracking-widest uppercase"
       >
-        <ArrowLeft className="w-4 h-4" />
+        <ArrowLeft className="w-3.5 h-3.5" />
         Back to events
       </button>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 mb-6">
-        <div className="flex items-center justify-between gap-3 mb-1">
-          <h2 className="text-zinc-100 font-semibold text-lg">{event.label}</h2>
+      <div className="border-2 border-[#333] bg-[#111] p-5 mb-6">
+        <div className="flex items-start justify-between gap-4 mb-2">
+          <h2 className="font-mono text-2xl font-bold uppercase tracking-tight text-[#e8e8e0]">
+            {event.label}
+          </h2>
           {event.event_type && (
-            <Badge className="bg-zinc-800 text-zinc-400 border-zinc-700 capitalize">
+            <span
+              className="inline-block px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider border-2 text-black shrink-0"
+              style={{
+                backgroundColor: eventTypeBg(event.event_type),
+                borderColor: eventTypeBg(event.event_type),
+              }}
+            >
               {event.event_type}
-            </Badge>
+            </span>
           )}
         </div>
-        <p className="text-zinc-500 text-xs">
-          {event.headline_count} headlines ·{" "}
+        <p className="font-mono text-xs text-[#777]">
+          <span className="text-[#00ff88] font-bold">{event.headline_count}</span>
+          {" "}headlines
+          {" "}<span className="text-[#333]">|</span>{" "}
           {new Date(event.created_at).toLocaleDateString()}
         </p>
       </div>
 
       {loading ? (
-        <Loading message="Loading headlines…" />
+        <Loading message="Loading headlines..." />
       ) : headlines.length === 0 ? (
-        <p className="text-zinc-500 text-sm">No headlines in this cluster.</p>
+        <p className="text-[#555] font-mono text-sm">No headlines in this cluster.</p>
       ) : (
-        <div className="space-y-3">
-          {headlines.map((h) => (
+        <div className="border-2 border-[#333]">
+          {headlines.map((h, i) => (
             <div
               key={h.id}
-              className="bg-zinc-900 border border-zinc-800 rounded-lg p-4"
+              className="animate-fade-in-up border-b-2 border-[#222] last:border-b-0 px-4 py-3 hover:bg-[#111] transition-colors"
+              style={{ animationDelay: `${i * 30}ms` }}
             >
               <a
                 href={h.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-zinc-100 text-sm font-medium hover:text-zinc-300 transition-colors"
+                className="font-mono text-sm font-bold text-[#e8e8e0] hover:text-[#00ff88] transition-colors"
               >
                 {h.title}
               </a>
               {h.description && (
-                <p className="text-zinc-400 text-xs mt-1 line-clamp-2">
+                <p className="text-[#777] text-xs mt-1 line-clamp-2 font-mono">
                   {h.description}
                 </p>
               )}
-              <p className="text-zinc-600 text-xs mt-2">
+              <p className="font-mono text-[11px] text-[#444] mt-2">
                 {h.source_name}
                 {h.published_at &&
-                  ` · ${new Date(h.published_at).toLocaleDateString()}`}
+                  ` // ${new Date(h.published_at).toLocaleDateString()}`}
               </p>
             </div>
           ))}
@@ -154,40 +190,46 @@ export default function EventsPage() {
 
   if (selected) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-6 py-8">
         <EventDetail event={selected} onBack={() => setSelected(null)} />
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-semibold text-zinc-100 mb-6">Events</h1>
+    <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="flex items-baseline gap-4 mb-6">
+        <h1 className="font-mono text-2xl font-bold uppercase tracking-tight text-[#e8e8e0]">
+          Events
+        </h1>
+        <span className="font-mono text-[10px] text-[#00ff88] tracking-widest uppercase">
+          Clusters
+        </span>
+      </div>
 
       {loading ? (
-        <Loading message="Loading events…" />
+        <Loading message="Loading events..." />
       ) : events.length === 0 ? (
-        <p className="text-zinc-500 text-sm text-center py-12">
+        <p className="text-[#555] font-mono text-sm text-center py-12">
           No event clusters found.
         </p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {events.map((e) => (
-            <EventCard key={e.id} event={e} onClick={() => setSelected(e)} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {events.map((e, i) => (
+            <EventCard key={e.id} event={e} onClick={() => setSelected(e)} index={i} />
           ))}
         </div>
       )}
 
       {!loading && page < totalPages && (
         <div className="flex justify-center mt-8">
-          <Button
-            variant="outline"
+          <button
             onClick={() => fetchEvents(page + 1, false)}
             disabled={loadingMore}
-            className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+            className="border-2 border-[#333] bg-[#111] text-[#e8e8e0] hover:border-[#00ff88] hover:text-[#00ff88] font-mono text-[10px] font-bold uppercase tracking-wider px-6 py-2.5 transition-colors disabled:opacity-50"
           >
-            {loadingMore ? "Loading…" : "Load more"}
-          </Button>
+            {loadingMore ? "Loading..." : "Load more"}
+          </button>
         </div>
       )}
     </div>

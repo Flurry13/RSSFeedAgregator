@@ -9,7 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loading } from "@/components/loading";
 import { api, type Headline } from "@/lib/api";
@@ -18,17 +17,46 @@ import { Search } from "lucide-react";
 
 const TOPICS = [
   "all",
-  "politics",
-  "technology",
-  "business",
-  "science",
-  "health",
-  "sports",
-  "entertainment",
-  "world",
+  "markets",
+  "economy",
+  "earnings",
+  "crypto",
+  "commodities",
+  "real_estate",
+  "regulation",
+  "fintech",
+  "prediction_markets",
+  "mergers",
 ];
 
 const PAGE_SIZE = 20;
+
+function topicStyle(topic: string): { bg: string; fg: string; border: string } {
+  const m: Record<string, { bg: string; fg: string; border: string }> = {
+    markets:            { bg: "bg-[#00ff88]", fg: "text-black", border: "border-[#00ff88]" },
+    economy:            { bg: "bg-[#ffd700]", fg: "text-black", border: "border-[#ffd700]" },
+    earnings:           { bg: "bg-[#ff8800]", fg: "text-black", border: "border-[#ff8800]" },
+    crypto:             { bg: "bg-[#aa77ff]", fg: "text-black", border: "border-[#aa77ff]" },
+    commodities:        { bg: "bg-[#ff3333]", fg: "text-black", border: "border-[#ff3333]" },
+    real_estate:        { bg: "bg-[#00dddd]", fg: "text-black", border: "border-[#00dddd]" },
+    regulation:         { bg: "bg-[#4488ff]", fg: "text-black", border: "border-[#4488ff]" },
+    fintech:            { bg: "bg-[#33ff99]", fg: "text-black", border: "border-[#33ff99]" },
+    prediction_markets: { bg: "bg-[#ff69b4]", fg: "text-black", border: "border-[#ff69b4]" },
+    mergers:            { bg: "bg-[#ff44aa]", fg: "text-black", border: "border-[#ff44aa]" },
+    general:            { bg: "bg-[#666]",    fg: "text-black", border: "border-[#666]" },
+  };
+  return m[topic.toLowerCase()] ?? m.general;
+}
+
+function topicBorderColor(topic: string): string {
+  const m: Record<string, string> = {
+    markets: "#00ff88", economy: "#ffd700", earnings: "#ff8800",
+    crypto: "#aa77ff", commodities: "#ff3333", real_estate: "#00dddd",
+    regulation: "#4488ff", fintech: "#33ff99", prediction_markets: "#ff69b4",
+    mergers: "#ff44aa",
+  };
+  return m[topic.toLowerCase()] ?? "#333";
+}
 
 export default function FeedPage() {
   const [headlines, setHeadlines] = useState<Headline[]>([]);
@@ -78,106 +106,128 @@ export default function FeedPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-semibold text-zinc-100 mb-6">Feed</h1>
+    <div className="px-4 py-6">
+      {/* Header */}
+      <div className="flex items-baseline gap-3 mb-4">
+        <h1 className="text-2xl font-bold uppercase tracking-tight text-[#e8e8e0]">
+          Feed
+        </h1>
+        <span className="text-[10px] text-[#00ff88] tracking-widest">
+          LIVE
+        </span>
+      </div>
 
       {/* Filters */}
-      <div className="flex gap-3 mb-6">
+      <div className="flex gap-2 mb-4">
         <form onSubmit={handleSearch} className="flex-1 flex gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#555]" />
             <Input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search headlines…"
-              className="pl-9 bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-600"
+              placeholder="grep headlines..."
+              className="pl-8 bg-[#111] border-2 border-[#333] text-[#e8e8e0] placeholder:text-[#444] text-xs h-8 focus:border-[#00ff88] focus:ring-0"
             />
           </div>
-          <Button type="submit" variant="secondary" className="bg-zinc-800 text-zinc-200 hover:bg-zinc-700">
+          <Button
+            type="submit"
+            className="bg-[#00ff88] text-black hover:bg-[#00dd77] text-[10px] font-bold uppercase tracking-wider h-8 px-4 border-2 border-[#00ff88] hover:border-[#00dd77]"
+          >
             Search
           </Button>
         </form>
 
         <Select value={topic} onValueChange={(v) => setTopic(v ?? "all")}>
-          <SelectTrigger className="w-40 bg-zinc-900 border-zinc-800 text-zinc-300">
+          <SelectTrigger className="w-36 bg-[#111] border-2 border-[#333] text-[#e8e8e0] text-[10px] uppercase tracking-wider h-8">
             <SelectValue placeholder="Topic" />
           </SelectTrigger>
-          <SelectContent className="bg-zinc-900 border-zinc-800">
+          <SelectContent className="bg-[#111] border-2 border-[#333]">
             {TOPICS.map((t) => (
               <SelectItem
                 key={t}
                 value={t}
-                className="text-zinc-300 focus:bg-zinc-800 capitalize"
+                className="text-[#e8e8e0] focus:bg-[#1a1a1a] uppercase text-[10px] tracking-wider"
               >
-                {t === "all" ? "All topics" : t}
+                {t === "all" ? "ALL TOPICS" : t}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      {/* List */}
+      {/* Headlines */}
       {loading ? (
-        <Loading message="Loading headlines…" />
+        <Loading message="Loading..." />
       ) : headlines.length === 0 ? (
-        <p className="text-zinc-500 text-sm text-center py-12">No headlines found.</p>
+        <p className="text-[#555] text-xs text-center py-12">
+          No headlines found.
+        </p>
       ) : (
-        <div className="space-y-4">
-          {headlines.map((h) => (
-            <article
-              key={h.id}
-              className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 hover:border-zinc-700 transition-colors"
-            >
-              <div className="flex items-center gap-2 mb-2 flex-wrap">
-                {h.topic && (
-                  <Badge className="bg-zinc-800 text-zinc-300 border-zinc-700 text-xs capitalize">
-                    {h.topic}
-                  </Badge>
-                )}
-                {h.language && (
-                  <Badge
-                    variant="outline"
-                    className="border-zinc-700 text-zinc-500 text-xs uppercase"
-                  >
-                    {h.language}
-                  </Badge>
-                )}
-              </div>
-              <a
-                href={h.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-zinc-100 font-medium text-base leading-snug hover:text-zinc-300 transition-colors"
+        <div className="border-2 border-[#333]">
+          {headlines.map((h, i) => {
+            const tc = h.topic ? topicStyle(h.topic) : null;
+            return (
+              <article
+                key={h.id}
+                className="animate-fade-in-up border-b-2 border-[#222] last:border-b-0 px-3 py-2.5 hover:bg-[#111] transition-colors"
+                style={{
+                  animationDelay: `${i * 30}ms`,
+                  borderLeftWidth: "4px",
+                  borderLeftColor: h.topic ? topicBorderColor(h.topic) : "#222",
+                }}
               >
-                {h.title}
-              </a>
-              {h.description && (
-                <p className="text-zinc-400 text-sm mt-1 line-clamp-2">{h.description}</p>
-              )}
-              <div className="flex items-center gap-2 mt-3 text-xs text-zinc-600">
-                <span>{h.source_name}</span>
-                {h.published_at && (
-                  <>
-                    <span>·</span>
-                    <span>{new Date(h.published_at).toLocaleDateString()}</span>
-                  </>
-                )}
-              </div>
-            </article>
-          ))}
+                <div className="flex items-start gap-3">
+                  {/* Topic badge */}
+                  <div className="shrink-0 w-20 pt-0.5">
+                    {h.topic && tc && (
+                      <span
+                        className={`inline-block px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider border-2 ${tc.bg} ${tc.fg} ${tc.border}`}
+                      >
+                        {h.topic}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Title */}
+                  <div className="flex-1 min-w-0">
+                    <a
+                      href={h.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-bold text-[#e8e8e0] hover:text-[#00ff88] transition-colors leading-snug"
+                    >
+                      {h.title}
+                    </a>
+                  </div>
+
+                  {/* Meta */}
+                  <div className="shrink-0 text-right">
+                    <span className="text-[10px] text-[#666] block">
+                      {h.source_name}
+                    </span>
+                    {h.published_at && (
+                      <span className="text-[9px] text-[#444] block">
+                        {new Date(h.published_at).toLocaleDateString()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </article>
+            );
+          })}
         </div>
       )}
 
       {/* Load more */}
       {!loading && page < totalPages && (
-        <div className="flex justify-center mt-8">
+        <div className="flex justify-center mt-6">
           <Button
             variant="outline"
             onClick={() => fetchHeadlines(page + 1, false)}
             disabled={loadingMore}
-            className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+            className="border-2 border-[#333] text-[#00ff88] hover:bg-[#111] hover:border-[#00ff88] text-[10px] uppercase tracking-wider font-bold"
           >
-            {loadingMore ? "Loading…" : "Load more"}
+            {loadingMore ? "Loading..." : "[ Load More ]"}
           </Button>
         </div>
       )}
