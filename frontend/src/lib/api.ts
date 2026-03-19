@@ -49,8 +49,11 @@ export interface Source {
   url: string;
   language?: string;
   country?: string;
+  category?: string;
   active: boolean;
-  error?: string;
+  fetch_error?: string | null;
+  error_count?: number;
+  last_fetched_at?: string | null;
   created_at: string;
 }
 

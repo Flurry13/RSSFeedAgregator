@@ -37,15 +37,19 @@ CREATE TABLE sources (
     language TEXT NOT NULL DEFAULT 'en',
     country TEXT,
     group_name TEXT,
+    category TEXT,
+    subcategory TEXT,
     active BOOLEAN DEFAULT TRUE,
     last_fetched_at TIMESTAMPTZ,
     fetch_error TEXT,
+    error_count INTEGER DEFAULT 0,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE INDEX idx_sources_active ON sources(active);
 CREATE INDEX idx_sources_language ON sources(language);
+CREATE INDEX idx_sources_category ON sources(category);
 
 -- Headlines table (simplified)
 CREATE TABLE headlines (

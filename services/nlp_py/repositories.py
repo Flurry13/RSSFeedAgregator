@@ -94,19 +94,30 @@ class SourceRepository:
 
     @staticmethod
     def update_last_fetched(source_id: int, error: Optional[str] = None) -> bool:
-        """Stamp last_fetched_at (and optionally last_error) for a source."""
+        """Stamp last_fetched_at for a source. On error, increments error_count;
+        on success, resets error_count to 0 and clears fetch_error."""
         try:
             with get_db_cursor() as cursor:
-                cursor.execute(
-                    """
-                    UPDATE sources
-                    SET last_fetched_at = NOW(),
-                        fetch_error = %(error)s,
-                        updated_at = NOW()
-                    WHERE id = %(source_id)s
-                    """,
-                    {"source_id": source_id, "error": error},
-                )
+                if error:
+                    cursor.execute(
+                        """UPDATE sources
+                           SET last_fetched_at = NOW(),
+                               fetch_error = %(error)s,
+                               error_count = COALESCE(error_count, 0) + 1,
+                               updated_at = NOW()
+                           WHERE id = %(source_id)s""",
+                        {"source_id": source_id, "error": error},
+                    )
+                else:
+                    cursor.execute(
+                        """UPDATE sources
+                           SET last_fetched_at = NOW(),
+                               fetch_error = NULL,
+                               error_count = 0,
+                               updated_at = NOW()
+                           WHERE id = %(source_id)s""",
+                        {"source_id": source_id},
+                    )
                 return True
         except Exception as e:
             print(f"Error updating last_fetched for source {source_id}: {e}")
