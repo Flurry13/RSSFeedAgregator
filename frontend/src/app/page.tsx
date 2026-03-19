@@ -31,39 +31,30 @@ const TOPICS = [
 
 const PAGE_SIZE = 20;
 
-function topicStyle(topic: string): { bg: string; fg: string; border: string } {
-  const m: Record<string, { bg: string; fg: string; border: string }> = {
-    markets:            { bg: "bg-[#00ff88]", fg: "text-black", border: "border-[#00ff88]" },
-    economy:            { bg: "bg-[#ffd700]", fg: "text-black", border: "border-[#ffd700]" },
-    earnings:           { bg: "bg-[#ff8800]", fg: "text-black", border: "border-[#ff8800]" },
-    crypto:             { bg: "bg-[#aa77ff]", fg: "text-black", border: "border-[#aa77ff]" },
-    commodities:        { bg: "bg-[#ff3333]", fg: "text-black", border: "border-[#ff3333]" },
-    real_estate:        { bg: "bg-[#00dddd]", fg: "text-black", border: "border-[#00dddd]" },
-    regulation:         { bg: "bg-[#4488ff]", fg: "text-black", border: "border-[#4488ff]" },
-    fintech:            { bg: "bg-[#33ff99]", fg: "text-black", border: "border-[#33ff99]" },
-    prediction_markets: { bg: "bg-[#ff69b4]", fg: "text-black", border: "border-[#ff69b4]" },
-    mergers:            { bg: "bg-[#ff44aa]", fg: "text-black", border: "border-[#ff44aa]" },
-    general:            { bg: "bg-[#666]",    fg: "text-black", border: "border-[#666]" },
-  };
-  return m[topic.toLowerCase()] ?? m.general;
+const TOPIC_COLORS: Record<string, { bg: string; text: string }> = {
+  markets:            { bg: "rgba(48,209,88,0.15)",  text: "#30d158" },
+  economy:            { bg: "rgba(255,214,10,0.15)", text: "#ffd60a" },
+  earnings:           { bg: "rgba(255,159,10,0.15)", text: "#ff9f0a" },
+  crypto:             { bg: "rgba(191,90,242,0.15)", text: "#bf5af2" },
+  commodities:        { bg: "rgba(255,69,58,0.15)",  text: "#ff453a" },
+  real_estate:        { bg: "rgba(100,210,255,0.15)", text: "#64d2ff" },
+  regulation:         { bg: "rgba(10,132,255,0.15)", text: "#0a84ff" },
+  fintech:            { bg: "rgba(48,209,88,0.15)",  text: "#30d158" },
+  prediction_markets: { bg: "rgba(255,55,95,0.15)",  text: "#ff375f" },
+  mergers:            { bg: "rgba(191,90,242,0.15)", text: "#bf5af2" },
+  general:            { bg: "rgba(152,152,157,0.15)", text: "#98989d" },
+};
+
+function topicColors(topic: string) {
+  return TOPIC_COLORS[topic.toLowerCase()] ?? TOPIC_COLORS.general;
 }
 
-function sentimentBadge(sentiment?: string) {
+function sentimentIcon(sentiment?: string) {
   if (sentiment === "bullish")
-    return <TrendingUp className="w-3.5 h-3.5 text-[#00ff88]" />;
+    return <TrendingUp className="w-3.5 h-3.5 text-[#30d158]" />;
   if (sentiment === "bearish")
-    return <TrendingDown className="w-3.5 h-3.5 text-[#ff3333]" />;
-  return <Minus className="w-3.5 h-3.5 text-[#555]" />;
-}
-
-function topicBorderColor(topic: string): string {
-  const m: Record<string, string> = {
-    markets: "#00ff88", economy: "#ffd700", earnings: "#ff8800",
-    crypto: "#aa77ff", commodities: "#ff3333", real_estate: "#00dddd",
-    regulation: "#4488ff", fintech: "#33ff99", prediction_markets: "#ff69b4",
-    mergers: "#ff44aa",
-  };
-  return m[topic.toLowerCase()] ?? "#333";
+    return <TrendingDown className="w-3.5 h-3.5 text-[#ff453a]" />;
+  return <Minus className="w-3.5 h-3.5 text-[#98989d]" />;
 }
 
 export default function FeedPage() {
@@ -130,10 +121,10 @@ export default function FeedPage() {
     <div className="px-4 py-6">
       {/* Header */}
       <div className="flex items-baseline gap-3 mb-4">
-        <h1 className="text-2xl font-bold uppercase tracking-tight text-[#e8e8e0]">
+        <h1 className="text-[28px] font-bold text-[#e5e5e7]">
           Feed
         </h1>
-        <span className="text-[10px] text-[#00ff88] tracking-widest">
+        <span className="text-[10px] text-[#30d158] tracking-widest uppercase">
           LIVE
         </span>
       </div>
@@ -142,47 +133,47 @@ export default function FeedPage() {
       <div className="flex gap-2 mb-4">
         <form onSubmit={handleSearch} className="flex-1 flex gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#555]" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#636366]" />
             <Input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="grep headlines..."
-              className="pl-8 bg-[#111] border-2 border-[#333] text-[#e8e8e0] placeholder:text-[#444] text-xs h-8 focus:border-[#00ff88] focus:ring-0"
+              placeholder="Search headlines..."
+              className="pl-8 bg-[#1c1c1e] border border-[#48484a] text-[#e5e5e7] placeholder:text-[#636366] text-sm h-8 rounded-lg focus:border-[#0a84ff] focus:ring-0"
             />
           </div>
           <Button
             type="submit"
-            className="bg-[#00ff88] text-black hover:bg-[#00dd77] text-[10px] font-bold uppercase tracking-wider h-8 px-4 border-2 border-[#00ff88] hover:border-[#00dd77]"
+            className="bg-[#0a84ff] text-white hover:bg-[#0a84ff]/90 text-xs font-medium h-8 px-4 rounded-lg"
           >
             Search
           </Button>
         </form>
 
         <Select value={topic ?? "all"} onValueChange={(v) => setTopic(v ?? "all")}>
-          <SelectTrigger className="w-36 bg-[#111] border-2 border-[#333] text-[#e8e8e0] text-[10px] uppercase tracking-wider h-8">
+          <SelectTrigger className="w-36 bg-[#1c1c1e] border border-[#48484a] text-[#e5e5e7] text-xs h-8 rounded-lg">
             <SelectValue placeholder="Topic" />
           </SelectTrigger>
-          <SelectContent className="bg-[#111] border-2 border-[#333]">
+          <SelectContent className="bg-[#2c2c2e] border border-[#3a3a3c] rounded-[10px]">
             {TOPICS.map((t) => (
               <SelectItem
                 key={t}
                 value={t}
-                className="text-[#e8e8e0] focus:bg-[#1a1a1a] uppercase text-[10px] tracking-wider"
+                className="text-[#e5e5e7] focus:bg-[#3a3a3c] text-xs"
               >
-                {t === "all" ? "ALL TOPICS" : t}
+                {t === "all" ? "All Topics" : t.replace(/_/g, " ")}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
 
         <Select value={sentiment ?? "all"} onValueChange={(v) => { setSentiment(v); }}>
-          <SelectTrigger className="w-[130px] bg-[#111] border-2 border-[#333] text-[#e8e8e0] font-mono text-xs rounded-none">
+          <SelectTrigger className="w-[130px] bg-[#1c1c1e] border border-[#48484a] text-[#e5e5e7] text-xs h-8 rounded-lg">
             <SelectValue placeholder="Sentiment" />
           </SelectTrigger>
-          <SelectContent className="bg-[#111] border-2 border-[#333]">
+          <SelectContent className="bg-[#2c2c2e] border border-[#3a3a3c] rounded-[10px]">
             {["all", "bullish", "bearish", "neutral"].map((s) => (
-              <SelectItem key={s} value={s} className="font-mono text-xs text-[#e8e8e0]">
-                {s.toUpperCase()}
+              <SelectItem key={s} value={s} className="text-xs text-[#e5e5e7] focus:bg-[#3a3a3c]">
+                {s.charAt(0).toUpperCase() + s.slice(1)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -193,34 +184,37 @@ export default function FeedPage() {
       {loading ? (
         <Loading message="Loading..." />
       ) : headlines.length === 0 ? (
-        <p className="text-[#555] text-xs text-center py-12">
+        <p className="text-[#636366] text-sm text-center py-12">
           No headlines found.
         </p>
       ) : (
-        <div className="border-2 border-[#333]">
+        <div className="space-y-2">
           {headlines.map((h, i) => {
-            const tc = h.topic ? topicStyle(h.topic) : null;
+            const tc = h.topic ? topicColors(h.topic) : null;
             return (
               <article
                 key={h.id}
-                className="animate-fade-in-up border-b-2 border-[#222] last:border-b-0 px-3 py-2.5 hover:bg-[#111] transition-colors"
+                className="animate-fade-in-up bg-[#2c2c2e] border border-[#3a3a3c] rounded-[10px] p-4 hover:bg-[#3a3a3c] transition-colors"
                 style={{
                   animationDelay: `${i * 30}ms`,
-                  borderLeftWidth: "4px",
-                  borderLeftColor: h.topic ? topicBorderColor(h.topic) : "#222",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
                 }}
               >
                 <div className="flex items-start gap-3">
                   {/* Topic badge + sentiment */}
-                  <div className="shrink-0 w-20 pt-0.5 flex flex-col gap-1">
+                  <div className="shrink-0 w-24 pt-0.5 flex flex-col gap-1.5">
                     {h.topic && tc && (
                       <span
-                        className={`inline-block px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider border-2 ${tc.bg} ${tc.fg} ${tc.border}`}
+                        className="inline-block px-2 py-0.5 text-[11px] font-medium rounded-md w-fit"
+                        style={{
+                          backgroundColor: tc.bg,
+                          color: tc.text,
+                        }}
                       >
-                        {h.topic}
+                        {h.topic.replace(/_/g, " ")}
                       </span>
                     )}
-                    {sentimentBadge(h.sentiment)}
+                    {sentimentIcon(h.sentiment)}
                   </div>
 
                   {/* Title */}
@@ -229,7 +223,7 @@ export default function FeedPage() {
                       href={h.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-sm font-bold text-[#e8e8e0] hover:text-[#00ff88] transition-colors leading-snug"
+                      className="text-[15px] font-medium text-[#e5e5e7] hover:text-[#0a84ff] transition-colors leading-snug"
                     >
                       {h.title}
                     </a>
@@ -237,14 +231,11 @@ export default function FeedPage() {
 
                   {/* Meta */}
                   <div className="shrink-0 text-right">
-                    <span className="text-[10px] text-[#666] block">
+                    <span className="text-[12px] text-[#98989d]">
                       {h.source_name}
+                      {h.published_at &&
+                        ` · ${new Date(h.published_at).toLocaleDateString()}`}
                     </span>
-                    {h.published_at && (
-                      <span className="text-[9px] text-[#444] block">
-                        {new Date(h.published_at).toLocaleDateString()}
-                      </span>
-                    )}
                   </div>
                 </div>
               </article>
@@ -257,12 +248,11 @@ export default function FeedPage() {
       {!loading && page < totalPages && (
         <div className="flex justify-center mt-6">
           <Button
-            variant="outline"
             onClick={() => fetchHeadlines(page + 1, false)}
             disabled={loadingMore}
-            className="border-2 border-[#333] text-[#00ff88] hover:bg-[#111] hover:border-[#00ff88] text-[10px] uppercase tracking-wider font-bold"
+            className="bg-[#0a84ff] text-white hover:bg-[#0a84ff]/90 text-sm font-medium px-6 py-2 rounded-lg"
           >
-            {loadingMore ? "Loading..." : "[ Load More ]"}
+            {loadingMore ? "Loading..." : "Load More"}
           </Button>
         </div>
       )}

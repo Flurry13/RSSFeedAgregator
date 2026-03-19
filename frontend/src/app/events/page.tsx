@@ -8,18 +8,18 @@ import { ArrowLeft, Layers } from "lucide-react";
 
 const PAGE_SIZE = 20;
 
-const EVENT_TYPE_COLORS: Record<string, string> = {
-  earnings_report: "#ff8800",
-  policy_decision: "#ffd700",
-  market_move: "#00ff88",
-  deal: "#ff44aa",
-  regulatory_action: "#4488ff",
-  crypto_event: "#aa77ff",
-  other: "#666",
+const EVENT_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
+  earnings_report:   { bg: "rgba(255,159,10,0.15)",  text: "#ff9f0a" },
+  policy_decision:   { bg: "rgba(255,214,10,0.15)",  text: "#ffd60a" },
+  market_move:       { bg: "rgba(48,209,88,0.15)",   text: "#30d158" },
+  deal:              { bg: "rgba(191,90,242,0.15)",   text: "#bf5af2" },
+  regulatory_action: { bg: "rgba(10,132,255,0.15)",  text: "#0a84ff" },
+  crypto_event:      { bg: "rgba(191,90,242,0.15)",   text: "#bf5af2" },
+  other:             { bg: "rgba(99,99,102,0.15)",    text: "#636366" },
 };
 
-function eventTypeBg(type: string): string {
-  return EVENT_TYPE_COLORS[type.toLowerCase()] ?? "#00ff88";
+function eventTypeColors(type: string) {
+  return EVENT_TYPE_COLORS[type.toLowerCase()] ?? EVENT_TYPE_COLORS.other;
 }
 
 function EventCard({
@@ -31,36 +31,41 @@ function EventCard({
   onClick: () => void;
   index: number;
 }) {
+  const etc = event.event_type ? eventTypeColors(event.event_type) : null;
+
   return (
     <button
       onClick={onClick}
-      className="animate-fade-in-up w-full text-left border-2 border-[#333] bg-[#111] px-4 py-3 hover:border-[#00ff88] transition-colors group"
-      style={{ animationDelay: `${index * 30}ms` }}
+      className="animate-fade-in-up w-full text-left border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] px-4 py-3 hover:bg-[#3a3a3c] transition-colors group"
+      style={{
+        animationDelay: `${index * 30}ms`,
+        boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+      }}
     >
       <div className="flex items-start justify-between gap-3 mb-2">
-        <span className="font-mono text-sm font-bold leading-snug text-[#e8e8e0] group-hover:text-[#00ff88] transition-colors">
+        <span className="text-[15px] font-medium leading-snug text-[#e5e5e7] group-hover:text-[#0a84ff] transition-colors">
           {event.label}
         </span>
-        {event.event_type && (
+        {event.event_type && etc && (
           <span
-            className="inline-block px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border-2 shrink-0 text-black"
+            className="inline-block px-2 py-0.5 text-[11px] font-medium rounded-md shrink-0"
             style={{
-              backgroundColor: eventTypeBg(event.event_type),
-              borderColor: eventTypeBg(event.event_type),
+              backgroundColor: etc.bg,
+              color: etc.text,
             }}
           >
-            {event.event_type}
+            {event.event_type.replace(/_/g, " ")}
           </span>
         )}
       </div>
-      <div className="flex items-center gap-4 font-mono text-xs">
-        <span className="flex items-center gap-1.5 text-[#00ff88]">
+      <div className="flex items-center gap-4 text-xs">
+        <span className="flex items-center gap-1.5 text-[#0a84ff]">
           <Layers className="w-3 h-3" />
-          <span className="font-bold text-sm">{event.headline_count}</span>
-          <span className="text-[#555]">headlines</span>
+          <span className="font-semibold text-sm">{event.headline_count}</span>
+          <span className="text-[#98989d]">headlines</span>
         </span>
         {event.created_at && (
-          <span className="text-[#444]">
+          <span className="text-[#636366]">
             {new Date(event.created_at).toLocaleDateString()}
           </span>
         )}
@@ -78,6 +83,7 @@ function EventDetail({
 }) {
   const [headlines, setHeadlines] = useState<Headline[]>(event.members ?? event.headlines ?? []);
   const [loading, setLoading] = useState(!event.members && !event.headlines);
+  const etc = event.event_type ? eventTypeColors(event.event_type) : null;
 
   useEffect(() => {
     if (event.members || event.headlines) return;
@@ -93,33 +99,33 @@ function EventDetail({
     <div>
       <button
         onClick={onBack}
-        className="flex items-center gap-1.5 text-[#555] hover:text-[#00ff88] font-mono text-xs mb-6 transition-colors tracking-widest uppercase"
+        className="flex items-center gap-1.5 text-[#0a84ff] hover:underline text-sm mb-6 transition-colors"
       >
         <ArrowLeft className="w-3.5 h-3.5" />
         Back to events
       </button>
 
-      <div className="border-2 border-[#333] bg-[#111] p-5 mb-6">
+      <div className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 mb-6" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }}>
         <div className="flex items-start justify-between gap-4 mb-2">
-          <h2 className="font-mono text-2xl font-bold uppercase tracking-tight text-[#e8e8e0]">
+          <h2 className="text-2xl font-bold text-[#e5e5e7]">
             {event.label}
           </h2>
-          {event.event_type && (
+          {event.event_type && etc && (
             <span
-              className="inline-block px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider border-2 text-black shrink-0"
+              className="inline-block px-2 py-0.5 text-[11px] font-medium rounded-md shrink-0"
               style={{
-                backgroundColor: eventTypeBg(event.event_type),
-                borderColor: eventTypeBg(event.event_type),
+                backgroundColor: etc.bg,
+                color: etc.text,
               }}
             >
-              {event.event_type}
+              {event.event_type.replace(/_/g, " ")}
             </span>
           )}
         </div>
-        <p className="font-mono text-xs text-[#777]">
-          <span className="text-[#00ff88] font-bold">{event.headline_count}</span>
+        <p className="text-sm text-[#98989d]">
+          <span className="text-[#0a84ff] font-semibold">{event.headline_count}</span>
           {" "}headlines
-          {" "}<span className="text-[#333]">|</span>{" "}
+          {" · "}
           {new Date(event.created_at).toLocaleDateString()}
         </p>
       </div>
@@ -127,32 +133,35 @@ function EventDetail({
       {loading ? (
         <Loading message="Loading headlines..." />
       ) : headlines.length === 0 ? (
-        <p className="text-[#555] font-mono text-sm">No headlines in this cluster.</p>
+        <p className="text-[#636366] text-sm">No headlines in this cluster.</p>
       ) : (
-        <div className="border-2 border-[#333]">
+        <div className="space-y-2">
           {headlines.map((h, i) => (
             <div
               key={h.id}
-              className="animate-fade-in-up border-b-2 border-[#222] last:border-b-0 px-4 py-3 hover:bg-[#111] transition-colors"
-              style={{ animationDelay: `${i * 30}ms` }}
+              className="animate-fade-in-up border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] px-4 py-3 hover:bg-[#3a3a3c] transition-colors"
+              style={{
+                animationDelay: `${i * 30}ms`,
+                boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+              }}
             >
               <a
                 href={h.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-mono text-sm font-bold text-[#e8e8e0] hover:text-[#00ff88] transition-colors"
+                className="text-[15px] font-medium text-[#e5e5e7] hover:text-[#0a84ff] transition-colors"
               >
                 {h.title}
               </a>
               {h.description && (
-                <p className="text-[#777] text-xs mt-1 line-clamp-2 font-mono">
+                <p className="text-[#98989d] text-sm mt-1 line-clamp-2">
                   {h.description}
                 </p>
               )}
-              <p className="font-mono text-[11px] text-[#444] mt-2">
+              <p className="text-[12px] text-[#636366] mt-2">
                 {h.source_name}
                 {h.published_at &&
-                  ` // ${new Date(h.published_at).toLocaleDateString()}`}
+                  ` · ${new Date(h.published_at).toLocaleDateString()}`}
               </p>
             </div>
           ))}
@@ -199,10 +208,10 @@ export default function EventsPage() {
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
       <div className="flex items-baseline gap-4 mb-6">
-        <h1 className="font-mono text-2xl font-bold uppercase tracking-tight text-[#e8e8e0]">
+        <h1 className="text-[28px] font-bold text-[#e5e5e7]">
           Events
         </h1>
-        <span className="font-mono text-[10px] text-[#00ff88] tracking-widest uppercase">
+        <span className="text-[12px] text-[#98989d]">
           Clusters
         </span>
       </div>
@@ -210,7 +219,7 @@ export default function EventsPage() {
       {loading ? (
         <Loading message="Loading events..." />
       ) : events.length === 0 ? (
-        <p className="text-[#555] font-mono text-sm text-center py-12">
+        <p className="text-[#636366] text-sm text-center py-12">
           No event clusters found.
         </p>
       ) : (
@@ -223,13 +232,13 @@ export default function EventsPage() {
 
       {!loading && page < totalPages && (
         <div className="flex justify-center mt-8">
-          <button
+          <Button
             onClick={() => fetchEvents(page + 1, false)}
             disabled={loadingMore}
-            className="border-2 border-[#333] bg-[#111] text-[#e8e8e0] hover:border-[#00ff88] hover:text-[#00ff88] font-mono text-[10px] font-bold uppercase tracking-wider px-6 py-2.5 transition-colors disabled:opacity-50"
+            className="bg-[#0a84ff] text-white hover:bg-[#0a84ff]/90 text-sm font-medium px-6 py-2 rounded-lg"
           >
-            {loadingMore ? "Loading..." : "Load more"}
-          </button>
+            {loadingMore ? "Loading..." : "Load More"}
+          </Button>
         </div>
       )}
     </div>
