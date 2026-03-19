@@ -1073,3 +1073,43 @@ class PipelineRunRepository:
         except Exception as e:
             print(f"Error fetching pipeline runs: {e}")
             return []
+
+
+# ---------------------------------------------------------------------------
+
+
+class SettingsRepository:
+    """Key-value store for application configuration backed by the settings table."""
+
+    @staticmethod
+    def get(key: str) -> Optional[str]:
+        try:
+            with get_db_cursor() as cursor:
+                cursor.execute("SELECT value FROM settings WHERE key = %s", (key,))
+                row = cursor.fetchone()
+                return row["value"] if row else None
+        except Exception as e:
+            print(f"Error fetching setting {key}: {e}")
+            return None
+
+    @staticmethod
+    def set(key: str, value: str):
+        try:
+            with get_db_cursor() as cursor:
+                cursor.execute(
+                    """INSERT INTO settings (key, value, updated_at) VALUES (%s, %s, NOW())
+                       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()""",
+                    (key, value),
+                )
+        except Exception as e:
+            print(f"Error setting {key}: {e}")
+
+    @staticmethod
+    def get_all() -> Dict[str, str]:
+        try:
+            with get_db_cursor() as cursor:
+                cursor.execute("SELECT key, value FROM settings")
+                return {r["key"]: r["value"] for r in cursor.fetchall()}
+        except Exception as e:
+            print(f"Error fetching settings: {e}")
+            return {}

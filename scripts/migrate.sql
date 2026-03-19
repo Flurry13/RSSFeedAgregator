@@ -122,6 +122,21 @@ CREATE TABLE IF NOT EXISTS pipeline_runs (
 
 CREATE INDEX IF NOT EXISTS idx_pipeline_runs_started_at ON pipeline_runs(started_at);
 
+-- Settings table (key-value store for application configuration)
+CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+INSERT INTO settings (key, value) VALUES
+    ('pipeline_schedule_enabled', 'false'),
+    ('pipeline_schedule_interval', '30'),
+    ('retention_days', '0'),
+    ('default_topic', 'all'),
+    ('default_sentiment', 'all')
+ON CONFLICT (key) DO NOTHING;
+
 -- Views
 CREATE VIEW v_recent_headlines AS
 SELECT
