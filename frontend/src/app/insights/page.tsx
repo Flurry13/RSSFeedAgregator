@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Loading } from "@/components/loading";
-import { api, type InsightsSummary } from "@/lib/api";
+import { api, type InsightsSummary, type PredictionSignals } from "@/lib/api";
 
 type Period = "24h" | "7d" | "30d";
 
@@ -304,10 +304,60 @@ function HeadlinesByCategory({ data }: { data: CategoryHeadlines }) {
   );
 }
 
+/* ── Prediction Markets ──────────────────────────────────────────────────── */
+function PredictionMarketsSection({ data }: { data: PredictionSignals | null }) {
+  if (!data) return null;
+  const { stats, divergences } = data;
+
+  return (
+    <div className="border-2 border-[#333] bg-[#111] p-5 animate-fade-in-up">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-mono text-[10px] uppercase tracking-widest text-[#555]">
+          Prediction Markets
+        </h2>
+        <a
+          href="/predictions"
+          className="font-mono text-[10px] text-[#00ff88] hover:underline uppercase tracking-wider"
+        >
+          View all →
+        </a>
+      </div>
+
+      <div className="flex gap-4 font-mono text-[11px] mb-4">
+        <span className="text-[#777]">{stats.pm_headline_count} headlines</span>
+        <span className="text-[#777]">{stats.cross_references_found} cross-refs</span>
+        <span className={stats.divergences_found > 0 ? "text-[#ff3333] font-bold" : "text-[#777]"}>
+          {stats.divergences_found} divergences
+        </span>
+      </div>
+
+      {divergences.length > 0 ? (
+        <div className="space-y-2">
+          {divergences.slice(0, 3).map((d, i) => (
+            <div key={i} className="flex items-center gap-3 font-mono text-[11px] border border-[#333] px-3 py-2">
+              <span className={d.pm_sentiment === "bearish" ? "text-[#ff3333]" : "text-[#00ff88]"}>
+                PM: {d.pm_sentiment.toUpperCase()}
+              </span>
+              <span className="text-[#555] truncate flex-1">{d.pm_headline.title.slice(0, 60)}...</span>
+              <span className="text-[#555]">vs</span>
+              <span className={d.market_sentiment === "bearish" ? "text-[#ff3333]" : "text-[#00ff88]"}>
+                MKT: {d.market_sentiment.toUpperCase()}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-[#555] font-mono text-xs">No divergences detected</p>
+      )}
+    </div>
+  );
+}
+
 /* ── Main Page ───────────────────────────────────────────────────────────── */
 export default function InsightsPage() {
   const [period, setPeriod] = useState<Period>("24h");
   const [data, setData] = useState<InsightsSummary | null>(null);
+  const [pmData, setPmData] = useState<PredictionSignals | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
@@ -318,6 +368,7 @@ export default function InsightsPage() {
       .then(setData)
       .catch(() => setData(null))
       .finally(() => setLoading(false));
+    api.insights.predictions(period).then(setPmData).catch(() => setPmData(null));
   }, [period]);
 
   async function handleCopy() {
@@ -400,6 +451,9 @@ export default function InsightsPage() {
                 >
                   <TopClusters clusters={data.top_clusters} />
                 </div>
+
+                {/* Prediction Markets */}
+                <PredictionMarketsSection data={pmData} />
 
                 {/* Category Volume */}
                 <div
