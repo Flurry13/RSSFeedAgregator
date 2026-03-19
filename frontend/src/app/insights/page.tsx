@@ -25,6 +25,63 @@ function topicColor(topic: string): string {
   return TOPIC_COLORS[topic?.toLowerCase()] ?? "#555";
 }
 
+/* ── Market Sentiment ────────────────────────────────────────────────────── */
+function MarketSentiment({
+  breakdown,
+  byCategory,
+}: {
+  breakdown: Record<string, number>;
+  byCategory: Record<string, { bullish: number; bearish: number; neutral: number }>;
+}) {
+  const total = (breakdown.bullish ?? 0) + (breakdown.bearish ?? 0) + (breakdown.neutral ?? 0);
+
+  return (
+    <div className="border-2 border-[#333] bg-[#111] p-5 animate-fade-in-up">
+      <h2 className="font-mono text-[10px] uppercase tracking-widest text-[#555] mb-4">
+        Market Sentiment
+      </h2>
+      {total === 0 ? (
+        <p className="text-[#555] font-mono text-xs">No sentiment data yet.</p>
+      ) : (
+        <>
+          <div className="flex h-6 w-full overflow-hidden border border-[#333] mb-2">
+            <div style={{ width: `${((breakdown.bullish ?? 0) / total) * 100}%`, backgroundColor: "#00ff88" }} />
+            <div style={{ width: `${((breakdown.bearish ?? 0) / total) * 100}%`, backgroundColor: "#ff3333" }} />
+            <div style={{ width: `${((breakdown.neutral ?? 0) / total) * 100}%`, backgroundColor: "#444" }} />
+          </div>
+          <div className="flex gap-4 font-mono text-[11px] mb-6">
+            <span className="text-[#00ff88] font-bold">Bullish {breakdown.bullish ?? 0}</span>
+            <span className="text-[#ff3333] font-bold">Bearish {breakdown.bearish ?? 0}</span>
+            <span className="text-[#666] font-bold">Neutral {breakdown.neutral ?? 0}</span>
+          </div>
+
+          <h3 className="font-mono text-[10px] uppercase tracking-widest text-[#555] mb-3">
+            By Category
+          </h3>
+          <div className="space-y-2">
+            {Object.entries(byCategory)
+              .sort(([, a], [, b]) => (b.bullish + b.bearish + b.neutral) - (a.bullish + a.bearish + a.neutral))
+              .map(([cat, counts]) => {
+                const catTotal = counts.bullish + counts.bearish + counts.neutral;
+                return (
+                  <div key={cat} className="flex items-center gap-3 font-mono text-[11px]">
+                    <span className="text-[#777] uppercase w-28 shrink-0">{cat.replace(/_/g, ' ')}</span>
+                    <div className="flex h-3 flex-1 overflow-hidden border border-[#333]">
+                      <div style={{ width: `${(counts.bullish / catTotal) * 100}%`, backgroundColor: "#00ff88" }} />
+                      <div style={{ width: `${(counts.bearish / catTotal) * 100}%`, backgroundColor: "#ff3333" }} />
+                      <div style={{ width: `${(counts.neutral / catTotal) * 100}%`, backgroundColor: "#333" }} />
+                    </div>
+                    <span className="text-[#555] w-10 text-right">{catTotal}</span>
+                  </div>
+                );
+              })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 /* ── Feed Health Bar ─────────────────────────────────────────────────────── */
 function FeedHealthBar({ health }: { health: InsightsSummary["feed_health"] }) {
   const total = health.healthy + health.erroring + health.inactive;
@@ -322,6 +379,12 @@ export default function InsightsPage() {
               </p>
             ) : (
               <div className="space-y-6">
+                {/* Market Sentiment */}
+                <MarketSentiment
+                  breakdown={data.sentiment_breakdown ?? {}}
+                  byCategory={data.sentiment_by_category ?? {}}
+                />
+
                 {/* Feed Health */}
                 <div
                   className="border-2 border-[#333] bg-[#111] p-5 animate-fade-in-up"
