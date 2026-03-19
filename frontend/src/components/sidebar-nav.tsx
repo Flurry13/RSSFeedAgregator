@@ -10,7 +10,6 @@ import {
   Lightbulb,
   TrendingUp,
   GitBranch,
-  Database,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -24,7 +23,6 @@ const NAV_ITEMS = [
   { label: "Insights", href: "/insights", icon: Lightbulb },
   { label: "Predictions", href: "/predictions", icon: TrendingUp },
   { label: "Pipeline", href: "/pipeline", icon: GitBranch },
-  { label: "Sources", href: "/sources", icon: Database },
   { label: "Settings", href: "/settings", icon: Settings },
 ];
 
