@@ -44,6 +44,7 @@ export interface AnalyticsData {
   daily_volume: { date: string; count: number }[];
   source_breakdown: { source_id: number; name: string; count: number }[];
   sentiment_distribution: { sentiment: string; count: number }[];
+  topic_category_heatmap: { topic: string; category: string; count: number }[];
 }
 
 export interface InsightsSummary {
@@ -55,6 +56,14 @@ export interface InsightsSummary {
   feed_health: { healthy: number; erroring: number; inactive: number };
   sentiment_breakdown: Record<string, number>;
   sentiment_by_category: Record<string, { bullish: number; bearish: number; neutral: number }>;
+}
+
+export interface AppSettings {
+  pipeline_schedule_enabled: string;
+  pipeline_schedule_interval: string;
+  retention_days: string;
+  default_topic: string;
+  default_sentiment: string;
 }
 
 export interface Source {
@@ -205,6 +214,19 @@ export const api = {
   search: {
     query(q: string, limit = 10): Promise<SearchResult[]> {
       return request(`/api/search${buildQuery({ q, limit })}`);
+    },
+  },
+
+  settings: {
+    get(): Promise<AppSettings> {
+      return request("/api/settings");
+    },
+    update(data: Partial<AppSettings>): Promise<AppSettings> {
+      return request("/api/settings", {
+        method: "PUT",
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" },
+      });
     },
   },
 
