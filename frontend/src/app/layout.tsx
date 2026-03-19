@@ -1,15 +1,9 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { SidebarNav } from "@/components/sidebar-nav";
 import { DataSidebar, MobileDataSidebar } from "@/components/data-sidebar";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Providers } from "@/components/providers";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
 
 export const metadata: Metadata = {
   title: "RSSFeed2",
@@ -23,7 +17,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} font-sans antialiased bg-zinc-950 text-zinc-100`}>
+      <body className="antialiased bg-background text-foreground">
         <Providers>
           <ErrorBoundary>
             <div className="flex min-h-screen">
