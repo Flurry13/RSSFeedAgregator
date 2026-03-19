@@ -1,193 +1,1459 @@
 {
-    "feeds": [
-      {
-        "id": "nytimes_politics",
-        "name": "New York Times Politics",
-        "url": "https://rss.nytimes.com/services/xml/rss/nyt/Politics.xml",
-        "group": "western",
-        "language": "en",
-        "country": "US"
-      },
-      {
-        "id": "fox_politics",
-        "name": "Fox News Politics",
-        "url": "http://feeds.foxnews.com/foxnews/politics",
-        "group": "western",
-        "language": "en",
-        "country": "US"
-      },
-      {
-        "id": "cbc_politics",
-        "name": "CBC News Politics",
-        "url": "https://www.cbc.ca/webfeed/rss/rss-politics",
-        "group": "western",
-        "language": "en",
-        "country": "CA"
-      },
-      {
-        "id": "bbc_politics",
-        "name": "BBC News Politics",
-        "url": "https://feeds.bbci.co.uk/news/politics/rss.xml",
-        "group": "western",
-        "language": "en",
-        "country": "UK"
-      },
-      {
-        "id": "guardian_politics",
-        "name": "The Guardian Politics",
-        "url": "https://www.theguardian.com/politics/rss",
-        "group": "western",
-        "language": "en",
-        "country": "UK"
-      },
-      {
-        "id": "lemonde_politique",
-        "name": "Le Monde Politique",
-        "url": "https://www.lemonde.fr/politique/rss_full.xml",
-        "group": "western",
-        "language": "fr",
-        "country": "FR"
-      },
-      {
-        "id": "elpais_politica",
-        "name": "El País Política",
-        "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/section/internacional/portada",
-        "group": "western",
-        "language": "es",
-        "country": "ES"
-      },
-      {
-        "id": "derspiegel_politik",
-        "name": "Der Spiegel Politik",
-        "url": "https://www.spiegel.de/politik/index.rss",
-        "group": "western",
-        "language": "de",
-        "country": "DE"
-      },
-      {
-        "id": "g1_politica",
-        "name": "G1 Política",
-        "url": "https://g1.globo.com/rss/g1/politica",
-        "group": "nonwestern",
-        "language": "pt",
-        "country": "BR"
-      },
-      {
-        "id": "clarin_politica",
-        "name": "Clarín Política",
-        "url": "https://www.clarin.com/rss/politica/",
-        "group": "nonwestern",
-        "language": "es",
-        "country": "AR"
-      },
-      {
-        "id": "elcomercio_politica",
-        "name": "El Comercio Política",
-        "url": "https://elcomercio.pe/arc/outboundfeeds/rss/category/politica/?outputType=xml",
-        "group": "nonwestern",
-        "language": "es",
-        "country": "PE"
-      },
-      {
-        "id": "dailymaverick_politics",
-        "name": "Daily Maverick Politics",
-        "url": "https://www.dailymaverick.co.za/section/politics/feed/",
-        "group": "nonwestern",
-        "language": "en",
-        "country": "ZA"
-      },
-      {
-        "id": "jeuneafrique_politique",
-        "name": "Jeune Afrique Politique",
-        "url": "https://www.jeuneafrique.com/feed/",
-        "group": "nonwestern",
-        "language": "fr",
-        "country": "ZA"
-      },
-      {
-        "id": "aljazeera_politics",
-        "name": "Al Jazeera Politics",
-        "url": "https://www.aljazeera.com/xml/rss/all.xml",
-        "group": "nonwestern",
-        "language": "en",
-        "country": "QA"
-      },
-      {
-        "id": "haaretz_politics",
-        "name": "Haaretz Politics",
-        "url": "https://www.haaretz.com/srv/haaretz-latest-headlines",
-        "group": "nonwestern",
-        "language": "he",
-        "country": "IL"
-      },
-      {
-        "id": "xinhua_world",
-        "name": "Xinhua World",
-        "url": "http://www.xinhuanet.com/english/rss/worldrss.xml",
-        "group": "nonwestern",
-        "language": "zh",
-        "country": "CN"
-      },
-      {
-        "id": "chinadaily_world",
-        "name": "China Daily World",
-        "url": "https://www.chinadaily.com.cn/rss/world_rss.xml",
-        "group": "nonwestern",
-        "language": "en",
-        "country": "CN"
-      },
-      {
-        "id": "thehindu_politics",
-        "name": "The Hindu Politics",
-        "url": "https://www.thehindu.com/news/national/feeder/default.rss",
-        "group": "nonwestern",
-        "language": "en",
-        "country": "IN"
-      },
-      {
-        "id": "asahi_politics",
-        "name": "Asahi Shimbun 政治",
-        "url": "https://www.asahi.com/rss/asahi/politics.rdf",
-        "group": "nonwestern",
-        "language": "ja",
-        "country": "JP"
-      },
-      {
-        "id": "abc_politics",
-        "name": "ABC News Australia Politics",
-        "url": "https://www.abc.net.au/news/feed/51120/rss.xml",
-        "group": "western",
-        "language": "en",
-        "country": "AU"
-      },
-      {
-        "id": "sbs_politics",
-        "name": "SBS News World",
-        "url": "https://www.sbs.com.au/news/topic/world/feed",
-        "group": "western",
-        "language": "en",
-        "country": "AU"
-      },
-      {
-        "id": "rnz_politics",
-        "name": "Radio New Zealand Politics",
-        "url": "https://www.rnz.co.nz/rss/politics.xml",
-        "group": "western",
-        "language": "en",
-        "country": "NZ"
+  "feeds": [
+    {
+      "id": "cnbc_top_news",
+      "name": "CNBC Top News",
+      "url": "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+      "category": "equities",
+      "subcategory": "us_stock_market",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "cnbc_investing",
+      "name": "CNBC Investing",
+      "url": "https://www.cnbc.com/id/15839069/device/rss/rss.html",
+      "category": "equities",
+      "subcategory": "us_stock_market",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "cnbc_economy",
+      "name": "CNBC Economy",
+      "url": "https://www.cnbc.com/id/20910258/device/rss/rss.html",
+      "category": "macro",
+      "subcategory": "economic_commentary",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "cnbc_earnings",
+      "name": "CNBC Earnings",
+      "url": "https://www.cnbc.com/id/15839135/device/rss/rss.html",
+      "category": "earnings",
+      "subcategory": "corporate_earnings",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "marketwatch_top_stories",
+      "name": "MarketWatch Top Stories",
+      "url": "https://feeds.content.dowjones.io/public/rss/mw_topstories",
+      "category": "equities",
+      "subcategory": "us_stock_market",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "marketwatch_market_pulse",
+      "name": "MarketWatch Market Pulse",
+      "url": "https://feeds.content.dowjones.io/public/rss/mw_marketpulse",
+      "category": "equities",
+      "subcategory": "us_stock_market",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "wsj_markets",
+      "name": "WSJ Markets",
+      "url": "https://feeds.content.dowjones.io/public/rss/RSSMarketsMain",
+      "category": "equities",
+      "subcategory": "us_stock_market",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "wsj_us_business",
+      "name": "WSJ US Business",
+      "url": "https://feeds.content.dowjones.io/public/rss/WSJcomUSBusiness",
+      "category": "equities",
+      "subcategory": "us_stock_market",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "wsj_economy",
+      "name": "WSJ Economy",
+      "url": "https://feeds.content.dowjones.io/public/rss/socialeconomyfeed",
+      "category": "macro",
+      "subcategory": "economic_commentary",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "seeking_alpha",
+      "name": "Seeking Alpha",
+      "url": "https://seekingalpha.com/feed.xml",
+      "category": "equities",
+      "subcategory": "us_stock_market",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "motley_fool",
+      "name": "Motley Fool",
+      "url": "https://www.fool.com/feeds/index.aspx?id=foolwatch&format=rss2",
+      "category": "equities",
+      "subcategory": "us_stock_market",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "yahoo_finance",
+      "name": "Yahoo Finance",
+      "url": "https://finance.yahoo.com/news/rssindex",
+      "category": "equities",
+      "subcategory": "us_stock_market",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "nasdaq_stocks",
+      "name": "Nasdaq Stocks",
+      "url": "https://www.nasdaq.com/feed/rssoutbound?category=Stocks",
+      "category": "equities",
+      "subcategory": "us_stock_market",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "nasdaq_markets",
+      "name": "Nasdaq Markets",
+      "url": "https://www.nasdaq.com/feed/rssoutbound?category=Markets",
+      "category": "equities",
+      "subcategory": "us_stock_market",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "investing_com_stock",
+      "name": "Investing.com Stock Market",
+      "url": "https://www.investing.com/rss/news_25.rss",
+      "category": "equities",
+      "subcategory": "us_stock_market",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "zerohedge",
+      "name": "Zero Hedge",
+      "url": "https://feeds.feedburner.com/zerohedge/feed",
+      "category": "equities",
+      "subcategory": "market_commentary",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "benzinga",
+      "name": "Benzinga",
+      "url": "https://www.benzinga.com/feed",
+      "category": "equities",
+      "subcategory": "us_stock_market",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "thestreet",
+      "name": "TheStreet",
+      "url": "https://www.thestreet.com/.rss/full",
+      "category": "equities",
+      "subcategory": "us_stock_market",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "kiplinger_investing",
+      "name": "Kiplinger Investing",
+      "url": "https://www.kiplinger.com/feed/investing",
+      "category": "equities",
+      "subcategory": "investment_advice",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "investopedia_markets",
+      "name": "Investopedia Market News",
+      "url": "https://www.investopedia.com/feedbuilder/feed/getfeed?feedName=rss_headline",
+      "category": "equities",
+      "subcategory": "us_stock_market",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "marketbeat",
+      "name": "MarketBeat",
+      "url": "https://www.marketbeat.com/feed/",
+      "category": "equities",
+      "subcategory": "us_stock_market",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "etf_trends",
+      "name": "ETF Trends",
+      "url": "https://www.etftrends.com/feed/",
+      "category": "equities",
+      "subcategory": "etf",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "fierce_pharma",
+      "name": "FiercePharma",
+      "url": "https://www.fiercepharma.com/rss/xml",
+      "category": "equities",
+      "subcategory": "healthcare",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "biopharma_dive",
+      "name": "BioPharma Dive",
+      "url": "https://www.biopharmadive.com/feeds/news/",
+      "category": "equities",
+      "subcategory": "healthcare",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "rigzone",
+      "name": "Rigzone",
+      "url": "https://www.rigzone.com/news/rss/rigzone_latest.aspx",
+      "category": "equities",
+      "subcategory": "energy",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "semianalysis",
+      "name": "SemiAnalysis",
+      "url": "https://www.semianalysis.com/feed",
+      "category": "equities",
+      "subcategory": "semiconductors",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "cnbc_world",
+      "name": "CNBC World Markets",
+      "url": "https://www.cnbc.com/id/100646281/device/rss/rss.html",
+      "category": "equities",
+      "subcategory": "global_markets",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "bloomberg_markets",
+      "name": "Bloomberg Markets",
+      "url": "https://feeds.bloomberg.com/markets/news.rss",
+      "category": "equities",
+      "subcategory": "global_markets",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "fed_press_all",
+      "name": "Federal Reserve Press Releases",
+      "url": "https://www.federalreserve.gov/feeds/press_all.xml",
+      "category": "macro",
+      "subcategory": "central_bank",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "fed_press_monetary",
+      "name": "Federal Reserve Monetary Policy",
+      "url": "https://www.federalreserve.gov/feeds/press_monetary.xml",
+      "category": "macro",
+      "subcategory": "central_bank",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "fed_speeches",
+      "name": "Federal Reserve Board Speeches",
+      "url": "https://www.federalreserve.gov/feeds/speeches.xml",
+      "category": "macro",
+      "subcategory": "central_bank",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "bls_latest",
+      "name": "Bureau of Labor Statistics",
+      "url": "https://www.bls.gov/feed/bls_latest.rss",
+      "category": "macro",
+      "subcategory": "economic_data",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "fred_blog",
+      "name": "FRED Blog (St. Louis Fed)",
+      "url": "https://fredblog.stlouisfed.org/feed/",
+      "category": "macro",
+      "subcategory": "economic_data",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "calculated_risk",
+      "name": "Calculated Risk",
+      "url": "https://calculatedrisk.substack.com/feed",
+      "category": "macro",
+      "subcategory": "economic_commentary",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "naked_capitalism",
+      "name": "Naked Capitalism",
+      "url": "https://www.nakedcapitalism.com/feed",
+      "category": "macro",
+      "subcategory": "economic_commentary",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "wolf_street",
+      "name": "Wolf Street",
+      "url": "https://wolfstreet.com/feed/",
+      "category": "macro",
+      "subcategory": "economic_commentary",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "economist_finance",
+      "name": "The Economist Finance",
+      "url": "https://www.economist.com/finance-and-economics/rss.xml",
+      "category": "macro",
+      "subcategory": "economic_commentary",
+      "language": "en",
+      "country": "GB"
+    },
+    {
+      "id": "economist_business",
+      "name": "The Economist Business",
+      "url": "https://www.economist.com/business/rss.xml",
+      "category": "macro",
+      "subcategory": "economic_commentary",
+      "language": "en",
+      "country": "GB"
+    },
+    {
+      "id": "investing_com_economy",
+      "name": "Investing.com Economic News",
+      "url": "https://www.investing.com/rss/news_14.rss",
+      "category": "macro",
+      "subcategory": "economic_commentary",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "imf_blog",
+      "name": "IMF Blog",
+      "url": "https://www.imf.org/en/News/Rss?dtype=Blogs",
+      "category": "macro",
+      "subcategory": "international_economics",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "world_bank_blogs",
+      "name": "World Bank Blogs",
+      "url": "https://blogs.worldbank.org/en/rss.xml",
+      "category": "macro",
+      "subcategory": "international_economics",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "bis_speeches",
+      "name": "BIS Central Bank Speeches",
+      "url": "https://www.bis.org/doclist/cbspeeches.rss",
+      "category": "macro",
+      "subcategory": "central_bank",
+      "language": "en",
+      "country": "CH"
+    },
+    {
+      "id": "ecb_press",
+      "name": "ECB Press Releases",
+      "url": "https://www.ecb.europa.eu/rss/press.html",
+      "category": "macro",
+      "subcategory": "central_bank",
+      "language": "en",
+      "country": "DE"
+    },
+    {
+      "id": "bank_of_england",
+      "name": "Bank of England News",
+      "url": "https://www.bankofengland.co.uk/rss/news",
+      "category": "macro",
+      "subcategory": "central_bank",
+      "language": "en",
+      "country": "GB"
+    },
+    {
+      "id": "brookings_economic",
+      "name": "Brookings Economic Studies",
+      "url": "https://www.brookings.edu/feeds/rss/research/",
+      "category": "macro",
+      "subcategory": "economic_research",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "epi",
+      "name": "Economic Policy Institute",
+      "url": "https://feeds.feedburner.com/epi",
+      "category": "macro",
+      "subcategory": "economic_research",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "piie",
+      "name": "Peterson Institute (PIIE)",
+      "url": "https://www.piie.com/research/publications/rss",
+      "category": "macro",
+      "subcategory": "international_economics",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "coindesk",
+      "name": "CoinDesk",
+      "url": "https://www.coindesk.com/arc/outboundfeeds/rss/",
+      "category": "crypto",
+      "subcategory": "digital_assets",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "cointelegraph",
+      "name": "CoinTelegraph",
+      "url": "https://cointelegraph.com/rss",
+      "category": "crypto",
+      "subcategory": "digital_assets",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "the_block",
+      "name": "The Block",
+      "url": "https://www.theblock.co/rss.xml",
+      "category": "crypto",
+      "subcategory": "digital_assets",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "decrypt",
+      "name": "Decrypt",
+      "url": "https://decrypt.co/feed",
+      "category": "crypto",
+      "subcategory": "digital_assets",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "bitcoin_magazine",
+      "name": "Bitcoin Magazine",
+      "url": "https://bitcoinmagazine.com/feed",
+      "category": "crypto",
+      "subcategory": "bitcoin",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "blockworks",
+      "name": "Blockworks",
+      "url": "https://blockworks.co/feed/",
+      "category": "crypto",
+      "subcategory": "digital_assets",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "coinjournal",
+      "name": "CoinJournal",
+      "url": "https://coinjournal.net/news/feed/",
+      "category": "crypto",
+      "subcategory": "digital_assets",
+      "language": "en",
+      "country": "GB"
+    },
+    {
+      "id": "dlnews",
+      "name": "DL News",
+      "url": "https://www.dlnews.com/feed/",
+      "category": "crypto",
+      "subcategory": "digital_assets",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "cryptoslate",
+      "name": "CryptoSlate",
+      "url": "https://cryptoslate.com/feed/",
+      "category": "crypto",
+      "subcategory": "digital_assets",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "beincrypto",
+      "name": "BeInCrypto",
+      "url": "https://beincrypto.com/feed/",
+      "category": "crypto",
+      "subcategory": "digital_assets",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "newsbtc",
+      "name": "NewsBTC",
+      "url": "https://www.newsbtc.com/feed/",
+      "category": "crypto",
+      "subcategory": "digital_assets",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "crypto_briefing",
+      "name": "Crypto Briefing",
+      "url": "https://cryptobriefing.com/feed/",
+      "category": "crypto",
+      "subcategory": "digital_assets",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "the_defiant",
+      "name": "The Defiant",
+      "url": "https://thedefiant.io/api/feed",
+      "category": "crypto",
+      "subcategory": "defi",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "polymarket_oracle",
+      "name": "Polymarket - The Oracle",
+      "url": "https://news.polymarket.com/feed",
+      "category": "prediction_markets",
+      "subcategory": "prediction_market_news",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "metaculus",
+      "name": "Metaculus Journal",
+      "url": "https://metaculus.medium.com/feed",
+      "category": "prediction_markets",
+      "subcategory": "forecasting",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "manifold_markets",
+      "name": "Manifold Markets Blog",
+      "url": "https://news.manifold.markets/feed",
+      "category": "prediction_markets",
+      "subcategory": "prediction_market_news",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "kalshi_blog",
+      "name": "Kalshi Blog",
+      "url": "https://kalshi.com/blog/rss.xml",
+      "category": "prediction_markets",
+      "subcategory": "prediction_market_news",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "predictit_analysis",
+      "name": "PredictIt Analysis",
+      "url": "https://analysis.predictit.org/feed",
+      "category": "prediction_markets",
+      "subcategory": "prediction_market_news",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "oilprice",
+      "name": "OilPrice.com",
+      "url": "https://oilprice.com/rss/main",
+      "category": "commodities",
+      "subcategory": "energy",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "eia_today",
+      "name": "EIA Today in Energy",
+      "url": "https://www.eia.gov/rss/todayinenergy.xml",
+      "category": "commodities",
+      "subcategory": "energy",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "mining_com",
+      "name": "MINING.com",
+      "url": "https://www.mining.com/feed/",
+      "category": "commodities",
+      "subcategory": "mining_metals",
+      "language": "en",
+      "country": "CA"
+    },
+    {
+      "id": "nasdaq_commodities",
+      "name": "Nasdaq Commodities",
+      "url": "https://www.nasdaq.com/feed/rssoutbound?category=Commodities",
+      "category": "commodities",
+      "subcategory": "commodities_general",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "investing_com_commodities",
+      "name": "Investing.com Commodities",
+      "url": "https://www.investing.com/rss/news_11.rss",
+      "category": "commodities",
+      "subcategory": "commodities_general",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "opec_news",
+      "name": "OPEC Flash News",
+      "url": "https://www.opec.org/opec_web/en/news/rss.xml",
+      "category": "commodities",
+      "subcategory": "energy",
+      "language": "en",
+      "country": "AT"
+    },
+    {
+      "id": "sp_global_commodities",
+      "name": "S&P Global Commodity Insights",
+      "url": "https://www.spglobal.com/commodity-insights/en/rss",
+      "category": "commodities",
+      "subcategory": "commodities_general",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "usda_reports",
+      "name": "USDA Agricultural Reports",
+      "url": "https://www.nass.usda.gov/rss/reports.xml",
+      "category": "commodities",
+      "subcategory": "agriculture",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "world_grain",
+      "name": "World Grain",
+      "url": "https://www.world-grain.com/rss",
+      "category": "commodities",
+      "subcategory": "agriculture",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "investing_com_forex",
+      "name": "Investing.com Forex",
+      "url": "https://www.investing.com/rss/news_1.rss",
+      "category": "commodities",
+      "subcategory": "forex",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "commodity_tv",
+      "name": "Commodity-TV",
+      "url": "https://www.commodity-tv.com/api/feeds/rss/",
+      "category": "commodities",
+      "subcategory": "commodities_general",
+      "language": "en",
+      "country": "CH"
+    },
+    {
+      "id": "housingwire",
+      "name": "HousingWire",
+      "url": "https://www.housingwire.com/feed/",
+      "category": "real_estate",
+      "subcategory": "housing_market",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "redfin_blog",
+      "name": "Redfin Blog",
+      "url": "https://www.redfin.com/blog/feed/",
+      "category": "real_estate",
+      "subcategory": "housing_market",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "realtor_news",
+      "name": "Realtor.com News",
+      "url": "https://www.realtor.com/news/feed/",
+      "category": "real_estate",
+      "subcategory": "housing_market",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "zillow_research",
+      "name": "Zillow Media Room",
+      "url": "https://zillow.mediaroom.com/rss-feeds",
+      "category": "real_estate",
+      "subcategory": "housing_market",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "mortgage_news_daily",
+      "name": "Mortgage News Daily",
+      "url": "https://www.mortgagenewsdaily.com/rss/news",
+      "category": "real_estate",
+      "subcategory": "mortgage",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "the_real_deal",
+      "name": "The Real Deal",
+      "url": "https://therealdeal.com/feed/",
+      "category": "real_estate",
+      "subcategory": "commercial_real_estate",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "bisnow",
+      "name": "Bisnow National",
+      "url": "https://www.bisnow.com/feed",
+      "category": "real_estate",
+      "subcategory": "commercial_real_estate",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "sec_press_releases",
+      "name": "SEC Press Releases",
+      "url": "https://www.sec.gov/news/pressreleases.rss",
+      "category": "regulation",
+      "subcategory": "securities",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "cftc_press_releases",
+      "name": "CFTC Press Releases",
+      "url": "https://www.cftc.gov/RSS/RSSGP/rssgp.xml/all",
+      "category": "regulation",
+      "subcategory": "commodities_futures",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "fdic_press_releases",
+      "name": "FDIC Press Releases",
+      "url": "https://public.govdelivery.com/topics/USFDIC_26/feed.rss",
+      "category": "regulation",
+      "subcategory": "banking",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "fdic_fil",
+      "name": "FDIC Financial Institution Letters",
+      "url": "https://public.govdelivery.com/topics/USFDIC_19/feed.rss",
+      "category": "regulation",
+      "subcategory": "banking",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "american_banker",
+      "name": "American Banker",
+      "url": "https://www.americanbanker.com/feed",
+      "category": "regulation",
+      "subcategory": "banking",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "occ_news",
+      "name": "OCC News Releases",
+      "url": "https://www.occ.treas.gov/rss/news-releases.xml",
+      "category": "regulation",
+      "subcategory": "banking",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "occ_bulletins",
+      "name": "OCC Bulletins",
+      "url": "https://www.occ.treas.gov/rss/bulletins.xml",
+      "category": "regulation",
+      "subcategory": "banking",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "doj_antitrust",
+      "name": "DOJ Antitrust Division",
+      "url": "https://www.justice.gov/atr/press-releases/feed",
+      "category": "regulation",
+      "subcategory": "antitrust",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "ftc_competition",
+      "name": "FTC Competition News",
+      "url": "https://www.ftc.gov/feeds/press-releases-competition.xml",
+      "category": "regulation",
+      "subcategory": "antitrust",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "ecb_banking_supervision",
+      "name": "ECB Banking Supervision",
+      "url": "https://www.bankingsupervision.europa.eu/rss/press.xml",
+      "category": "regulation",
+      "subcategory": "banking",
+      "language": "en",
+      "country": "DE"
+    },
+    {
+      "id": "finextra_headlines",
+      "name": "Finextra Headlines",
+      "url": "https://www.finextra.com/rss/headlines.aspx",
+      "category": "fintech",
+      "subcategory": "fintech_news",
+      "language": "en",
+      "country": "GB"
+    },
+    {
+      "id": "finextra_payments",
+      "name": "Finextra Payments",
+      "url": "https://www.finextra.com/rss/channel.aspx?channel=payments",
+      "category": "fintech",
+      "subcategory": "payments",
+      "language": "en",
+      "country": "GB"
+    },
+    {
+      "id": "techcrunch_fintech",
+      "name": "TechCrunch Fintech",
+      "url": "https://techcrunch.com/category/fintech/feed/",
+      "category": "fintech",
+      "subcategory": "fintech_news",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "pymnts",
+      "name": "PYMNTS.com",
+      "url": "https://www.pymnts.com/feed/",
+      "category": "fintech",
+      "subcategory": "payments",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "financial_brand",
+      "name": "The Financial Brand",
+      "url": "https://thefinancialbrand.com/feed/",
+      "category": "fintech",
+      "subcategory": "digital_banking",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "tearsheet",
+      "name": "Tearsheet",
+      "url": "https://tearsheet.co/feed/",
+      "category": "fintech",
+      "subcategory": "fintech_news",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "sifted_fintech",
+      "name": "Sifted European Fintech",
+      "url": "https://sifted.eu/feed/",
+      "category": "fintech",
+      "subcategory": "fintech_news",
+      "language": "en",
+      "country": "GB"
+    },
+    {
+      "id": "investing_com_earnings",
+      "name": "Investing.com Earnings",
+      "url": "https://www.investing.com/rss/news_1062.rss",
+      "category": "earnings",
+      "subcategory": "corporate_earnings",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "globenewswire",
+      "name": "GlobeNewsWire Earnings",
+      "url": "https://www.globenewswire.com/RssFeed/subjectcode/14-Earnings%20Releases%20And%20Operating%20Results/feedTitle/GlobeNewswire%20-%20Earnings%20Releases%20And%20Operating%20Results",
+      "category": "earnings",
+      "subcategory": "corporate_earnings",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "investing_com_analyst",
+      "name": "Investing.com Analyst Ratings",
+      "url": "https://www.investing.com/rss/news_1061.rss",
+      "category": "earnings",
+      "subcategory": "analyst_ratings",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "prnewswire_business",
+      "name": "PR Newswire Business",
+      "url": "https://www.prnewswire.com/rss/financial-services-latest-news/financial-services-latest-news-list.rss",
+      "category": "earnings",
+      "subcategory": "corporate_news",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "businesswire_finance",
+      "name": "Business Wire Finance",
+      "url": "https://feed.businesswire.com/rss/home/?rss=G1QFDERJXkJeEFpRWA==",
+      "category": "earnings",
+      "subcategory": "corporate_news",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "sp_global_market_intel",
+      "name": "S&P Global Market Intelligence",
+      "url": "https://www.spglobal.com/market-intelligence/en/rss",
+      "category": "earnings",
+      "subcategory": "market_intelligence",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "nasdaq_earnings",
+      "name": "Nasdaq Earnings",
+      "url": "https://www.nasdaq.com/feed/rssoutbound?category=Earnings",
+      "category": "earnings",
+      "subcategory": "corporate_earnings",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "ft_companies",
+      "name": "Financial Times Companies",
+      "url": "https://www.ft.com/companies?format=rss",
+      "category": "international",
+      "subcategory": "global_finance",
+      "language": "en",
+      "country": "GB"
+    },
+    {
+      "id": "ft_markets",
+      "name": "Financial Times Markets",
+      "url": "https://www.ft.com/markets?format=rss",
+      "category": "international",
+      "subcategory": "global_markets",
+      "language": "en",
+      "country": "GB"
+    },
+    {
+      "id": "nikkei_asia",
+      "name": "Nikkei Asia",
+      "url": "https://asia.nikkei.com/rss/feed/nar",
+      "category": "international",
+      "subcategory": "asia_pacific",
+      "language": "en",
+      "country": "JP"
+    },
+    {
+      "id": "scmp_business",
+      "name": "SCMP Business",
+      "url": "https://www.scmp.com/rss/92/feed",
+      "category": "international",
+      "subcategory": "asia_pacific",
+      "language": "en",
+      "country": "HK"
+    },
+    {
+      "id": "wsj_world_news",
+      "name": "WSJ World News",
+      "url": "https://feeds.content.dowjones.io/public/rss/RSSWorldNews",
+      "category": "international",
+      "subcategory": "global_finance",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "bbc_business",
+      "name": "BBC Business",
+      "url": "https://feeds.bbci.co.uk/news/business/rss.xml",
+      "category": "international",
+      "subcategory": "global_finance",
+      "language": "en",
+      "country": "GB"
+    },
+    {
+      "id": "bloomberg_wealth",
+      "name": "Bloomberg Wealth",
+      "url": "https://feeds.bloomberg.com/wealth/news.rss",
+      "category": "international",
+      "subcategory": "global_finance",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "bloomberg_politics",
+      "name": "Bloomberg Politics",
+      "url": "https://feeds.bloomberg.com/politics/news.rss",
+      "category": "international",
+      "subcategory": "geopolitical",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "livemint_markets",
+      "name": "LiveMint Markets",
+      "url": "https://www.livemint.com/rss/markets",
+      "category": "international",
+      "subcategory": "asia_pacific",
+      "language": "en",
+      "country": "IN"
+    },
+    {
+      "id": "livemint_companies",
+      "name": "LiveMint Companies",
+      "url": "https://www.livemint.com/rss/companies",
+      "category": "international",
+      "subcategory": "asia_pacific",
+      "language": "en",
+      "country": "IN"
+    },
+    {
+      "id": "economic_times_india",
+      "name": "Economic Times India",
+      "url": "https://economictimes.indiatimes.com/rssfeedsdefault.cms",
+      "category": "international",
+      "subcategory": "asia_pacific",
+      "language": "en",
+      "country": "IN"
+    },
+    {
+      "id": "straits_times_business",
+      "name": "Straits Times Business",
+      "url": "https://www.straitstimes.com/business/rss.xml",
+      "category": "international",
+      "subcategory": "asia_pacific",
+      "language": "en",
+      "country": "SG"
+    },
+    {
+      "id": "japan_times_business",
+      "name": "Japan Times Business",
+      "url": "https://www.japantimes.co.jp/feed/",
+      "category": "international",
+      "subcategory": "asia_pacific",
+      "language": "en",
+      "country": "JP"
+    },
+    {
+      "id": "the_edge_markets",
+      "name": "The Edge Markets",
+      "url": "https://feeds.theedgemarkets.com/theedgemarkets/mytopstories.rss",
+      "category": "international",
+      "subcategory": "asia_pacific",
+      "language": "en",
+      "country": "MY"
+    },
+    {
+      "id": "gulf_news_business",
+      "name": "Gulf News Business",
+      "url": "https://gulfnews.com/business/rss",
+      "category": "international",
+      "subcategory": "middle_east",
+      "language": "en",
+      "country": "AE"
+    },
+    {
+      "id": "arabian_business",
+      "name": "Arabian Business",
+      "url": "https://www.arabianbusiness.com/rss",
+      "category": "international",
+      "subcategory": "middle_east",
+      "language": "en",
+      "country": "AE"
+    },
+    {
+      "id": "al_jazeera_economy",
+      "name": "Al Jazeera Economy",
+      "url": "https://www.aljazeera.com/xml/rss/all.xml",
+      "category": "international",
+      "subcategory": "geopolitical",
+      "language": "en",
+      "country": "QA"
+    },
+    {
+      "id": "handelsblatt",
+      "name": "Handelsblatt",
+      "url": "https://www.handelsblatt.com/contentexport/feed/schlagzeilen",
+      "category": "international",
+      "subcategory": "europe",
+      "language": "de",
+      "country": "DE"
+    },
+    {
+      "id": "caixin_global",
+      "name": "Caixin Global",
+      "url": "https://www.caixinglobal.com/feed/",
+      "category": "international",
+      "subcategory": "asia_pacific",
+      "language": "en",
+      "country": "CN"
+    },
+    {
+      "id": "bloomberg_technology",
+      "name": "Bloomberg Technology",
+      "url": "https://feeds.bloomberg.com/technology/news.rss",
+      "category": "international",
+      "subcategory": "global_finance",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "axios_markets",
+      "name": "Axios Markets",
+      "url": "https://www.axios.com/feeds/feed.rss",
+      "category": "equities",
+      "subcategory": "us_stock_market",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "forbes_business",
+      "name": "Forbes Business",
+      "url": "https://www.forbes.com/business/feed/",
+      "category": "equities",
+      "subcategory": "us_stock_market",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "fortune_finance",
+      "name": "Fortune Finance",
+      "url": "https://fortune.com/feed/",
+      "category": "equities",
+      "subcategory": "us_stock_market",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "business_insider_finance",
+      "name": "Business Insider Finance",
+      "url": "https://www.businessinsider.com/svc/rss",
+      "category": "equities",
+      "subcategory": "us_stock_market",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "cnbc_finance",
+      "name": "CNBC Finance",
+      "url": "https://www.cnbc.com/id/10000664/device/rss/rss.html",
+      "category": "equities",
+      "subcategory": "us_stock_market",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "cnbc_technology",
+      "name": "CNBC Technology",
+      "url": "https://www.cnbc.com/id/15838652/device/rss/rss.html",
+      "category": "equities",
+      "subcategory": "tech_stocks",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "quartz_business",
+      "name": "Quartz Business",
+      "url": "https://qz.com/feed",
+      "category": "equities",
+      "subcategory": "global_markets",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "sp_dow_jones",
+      "name": "S&P Dow Jones Indices",
+      "url": "https://www.spglobal.com/spdji/en/rss/rss-details/?rssFeedName=all-indices-702",
+      "category": "equities",
+      "subcategory": "indices",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "fed_chicago",
+      "name": "Chicago Fed",
+      "url": "https://www.chicagofed.org/publications/publication-listing?pubID=all&format=rss",
+      "category": "macro",
+      "subcategory": "central_bank",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "fed_atlanta",
+      "name": "Atlanta Fed",
+      "url": "https://www.atlantafed.org/rss/macroblog",
+      "category": "macro",
+      "subcategory": "central_bank",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "fed_dallas",
+      "name": "Dallas Fed",
+      "url": "https://www.dallasfed.org/rss/default.aspx",
+      "category": "macro",
+      "subcategory": "central_bank",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "fsb",
+      "name": "Financial Stability Board",
+      "url": "https://www.fsb.org/feed/",
+      "category": "macro",
+      "subcategory": "financial_stability",
+      "language": "en",
+      "country": "CH"
+    },
+    {
+      "id": "dailyfx_market",
+      "name": "DailyFX Market News",
+      "url": "https://www.dailyfx.com/feeds/market-news",
+      "category": "commodities",
+      "subcategory": "forex",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "agri_pulse",
+      "name": "Agri-Pulse",
+      "url": "https://www.agri-pulse.com/rss",
+      "category": "commodities",
+      "subcategory": "agriculture",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "finextra_regtech",
+      "name": "Finextra RegTech",
+      "url": "https://www.finextra.com/rss/channel.aspx?channel=regtech",
+      "category": "fintech",
+      "subcategory": "regtech",
+      "language": "en",
+      "country": "GB"
+    },
+    {
+      "id": "finextra_blockchain",
+      "name": "Finextra Blockchain",
+      "url": "https://www.finextra.com/rss/channel.aspx?channel=blockchain",
+      "category": "fintech",
+      "subcategory": "blockchain",
+      "language": "en",
+      "country": "GB"
+    },
+    {
+      "id": "blockchain_news",
+      "name": "Blockchain News",
+      "url": "https://blockchain.news/feed",
+      "category": "crypto",
+      "subcategory": "blockchain",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "arab_news_business",
+      "name": "Arab News Business",
+      "url": "https://www.arabnews.com/rss/business",
+      "category": "international",
+      "subcategory": "middle_east",
+      "language": "en",
+      "country": "SA"
+    },
+    {
+      "id": "meed",
+      "name": "MEED",
+      "url": "https://www.meed.com/rss-feeds",
+      "category": "international",
+      "subcategory": "middle_east",
+      "language": "en",
+      "country": "AE"
+    },
+    {
+      "id": "ibt_singapore",
+      "name": "IBT Singapore",
+      "url": "https://www.ibtimes.sg/rss",
+      "category": "international",
+      "subcategory": "asia_pacific",
+      "language": "en",
+      "country": "SG"
+    },
+    {
+      "id": "nippon_business",
+      "name": "Nippon.com Business",
+      "url": "https://www.nippon.com/en/rss/economy_l.xml",
+      "category": "international",
+      "subcategory": "asia_pacific",
+      "language": "en",
+      "country": "JP"
+    },
+    {
+      "id": "inside_mortgage",
+      "name": "Inside Mortgage Finance",
+      "url": "https://www.insidemortgagefinance.com/rss",
+      "category": "real_estate",
+      "subcategory": "mortgage",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "nasdaq_etf",
+      "name": "Nasdaq ETFs",
+      "url": "https://www.nasdaq.com/feed/rssoutbound?category=ETFs",
+      "category": "equities",
+      "subcategory": "etf",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "investing_com_technology",
+      "name": "Investing.com Technology",
+      "url": "https://www.investing.com/rss/news_301.rss",
+      "category": "equities",
+      "subcategory": "tech_stocks",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "cnbc_real_estate",
+      "name": "CNBC Real Estate",
+      "url": "https://www.cnbc.com/id/10000115/device/rss/rss.html",
+      "category": "real_estate",
+      "subcategory": "housing_market",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "ft_world",
+      "name": "Financial Times World",
+      "url": "https://www.ft.com/world?format=rss",
+      "category": "international",
+      "subcategory": "global_finance",
+      "language": "en",
+      "country": "GB"
+    },
+    {
+      "id": "ft_economy",
+      "name": "Financial Times Economy",
+      "url": "https://www.ft.com/global-economy?format=rss",
+      "category": "macro",
+      "subcategory": "international_economics",
+      "language": "en",
+      "country": "GB"
+    },
+    {
+      "id": "globenewswire_mergers",
+      "name": "GlobeNewsWire M&A",
+      "url": "https://www.globenewswire.com/RssFeed/subjectcode/21-Mergers%20And%20Acquisitions/feedTitle/GlobeNewswire%20-%20Mergers%20And%20Acquisitions",
+      "category": "earnings",
+      "subcategory": "mergers_acquisitions",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "fxstreet",
+      "name": "FXStreet",
+      "url": "https://www.fxstreet.com/rss",
+      "category": "commodities",
+      "subcategory": "forex",
+      "language": "en",
+      "country": "ES"
+    },
+    {
+      "id": "econlib",
+      "name": "EconLog (Econlib)",
+      "url": "https://www.econlib.org/feed/indexarticles_econlog/",
+      "category": "macro",
+      "subcategory": "economic_commentary",
+      "language": "en",
+      "country": "US"
+    },
+    {
+      "id": "central_banking",
+      "name": "Central Banking",
+      "url": "https://www.centralbanking.com/rss-feeds",
+      "category": "macro",
+      "subcategory": "central_bank",
+      "language": "en",
+      "country": "GB"
+    }
+  ],
+  "metadata": {
+    "version": "3.0",
+    "last_updated": "2026-03-19T00:00:00Z",
+    "total_feeds": 158,
+    "focus": "Financial markets, economics, and prediction markets — optimized for AI agent consumption",
+    "categories": {
+      "equities": 35,
+      "macro": 28,
+      "crypto": 14,
+      "prediction_markets": 5,
+      "commodities": 14,
+      "real_estate": 9,
+      "regulation": 10,
+      "fintech": 9,
+      "earnings": 9,
+      "international": 25
+    },
+    "ai_agent_notes": {
+      "category_field": "Primary financial domain — use for broad filtering",
+      "subcategory_field": "Granular sub-domain — use for targeted analysis",
+      "designed_for": "Automated headline parsing, cross-source event correlation, and financial signal extraction by AI agents",
+      "correlation_hints": {
+        "equities + macro": "Fed policy → market reaction",
+        "crypto + regulation": "SEC/CFTC actions → crypto market impact",
+        "commodities + international": "Geopolitical events → commodity price signals",
+        "prediction_markets + equities": "Market sentiment vs prediction market odds divergence",
+        "earnings + equities": "Earnings surprises → stock movement",
+        "regulation + fintech": "New banking rules → fintech opportunities",
+        "international + commodities": "Trade policy → supply chain disruption → commodity prices",
+        "macro + real_estate": "Interest rate changes → housing market impact"
       }
-    ],
-    "metadata": {
-      "version": "1.0",
-      "last_updated": "2025-08-08T00:00:00Z",
-      "total_feeds": 24,
-      "groups": {
-        "western": 10,
-        "nonwestern": 14
-      },
-      "languages": ["en", "fr", "es", "de", "pt", "he", "zh", "ja"],
-      "countries": ["US", "CA", "UK", "FR", "ES", "DE", "BR", "AR", "PE", "ZA", "QA", "IL", "CN", "IN", "JP", "AU", "NZ", "AQ"],
-      "coverage": "Global politics coverage with Western/Non-Western balance and multilingual sources"
     }
   }
-  
+}
