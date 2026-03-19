@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Loading } from "@/components/loading";
 import { api, type AnalyticsData } from "@/lib/api";
@@ -225,6 +225,65 @@ function SentimentChart({ data }: { data: { sentiment: string; count: number }[]
   );
 }
 
+function HeatmapChart({ data }: { data: { topic: string; category: string; count: number }[] }) {
+  if (!data.length) return <p className="text-[#555] font-mono text-xs">No data yet.</p>;
+
+  const topics = [...new Set(data.map((d) => d.topic))];
+  const categories = [...new Set(data.map((d) => d.category))];
+  const maxCount = Math.max(...data.map((d) => d.count));
+  const lookup = new Map(data.map((d) => [`${d.topic}-${d.category}`, d.count]));
+
+  return (
+    <div>
+      <h2 className="font-mono text-[10px] uppercase tracking-widest text-[#555] mb-4">
+        Topic x Category
+      </h2>
+      <div className="overflow-x-auto">
+        <div
+          className="grid gap-[2px]"
+          style={{
+            gridTemplateColumns: `100px repeat(${categories.length}, 1fr)`,
+            gridTemplateRows: `24px repeat(${topics.length}, 28px)`,
+          }}
+        >
+          <div />
+          {categories.map((cat) => (
+            <div key={cat} className="font-mono text-[8px] text-[#555] uppercase text-center truncate px-1">
+              {cat.replace(/_/g, " ")}
+            </div>
+          ))}
+          {topics.map((topic) => (
+            <React.Fragment key={topic}>
+              <div className="font-mono text-[9px] text-[#777] uppercase flex items-center truncate">
+                {topic.replace(/_/g, " ")}
+              </div>
+              {categories.map((cat) => {
+                const count = lookup.get(`${topic}-${cat}`) ?? 0;
+                const intensity = maxCount > 0 ? count / maxCount : 0;
+                return (
+                  <div
+                    key={`${topic}-${cat}`}
+                    className="flex items-center justify-center font-mono text-[8px] border border-[#222]"
+                    style={{
+                      backgroundColor: count > 0
+                        ? `rgba(0, 255, 136, ${0.1 + intensity * 0.8})`
+                        : "transparent",
+                      color: intensity > 0.5 ? "#000" : "#555",
+                    }}
+                    title={`${topic} × ${cat}: ${count}`}
+                  >
+                    {count > 0 ? count : ""}
+                  </div>
+                );
+              })}
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SourcesChart({ data }: { data: AnalyticsData["source_breakdown"] }) {
   return (
     <div>
@@ -320,12 +379,15 @@ export default function AnalyticsPage() {
                   <SentimentChart data={data.sentiment_distribution ?? []} />
                 </div>
                 <div className="border-2 border-[#333] bg-[#111] p-5 animate-fade-in-up" style={{ animationDelay: "60ms" }}>
-                  <CategoryChart data={data.category_breakdown ?? []} />
+                  <HeatmapChart data={data.topic_category_heatmap ?? []} />
                 </div>
                 <div className="border-2 border-[#333] bg-[#111] p-5 animate-fade-in-up" style={{ animationDelay: "90ms" }}>
-                  <VolumeChart data={data.daily_volume} />
+                  <CategoryChart data={data.category_breakdown ?? []} />
                 </div>
                 <div className="border-2 border-[#333] bg-[#111] p-5 animate-fade-in-up" style={{ animationDelay: "120ms" }}>
+                  <VolumeChart data={data.daily_volume} />
+                </div>
+                <div className="border-2 border-[#333] bg-[#111] p-5 animate-fade-in-up" style={{ animationDelay: "150ms" }}>
                   <SourcesChart data={data.source_breakdown} />
                 </div>
               </div>
