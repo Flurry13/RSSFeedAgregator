@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Loading } from "@/components/loading";
 import { api, type Headline } from "@/lib/api";
 import { useSocket } from "@/hooks/use-socket";
-import { Search } from "lucide-react";
+import { Search, TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 const TOPICS = [
   "all",
@@ -48,6 +48,14 @@ function topicStyle(topic: string): { bg: string; fg: string; border: string } {
   return m[topic.toLowerCase()] ?? m.general;
 }
 
+function sentimentBadge(sentiment?: string) {
+  if (sentiment === "bullish")
+    return <TrendingUp className="w-3.5 h-3.5 text-[#00ff88]" />;
+  if (sentiment === "bearish")
+    return <TrendingDown className="w-3.5 h-3.5 text-[#ff3333]" />;
+  return <Minus className="w-3.5 h-3.5 text-[#555]" />;
+}
+
 function topicBorderColor(topic: string): string {
   const m: Record<string, string> = {
     markets: "#00ff88", economy: "#ffd700", earnings: "#ff8800",
@@ -67,6 +75,7 @@ export default function FeedPage() {
   const [search, setSearch] = useState("");
   const [topic, setTopic] = useState("all");
   const [searchInput, setSearchInput] = useState("");
+  const [sentiment, setSentiment] = useState("all");
 
   const fetchHeadlines = useCallback(
     async (nextPage: number, replace: boolean) => {
@@ -78,6 +87,7 @@ export default function FeedPage() {
           limit: PAGE_SIZE,
           q: search || undefined,
           topic: topic !== "all" ? topic : undefined,
+          sentiment: sentiment !== "all" ? sentiment : undefined,
         });
         setHeadlines((prev) => (replace ? res.data : [...prev, ...res.data]));
         setTotalPages(res.pagination.total_pages);
@@ -87,7 +97,7 @@ export default function FeedPage() {
         setLoadingMore(false);
       }
     },
-    [search, topic]
+    [search, topic, sentiment]
   );
 
   useEffect(() => {
@@ -153,6 +163,19 @@ export default function FeedPage() {
             ))}
           </SelectContent>
         </Select>
+
+        <Select value={sentiment} onValueChange={(v) => { setSentiment(v); }}>
+          <SelectTrigger className="w-[130px] bg-[#111] border-2 border-[#333] text-[#e8e8e0] font-mono text-xs rounded-none">
+            <SelectValue placeholder="Sentiment" />
+          </SelectTrigger>
+          <SelectContent className="bg-[#111] border-2 border-[#333]">
+            {["all", "bullish", "bearish", "neutral"].map((s) => (
+              <SelectItem key={s} value={s} className="font-mono text-xs text-[#e8e8e0]">
+                {s.toUpperCase()}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Headlines */}
@@ -177,8 +200,8 @@ export default function FeedPage() {
                 }}
               >
                 <div className="flex items-start gap-3">
-                  {/* Topic badge */}
-                  <div className="shrink-0 w-20 pt-0.5">
+                  {/* Topic badge + sentiment */}
+                  <div className="shrink-0 w-20 pt-0.5 flex flex-col gap-1">
                     {h.topic && tc && (
                       <span
                         className={`inline-block px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider border-2 ${tc.bg} ${tc.fg} ${tc.border}`}
@@ -186,6 +209,7 @@ export default function FeedPage() {
                         {h.topic}
                       </span>
                     )}
+                    {sentimentBadge(h.sentiment)}
                   </div>
 
                   {/* Title */}
