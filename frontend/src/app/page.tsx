@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -59,26 +60,46 @@ function sentimentIcon(sentiment?: string) {
   return null;
 }
 
-export default function FeedPage() {
+function FeedPageInner() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const urlTopic = searchParams.get("topic");
+  const urlSentiment = searchParams.get("sentiment");
+  const urlSearch = searchParams.get("q");
+
   const [headlines, setHeadlines] = useState<Headline[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [search, setSearch] = useState("");
-  const [topic, setTopic] = useState<string | null>(null);
-  const [searchInput, setSearchInput] = useState("");
-  const [sentiment, setSentiment] = useState<string | null>(null);
+  const [search, setSearch] = useState(urlSearch || "");
+  const [topic, setTopic] = useState<string | null>(urlTopic);
+  const [searchInput, setSearchInput] = useState(urlSearch || "");
+  const [sentiment, setSentiment] = useState<string | null>(urlSentiment);
 
+  // On mount, load settings defaults only if URL didn't specify the filter
   useEffect(() => {
     api.settings.get().then((s) => {
-      setTopic(s.default_topic || "all");
-      setSentiment(s.default_sentiment || "all");
+      if (!urlTopic) setTopic(s.default_topic || "all");
+      if (!urlSentiment) setSentiment(s.default_sentiment || "all");
     }).catch(() => {
-      setTopic("all");
-      setSentiment("all");
+      if (!urlTopic) setTopic("all");
+      if (!urlSentiment) setSentiment("all");
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Sync filter state back to URL whenever filters change
+  useEffect(() => {
+    if (topic === null || sentiment === null) return;
+    const params = new URLSearchParams();
+    if (topic && topic !== "all") params.set("topic", topic);
+    if (sentiment && sentiment !== "all") params.set("sentiment", sentiment);
+    if (search) params.set("q", search);
+    const qs = params.toString();
+    router.replace(qs ? `/?${qs}` : "/", { scroll: false });
+  }, [topic, sentiment, search, router]);
 
   const fetchHeadlines = useCallback(
     async (nextPage: number, replace: boolean) => {
@@ -259,5 +280,13 @@ export default function FeedPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function FeedPage() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <FeedPageInner />
+    </Suspense>
   );
 }
