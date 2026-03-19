@@ -228,7 +228,14 @@ function CrossReferences({
                             {rel.category}
                           </span>
                         )}
-                        <span className="text-[9px] text-[#48484a]">
+                        <span
+                          className="text-[9px] font-semibold px-1.5 py-0.5 rounded"
+                          style={{
+                            color: rel.shared_words >= 3 ? "#30d158" : "#ffd60a",
+                            border: `1px solid ${rel.shared_words >= 3 ? "#30d15844" : "#ffd60a44"}`,
+                            background: rel.shared_words >= 3 ? "#30d15811" : "#ffd60a11",
+                          }}
+                        >
                           {rel.shared_words} shared words
                         </span>
                       </div>

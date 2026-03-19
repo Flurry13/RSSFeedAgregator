@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Loading } from "@/components/loading";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { api, type InsightsSummary, type PredictionSignals } from "@/lib/api";
 
 type Period = "24h" | "7d" | "30d";
@@ -378,6 +379,17 @@ export default function InsightsPage() {
     setTimeout(() => setCopied(false), 2000);
   }
 
+  function handleDownload() {
+    if (!data) return;
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `insights-${period}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
       <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3 sm:gap-4 mb-6">
@@ -389,13 +401,22 @@ export default function InsightsPage() {
             AI Summary
           </span>
         </div>
-        <button
-          onClick={handleCopy}
-          disabled={!data}
-          className="text-[11px] px-3 py-1.5 rounded-lg bg-transparent border border-[#48484a] text-[#e5e5e7] hover:border-[#0a84ff] hover:text-[#0a84ff] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-        >
-          {copied ? "Copied!" : "Copy as JSON"}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleCopy}
+            disabled={!data}
+            className="text-[11px] px-3 py-1.5 rounded-lg bg-transparent border border-[#48484a] text-[#e5e5e7] hover:border-[#0a84ff] hover:text-[#0a84ff] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            {copied ? "Copied!" : "Copy as JSON"}
+          </button>
+          <button
+            onClick={handleDownload}
+            disabled={!data}
+            className="text-[11px] px-3 py-1.5 rounded-lg bg-transparent border border-[#48484a] text-[#e5e5e7] hover:border-[#0a84ff] hover:text-[#0a84ff] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            Download JSON
+          </button>
+        </div>
       </div>
 
       <Tabs value={period} onValueChange={(v) => setPeriod(v as Period)}>
@@ -431,45 +452,57 @@ export default function InsightsPage() {
             ) : (
               <div className="space-y-6">
                 {/* Market Sentiment */}
-                <MarketSentiment
-                  breakdown={data.sentiment_breakdown ?? {}}
-                  byCategory={data.sentiment_by_category ?? {}}
-                />
+                <ErrorBoundary>
+                  <MarketSentiment
+                    breakdown={data.sentiment_breakdown ?? {}}
+                    byCategory={data.sentiment_by_category ?? {}}
+                  />
+                </ErrorBoundary>
 
                 {/* Feed Health */}
-                <div
-                  className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up"
-                  style={{ animationDelay: "0ms" }}
-                >
-                  <FeedHealthBar health={data.feed_health} />
-                </div>
+                <ErrorBoundary>
+                  <div
+                    className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up"
+                    style={{ animationDelay: "0ms" }}
+                  >
+                    <FeedHealthBar health={data.feed_health} />
+                  </div>
+                </ErrorBoundary>
 
                 {/* Top Clusters */}
-                <div
-                  className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up"
-                  style={{ animationDelay: "60ms" }}
-                >
-                  <TopClusters clusters={data.top_clusters} />
-                </div>
+                <ErrorBoundary>
+                  <div
+                    className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up"
+                    style={{ animationDelay: "60ms" }}
+                  >
+                    <TopClusters clusters={data.top_clusters} />
+                  </div>
+                </ErrorBoundary>
 
                 {/* Prediction Markets */}
-                <PredictionMarketsSection data={pmData} />
+                <ErrorBoundary>
+                  <PredictionMarketsSection data={pmData} />
+                </ErrorBoundary>
 
                 {/* Category Volume */}
-                <div
-                  className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up"
-                  style={{ animationDelay: "120ms" }}
-                >
-                  <CategoryVolume data={data.category_volume} />
-                </div>
+                <ErrorBoundary>
+                  <div
+                    className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up"
+                    style={{ animationDelay: "120ms" }}
+                  >
+                    <CategoryVolume data={data.category_volume} />
+                  </div>
+                </ErrorBoundary>
 
                 {/* Top Headlines by Category */}
-                <div
-                  className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up"
-                  style={{ animationDelay: "180ms" }}
-                >
-                  <HeadlinesByCategory data={data.top_headlines_by_category} />
-                </div>
+                <ErrorBoundary>
+                  <div
+                    className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up"
+                    style={{ animationDelay: "180ms" }}
+                  >
+                    <HeadlinesByCategory data={data.top_headlines_by_category} />
+                  </div>
+                </ErrorBoundary>
               </div>
             )}
           </TabsContent>

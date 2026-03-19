@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Loading } from "@/components/loading";
+import { Loading, AnalyticsSkeleton } from "@/components/loading";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { api, type AnalyticsData } from "@/lib/api";
 import {
   BarChart,
@@ -365,31 +366,43 @@ export default function AnalyticsPage() {
         {(["24h", "7d", "30d"] as Period[]).map((p) => (
           <TabsContent key={p} value={p}>
             {loading ? (
-              <Loading message="Loading analytics..." />
+              <AnalyticsSkeleton />
             ) : !data ? (
               <p className="text-[#636366] text-sm text-center py-12">
                 No analytics data available.
               </p>
             ) : (
               <div className="space-y-6">
-                <div className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up" style={{ animationDelay: "0ms" }}>
-                  <TopicsChart data={data.topic_distribution} />
-                </div>
-                <div className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up" style={{ animationDelay: "30ms" }}>
-                  <SentimentChart data={data.sentiment_distribution ?? []} />
-                </div>
-                <div className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up" style={{ animationDelay: "60ms" }}>
-                  <HeatmapChart data={data.topic_category_heatmap ?? []} />
-                </div>
-                <div className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up" style={{ animationDelay: "90ms" }}>
-                  <CategoryChart data={data.category_breakdown ?? []} />
-                </div>
-                <div className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up" style={{ animationDelay: "120ms" }}>
-                  <VolumeChart data={data.daily_volume} />
-                </div>
-                <div className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up" style={{ animationDelay: "150ms" }}>
-                  <SourcesChart data={data.source_breakdown} />
-                </div>
+                <ErrorBoundary>
+                  <div className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up" style={{ animationDelay: "0ms" }}>
+                    <TopicsChart data={data.topic_distribution} />
+                  </div>
+                </ErrorBoundary>
+                <ErrorBoundary>
+                  <div className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up" style={{ animationDelay: "30ms" }}>
+                    <SentimentChart data={data.sentiment_distribution ?? []} />
+                  </div>
+                </ErrorBoundary>
+                <ErrorBoundary>
+                  <div className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up" style={{ animationDelay: "60ms" }}>
+                    <HeatmapChart data={data.topic_category_heatmap ?? []} />
+                  </div>
+                </ErrorBoundary>
+                <ErrorBoundary>
+                  <div className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up" style={{ animationDelay: "90ms" }}>
+                    <CategoryChart data={data.category_breakdown ?? []} />
+                  </div>
+                </ErrorBoundary>
+                <ErrorBoundary>
+                  <div className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up" style={{ animationDelay: "120ms" }}>
+                    <VolumeChart data={data.daily_volume} />
+                  </div>
+                </ErrorBoundary>
+                <ErrorBoundary>
+                  <div className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up" style={{ animationDelay: "150ms" }}>
+                    <SourcesChart data={data.source_breakdown} />
+                  </div>
+                </ErrorBoundary>
               </div>
             )}
           </TabsContent>
