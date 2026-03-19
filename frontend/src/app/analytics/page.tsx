@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Loading, AnalyticsSkeleton } from "@/components/loading";
+import { AnalyticsSkeleton } from "@/components/loading";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { api, type AnalyticsData } from "@/lib/api";
 import {

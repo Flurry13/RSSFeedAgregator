@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Loading } from "@/components/loading";
+import { FeedSkeleton } from "@/components/loading";
 import { api, type Headline } from "@/lib/api";
 import { useSocket } from "@/hooks/use-socket";
 import { Search, TrendingUp, TrendingDown, Minus } from "lucide-react";
@@ -207,11 +207,12 @@ function FeedPageInner() {
 
       {/* Headlines */}
       {loading ? (
-        <Loading message="Loading..." />
+        <FeedSkeleton />
       ) : headlines.length === 0 ? (
-        <p className="text-[#636366] text-sm text-center py-12">
-          No headlines found.
-        </p>
+        <div className="text-center py-12">
+          <p className="text-[#98989d] text-sm">No headlines match your filters</p>
+          <p className="text-[#636366] text-xs mt-2">Try broadening your search or changing filters</p>
+        </div>
       ) : (
         <div className="space-y-2">
           {headlines.map((h, i) => {
@@ -287,7 +288,7 @@ function FeedPageInner() {
 
 export default function FeedPage() {
   return (
-    <Suspense fallback={<Loading />}>
+    <Suspense fallback={<div className="px-3 sm:px-4 py-6"><FeedSkeleton /></div>}>
       <FeedPageInner />
     </Suspense>
   );

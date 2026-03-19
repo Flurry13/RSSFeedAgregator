@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Loading } from "@/components/loading";
+import { FeedSkeleton } from "@/components/loading";
 import { api, type PredictionSignals } from "@/lib/api";
 import { TrendingUp, TrendingDown, Minus, AlertTriangle } from "lucide-react";
 
@@ -352,11 +352,12 @@ export default function PredictionsPage() {
         {(["24h", "7d", "30d"] as Period[]).map((p) => (
           <TabsContent key={p} value={p}>
             {loading ? (
-              <Loading message="Loading predictions..." />
+              <FeedSkeleton />
             ) : !data ? (
-              <p className="text-[#636366] text-sm text-center py-12">
-                No predictions data available.
-              </p>
+              <div className="text-center py-12">
+                <p className="text-[#98989d] text-sm">No predictions data available</p>
+                <p className="text-[#636366] text-xs mt-2">Prediction signals will appear after the pipeline processes prediction market headlines</p>
+              </div>
             ) : (
               <>
                 <StatsBar stats={data.stats} />
