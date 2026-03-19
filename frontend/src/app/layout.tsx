@@ -6,8 +6,8 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { Providers } from "@/components/providers";
 
 export const metadata: Metadata = {
-  title: "RSSFeed2",
-  description: "RSS aggregator with NLP pipeline",
+  title: "SiftSignal",
+  description: "Financial news intelligence platform",
 };
 
 export default function RootLayout({

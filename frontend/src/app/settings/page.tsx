@@ -408,7 +408,7 @@ export default function SettingsPage() {
             About
           </p>
           <p className="text-[#98989d] text-sm">
-            RSSFeed2 -- Financial News Intelligence Platform
+            SiftSignal — Financial News Intelligence Platform
           </p>
           <p className="text-[12px] text-[#636366] mt-1">
             Settings stored on server

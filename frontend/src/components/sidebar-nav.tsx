@@ -83,7 +83,7 @@ export function SidebarNav() {
               <div className="flex items-center gap-2.5">
                 <Rss className="w-4 h-4 text-[#0a84ff] shrink-0" />
                 <span className="text-[15px] font-semibold text-[#e5e5e7]">
-                  RSSFeed2
+                  SiftSignal
                 </span>
               </div>
               <button
@@ -119,7 +119,7 @@ export function SidebarNav() {
           <Rss className="w-4 h-4 text-[#0a84ff] shrink-0" />
           {!collapsed && (
             <span className="text-[15px] font-semibold text-[#e5e5e7]">
-              RSSFeed2
+              SiftSignal
             </span>
           )}
         </div>
