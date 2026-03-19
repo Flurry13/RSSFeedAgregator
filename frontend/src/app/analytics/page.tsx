@@ -22,71 +22,71 @@ import {
 
 type Period = "24h" | "7d" | "30d";
 
-/* Full saturation topic colors */
+/* Apple system topic colors */
 const TOPIC_COLORS: Record<string, string> = {
-  markets: "#00ff88",
-  economy: "#ffd700",
-  earnings: "#ff8800",
-  crypto: "#aa77ff",
-  commodities: "#ff3333",
-  real_estate: "#00dddd",
-  regulation: "#4488ff",
-  fintech: "#33ff99",
-  prediction_markets: "#ff69b4",
-  mergers: "#ff44aa",
-  general: "#666666",
+  markets: "#30d158",
+  economy: "#ffd60a",
+  earnings: "#ff9f0a",
+  crypto: "#bf5af2",
+  commodities: "#ff453a",
+  real_estate: "#64d2ff",
+  regulation: "#0a84ff",
+  fintech: "#30d158",
+  prediction_markets: "#ff375f",
+  mergers: "#bf5af2",
+  general: "#636366",
 };
 
 /* Fallback palette for pie chart / unknown topics */
 const COLORS = [
-  "#00ff88",
-  "#00ffaa",
-  "#4488ff",
-  "#aa77ff",
-  "#ff3333",
-  "#ffd700",
-  "#ff69b4",
-  "#ff8800",
+  "#30d158",
+  "#0a84ff",
+  "#bf5af2",
+  "#ff453a",
+  "#ffd60a",
+  "#ff375f",
+  "#ff9f0a",
+  "#64d2ff",
 ];
 
 const tooltipStyle = {
-  backgroundColor: "#111",
-  border: "2px solid #333",
-  color: "#e8e8e0",
-  fontSize: 10,
-  fontFamily: "'Space Mono', monospace",
+  backgroundColor: "#3a3a3c",
+  border: "1px solid #48484a",
+  color: "#e5e5e7",
+  fontSize: 12,
+  borderRadius: 8,
 };
 
-const labelStyle = { color: "#777", fontSize: 10, fontFamily: "'Space Mono', monospace" };
+const labelStyle = { color: "#636366", fontSize: 11 };
 
 const SENTIMENT_COLORS: Record<string, string> = {
-  bullish: "#00ff88",
-  bearish: "#ff3333",
-  neutral: "#666",
+  bullish: "#30d158",
+  bearish: "#ff453a",
+  neutral: "#636366",
 };
 
 function TopicsChart({ data }: { data: AnalyticsData["topic_distribution"] }) {
   return (
     <div>
-      <h2 className="font-mono text-[10px] uppercase tracking-widest text-[#555] mb-4">
+      <h2 className="text-xs text-[#636366] uppercase tracking-wide mb-4">
         Topic Distribution
       </h2>
       <ResponsiveContainer width="100%" height={220}>
         <BarChart data={data} margin={{ left: -20 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#222" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#3a3a3c" />
           <XAxis
             dataKey="topic"
-            tick={{ fontSize: 10, fill: "#555", fontFamily: "'Space Mono', monospace" }}
+            tick={{ fontSize: 11, fill: "#636366" }}
             axisLine={false}
             tickLine={false}
           />
           <YAxis
-            tick={{ fontSize: 10, fill: "#555", fontFamily: "'Space Mono', monospace" }}
+            tick={{ fontSize: 11, fill: "#636366" }}
             axisLine={false}
             tickLine={false}
           />
-          <Tooltip contentStyle={tooltipStyle} labelStyle={labelStyle} cursor={{ fill: "#1a1a1a" }} />
-          <Bar dataKey="count" radius={[0, 0, 0, 0]}>
+          <Tooltip contentStyle={tooltipStyle} labelStyle={labelStyle} cursor={{ fill: "#2c2c2e" }} />
+          <Bar dataKey="count" radius={[4, 4, 0, 0]}>
             {data.map((entry, i) => (
               <Cell
                 key={i}
@@ -103,7 +103,7 @@ function TopicsChart({ data }: { data: AnalyticsData["topic_distribution"] }) {
 function CategoryChart({ data }: { data: { category: string; count: number }[] }) {
   return (
     <div>
-      <h2 className="font-mono text-[10px] uppercase tracking-widest text-[#555] mb-4">
+      <h2 className="text-xs text-[#636366] uppercase tracking-wide mb-4">
         Category Breakdown
       </h2>
       <div className="flex items-center gap-6">
@@ -118,7 +118,7 @@ function CategoryChart({ data }: { data: { category: string; count: number }[] }
               outerRadius={80}
               labelLine={false}
               strokeWidth={2}
-              stroke="#050505"
+              stroke="#1c1c1e"
             >
               {data.map((entry) => (
                 <Cell
@@ -130,15 +130,15 @@ function CategoryChart({ data }: { data: { category: string; count: number }[] }
             <Tooltip contentStyle={tooltipStyle} />
           </PieChart>
         </ResponsiveContainer>
-        <div className="flex flex-col gap-2 font-mono text-[11px]">
+        <div className="flex flex-col gap-2 text-[11px]">
           {data.map((d) => (
             <div key={d.category} className="flex items-center gap-2">
               <span
-                className="w-2 h-2 shrink-0"
-                style={{ background: TOPIC_COLORS[d.category] ?? "#555" }}
+                className="w-2 h-2 rounded-full shrink-0"
+                style={{ background: TOPIC_COLORS[d.category] ?? "#636366" }}
               />
-              <span className="text-[#777] uppercase">{d.category.replace('_', ' ')}</span>
-              <span className="text-[#00ff88] ml-1 font-bold">{d.count}</span>
+              <span className="text-[#98989d]">{d.category.replace('_', ' ')}</span>
+              <span className="text-[#e5e5e7] ml-1 font-semibold">{d.count}</span>
             </div>
           ))}
         </div>
@@ -150,20 +150,20 @@ function CategoryChart({ data }: { data: { category: string; count: number }[] }
 function VolumeChart({ data }: { data: AnalyticsData["daily_volume"] }) {
   return (
     <div>
-      <h2 className="font-mono text-[10px] uppercase tracking-widest text-[#555] mb-4">
+      <h2 className="text-xs text-[#636366] uppercase tracking-wide mb-4">
         Daily Volume
       </h2>
       <ResponsiveContainer width="100%" height={200}>
         <LineChart data={data} margin={{ left: -20 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#222" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#3a3a3c" />
           <XAxis
             dataKey="date"
-            tick={{ fontSize: 10, fill: "#555", fontFamily: "'Space Mono', monospace" }}
+            tick={{ fontSize: 11, fill: "#636366" }}
             axisLine={false}
             tickLine={false}
           />
           <YAxis
-            tick={{ fontSize: 10, fill: "#555", fontFamily: "'Space Mono', monospace" }}
+            tick={{ fontSize: 11, fill: "#636366" }}
             axisLine={false}
             tickLine={false}
           />
@@ -171,10 +171,10 @@ function VolumeChart({ data }: { data: AnalyticsData["daily_volume"] }) {
           <Line
             type="monotone"
             dataKey="count"
-            stroke="#00ff88"
+            stroke="#0a84ff"
             strokeWidth={2}
             dot={false}
-            activeDot={{ r: 4, fill: "#00ff88", stroke: "#050505", strokeWidth: 2 }}
+            activeDot={{ r: 4, fill: "#0a84ff", stroke: "#1c1c1e", strokeWidth: 2 }}
           />
         </LineChart>
       </ResponsiveContainer>
@@ -186,36 +186,36 @@ function SentimentChart({ data }: { data: { sentiment: string; count: number }[]
   const total = data.reduce((sum, d) => sum + d.count, 0);
   return (
     <div>
-      <h2 className="font-mono text-[10px] uppercase tracking-widest text-[#555] mb-4">
+      <h2 className="text-xs text-[#636366] uppercase tracking-wide mb-4">
         Sentiment Distribution
       </h2>
       {total === 0 ? (
-        <p className="text-[#555] font-mono text-xs">No sentiment data yet.</p>
+        <p className="text-[#636366] text-xs">No sentiment data yet.</p>
       ) : (
         <div>
-          <div className="flex h-8 w-full overflow-hidden border-2 border-[#333]">
+          <div className="flex h-8 w-full overflow-hidden rounded-lg border border-[#3a3a3c]">
             {data.map((d) => (
               <div
                 key={d.sentiment}
                 style={{
                   width: `${(d.count / total) * 100}%`,
-                  backgroundColor: SENTIMENT_COLORS[d.sentiment] ?? "#444",
+                  backgroundColor: SENTIMENT_COLORS[d.sentiment] ?? "#48484a",
                 }}
               />
             ))}
           </div>
-          <div className="flex gap-6 mt-3 font-mono text-[11px]">
+          <div className="flex gap-6 mt-3 text-[11px]">
             {data.map((d) => (
               <div key={d.sentiment} className="flex items-center gap-2">
                 <span
-                  className="w-2 h-2 shrink-0"
-                  style={{ background: SENTIMENT_COLORS[d.sentiment] ?? "#444" }}
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{ background: SENTIMENT_COLORS[d.sentiment] ?? "#48484a" }}
                 />
-                <span className="text-[#777] uppercase">{d.sentiment}</span>
-                <span className="font-bold" style={{ color: SENTIMENT_COLORS[d.sentiment] ?? "#777" }}>
+                <span className="text-[#98989d]">{d.sentiment}</span>
+                <span className="font-semibold" style={{ color: SENTIMENT_COLORS[d.sentiment] ?? "#98989d" }}>
                   {d.count}
                 </span>
-                <span className="text-[#555]">({Math.round((d.count / total) * 100)}%)</span>
+                <span className="text-[#636366]">({Math.round((d.count / total) * 100)}%)</span>
               </div>
             ))}
           </div>
@@ -226,7 +226,7 @@ function SentimentChart({ data }: { data: { sentiment: string; count: number }[]
 }
 
 function HeatmapChart({ data }: { data: { topic: string; category: string; count: number }[] }) {
-  if (!data.length) return <p className="text-[#555] font-mono text-xs">No data yet.</p>;
+  if (!data.length) return <p className="text-[#636366] text-xs">No data yet.</p>;
 
   const topics = [...new Set(data.map((d) => d.topic))];
   const categories = [...new Set(data.map((d) => d.category))];
@@ -235,7 +235,7 @@ function HeatmapChart({ data }: { data: { topic: string; category: string; count
 
   return (
     <div>
-      <h2 className="font-mono text-[10px] uppercase tracking-widest text-[#555] mb-4">
+      <h2 className="text-xs text-[#636366] uppercase tracking-wide mb-4">
         Topic x Category
       </h2>
       <div className="overflow-x-auto">
@@ -248,13 +248,13 @@ function HeatmapChart({ data }: { data: { topic: string; category: string; count
         >
           <div />
           {categories.map((cat) => (
-            <div key={cat} className="font-mono text-[8px] text-[#555] uppercase text-center truncate px-1">
+            <div key={cat} className="text-[9px] text-[#636366] uppercase text-center truncate px-1">
               {cat.replace(/_/g, " ")}
             </div>
           ))}
           {topics.map((topic) => (
             <React.Fragment key={topic}>
-              <div className="font-mono text-[9px] text-[#777] uppercase flex items-center truncate">
+              <div className="text-[10px] text-[#98989d] flex items-center truncate">
                 {topic.replace(/_/g, " ")}
               </div>
               {categories.map((cat) => {
@@ -263,12 +263,12 @@ function HeatmapChart({ data }: { data: { topic: string; category: string; count
                 return (
                   <div
                     key={`${topic}-${cat}`}
-                    className="flex items-center justify-center font-mono text-[8px] border border-[#222]"
+                    className="flex items-center justify-center text-[9px] rounded border border-[#3a3a3c]"
                     style={{
                       backgroundColor: count > 0
-                        ? `rgba(0, 255, 136, ${0.1 + intensity * 0.8})`
+                        ? `rgba(48, 209, 88, ${0.1 + intensity * 0.8})`
                         : "transparent",
-                      color: intensity > 0.5 ? "#000" : "#555",
+                      color: intensity > 0.5 ? "#000" : "#636366",
                     }}
                     title={`${topic} × ${cat}: ${count}`}
                   >
@@ -287,28 +287,28 @@ function HeatmapChart({ data }: { data: { topic: string; category: string; count
 function SourcesChart({ data }: { data: AnalyticsData["source_breakdown"] }) {
   return (
     <div>
-      <h2 className="font-mono text-[10px] uppercase tracking-widest text-[#555] mb-4">
+      <h2 className="text-xs text-[#636366] uppercase tracking-wide mb-4">
         Top Sources
       </h2>
       <ResponsiveContainer width="100%" height={220}>
         <BarChart data={data} layout="vertical" margin={{ left: 10 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#222" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#3a3a3c" />
           <XAxis
             type="number"
-            tick={{ fontSize: 10, fill: "#555", fontFamily: "'Space Mono', monospace" }}
+            tick={{ fontSize: 11, fill: "#636366" }}
             axisLine={false}
             tickLine={false}
           />
           <YAxis
             type="category"
             dataKey="name"
-            tick={{ fontSize: 10, fill: "#777", fontFamily: "'Space Mono', monospace" }}
+            tick={{ fontSize: 11, fill: "#98989d" }}
             axisLine={false}
             tickLine={false}
             width={110}
           />
-          <Tooltip contentStyle={tooltipStyle} labelStyle={labelStyle} cursor={{ fill: "#1a1a1a" }} />
-          <Bar dataKey="count" fill="#00ff88" radius={[0, 0, 0, 0]} />
+          <Tooltip contentStyle={tooltipStyle} labelStyle={labelStyle} cursor={{ fill: "#2c2c2e" }} />
+          <Bar dataKey="count" fill="#0a84ff" radius={[0, 4, 4, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -332,31 +332,31 @@ export default function AnalyticsPage() {
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
       <div className="flex items-baseline gap-4 mb-6">
-        <h1 className="font-mono text-2xl font-bold uppercase tracking-tight text-[#e8e8e0]">
+        <h1 className="text-2xl font-semibold text-[#e5e5e7]">
           Analytics
         </h1>
-        <span className="font-mono text-[10px] text-[#00ff88] tracking-widest uppercase">
+        <span className="text-xs text-[#636366] uppercase tracking-wide">
           Dashboard
         </span>
       </div>
 
       <Tabs value={period} onValueChange={(v) => setPeriod(v as Period)}>
-        <TabsList className="bg-[#111] border-2 border-[#333] mb-6 rounded-none p-0">
+        <TabsList className="bg-[#2c2c2e] border border-[#3a3a3c] mb-6 rounded-lg p-0.5">
           <TabsTrigger
             value="24h"
-            className="data-[state=active]:bg-[#00ff88] data-[state=active]:text-black text-[#777] font-mono text-xs rounded-none px-4 font-bold uppercase tracking-wider"
+            className="data-[state=active]:bg-[#0a84ff] data-[state=active]:text-white text-[#98989d] text-xs rounded-md px-4 py-1.5 font-medium"
           >
             24H
           </TabsTrigger>
           <TabsTrigger
             value="7d"
-            className="data-[state=active]:bg-[#00ff88] data-[state=active]:text-black text-[#777] font-mono text-xs rounded-none px-4 font-bold uppercase tracking-wider"
+            className="data-[state=active]:bg-[#0a84ff] data-[state=active]:text-white text-[#98989d] text-xs rounded-md px-4 py-1.5 font-medium"
           >
             7D
           </TabsTrigger>
           <TabsTrigger
             value="30d"
-            className="data-[state=active]:bg-[#00ff88] data-[state=active]:text-black text-[#777] font-mono text-xs rounded-none px-4 font-bold uppercase tracking-wider"
+            className="data-[state=active]:bg-[#0a84ff] data-[state=active]:text-white text-[#98989d] text-xs rounded-md px-4 py-1.5 font-medium"
           >
             30D
           </TabsTrigger>
@@ -367,27 +367,27 @@ export default function AnalyticsPage() {
             {loading ? (
               <Loading message="Loading analytics..." />
             ) : !data ? (
-              <p className="text-[#555] font-mono text-sm text-center py-12">
+              <p className="text-[#636366] text-sm text-center py-12">
                 No analytics data available.
               </p>
             ) : (
               <div className="space-y-6">
-                <div className="border-2 border-[#333] bg-[#111] p-5 animate-fade-in-up" style={{ animationDelay: "0ms" }}>
+                <div className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up" style={{ animationDelay: "0ms" }}>
                   <TopicsChart data={data.topic_distribution} />
                 </div>
-                <div className="border-2 border-[#333] bg-[#111] p-5 animate-fade-in-up" style={{ animationDelay: "30ms" }}>
+                <div className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up" style={{ animationDelay: "30ms" }}>
                   <SentimentChart data={data.sentiment_distribution ?? []} />
                 </div>
-                <div className="border-2 border-[#333] bg-[#111] p-5 animate-fade-in-up" style={{ animationDelay: "60ms" }}>
+                <div className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up" style={{ animationDelay: "60ms" }}>
                   <HeatmapChart data={data.topic_category_heatmap ?? []} />
                 </div>
-                <div className="border-2 border-[#333] bg-[#111] p-5 animate-fade-in-up" style={{ animationDelay: "90ms" }}>
+                <div className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up" style={{ animationDelay: "90ms" }}>
                   <CategoryChart data={data.category_breakdown ?? []} />
                 </div>
-                <div className="border-2 border-[#333] bg-[#111] p-5 animate-fade-in-up" style={{ animationDelay: "120ms" }}>
+                <div className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up" style={{ animationDelay: "120ms" }}>
                   <VolumeChart data={data.daily_volume} />
                 </div>
-                <div className="border-2 border-[#333] bg-[#111] p-5 animate-fade-in-up" style={{ animationDelay: "150ms" }}>
+                <div className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up" style={{ animationDelay: "150ms" }}>
                   <SourcesChart data={data.source_breakdown} />
                 </div>
               </div>

@@ -9,29 +9,29 @@ import { TrendingUp, TrendingDown, Minus, AlertTriangle } from "lucide-react";
 type Period = "24h" | "7d" | "30d";
 
 function sentimentIcon(s?: string) {
-  if (s === "bullish") return <TrendingUp className="w-3.5 h-3.5 text-[#00ff88]" />;
-  if (s === "bearish") return <TrendingDown className="w-3.5 h-3.5 text-[#ff3333]" />;
-  return <Minus className="w-3.5 h-3.5 text-[#555]" />;
+  if (s === "bullish") return <TrendingUp className="w-3.5 h-3.5 text-[#30d158]" />;
+  if (s === "bearish") return <TrendingDown className="w-3.5 h-3.5 text-[#ff453a]" />;
+  return <Minus className="w-3.5 h-3.5 text-[#98989d]" />;
 }
 
-/* ── Stats Bar ────────────────────────────────────────────────────────────── */
+/* -- Stats Bar ----------------------------------------------------------- */
 function StatsBar({ stats }: { stats: PredictionSignals["stats"] }) {
   return (
-    <div className="flex items-center gap-6 font-mono text-[11px] text-[#555] border-2 border-[#222] bg-[#0d0d0d] px-4 py-2.5 mb-6">
+    <div className="flex items-center gap-6 text-[11px] text-[#636366] border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] px-4 py-2.5 mb-6">
       <span>
-        <span className="text-[#e8e8e0] font-bold">{stats.pm_headline_count}</span>{" "}
+        <span className="text-[#e5e5e7] font-semibold">{stats.pm_headline_count}</span>{" "}
         headlines
       </span>
-      <span className="text-[#222]">|</span>
+      <span className="text-[#3a3a3c]">|</span>
       <span>
-        <span className="text-[#e8e8e0] font-bold">{stats.cross_references_found}</span>{" "}
+        <span className="text-[#e5e5e7] font-semibold">{stats.cross_references_found}</span>{" "}
         cross-references
       </span>
-      <span className="text-[#222]">|</span>
+      <span className="text-[#3a3a3c]">|</span>
       <span>
         <span
-          className="font-bold"
-          style={{ color: stats.divergences_found > 0 ? "#ff3333" : "#e8e8e0" }}
+          className="font-semibold"
+          style={{ color: stats.divergences_found > 0 ? "#ff453a" : "#e5e5e7" }}
         >
           {stats.divergences_found}
         </span>{" "}
@@ -41,57 +41,61 @@ function StatsBar({ stats }: { stats: PredictionSignals["stats"] }) {
   );
 }
 
-/* ── Divergence Alerts ────────────────────────────────────────────────────── */
+/* -- Divergence Alerts --------------------------------------------------- */
 function DivergenceAlerts({
   divergences,
 }: {
   divergences: PredictionSignals["divergences"];
 }) {
   return (
-    <div className="border-2 border-[#333] bg-[#111] p-5 animate-fade-in-up" style={{ animationDelay: "0ms" }}>
+    <div className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up" style={{ animationDelay: "0ms" }}>
       <div className="flex items-center gap-3 mb-4">
-        <AlertTriangle className="w-4 h-4 text-[#ff3333]" />
-        <h2 className="font-mono text-[10px] uppercase tracking-widest text-[#555]">
+        <AlertTriangle className="w-4 h-4 text-[#ff453a]" />
+        <h2 className="text-xs text-[#636366] uppercase tracking-wide">
           Divergence Alerts
         </h2>
-        <span className="font-mono text-[9px] px-1.5 py-0.5 border border-[#ff333344] bg-[#ff333311] text-[#ff3333]">
+        <span className="text-[9px] px-1.5 py-0.5 rounded border border-[#ff453a44] bg-[#ff453a11] text-[#ff453a]">
           {divergences.length}
         </span>
       </div>
 
       {divergences.length === 0 ? (
-        <p className="font-mono text-[12px] text-[#444]">
+        <p className="text-[13px] text-[#48484a]">
           No sentiment divergences detected in this period
         </p>
       ) : (
         <div className="space-y-3">
           {divergences.map((div, i) => {
             const topRelated = div.related_headlines[0];
-            const pmColor = div.pm_sentiment === "bearish" ? "#ff3333" : "#00ff88";
-            const mktColor = div.market_sentiment === "bearish" ? "#ff3333" : "#00ff88";
+            const pmColor = div.pm_sentiment === "bearish" ? "#ff453a" : "#30d158";
+            const mktColor = div.market_sentiment === "bearish" ? "#ff453a" : "#30d158";
             const pmLabel = `PM ${div.pm_sentiment?.toUpperCase()}`;
             const mktLabel = `MARKET ${div.market_sentiment?.toUpperCase()}`;
 
             return (
               <div
                 key={i}
-                className="border border-[#2a2a2a] flex items-stretch"
-                style={{ animationDelay: `${i * 40}ms` }}
+                className="border border-[#3a3a3c] rounded-lg flex items-stretch overflow-hidden"
+                style={{
+                  animationDelay: `${i * 40}ms`,
+                  borderLeftWidth: 3,
+                  borderLeftColor: pmColor,
+                }}
               >
                 {/* Left: PM headline */}
-                <div className="flex-1 p-3 min-w-0 border-r border-[#2a2a2a]">
+                <div className="flex-1 p-3 min-w-0 border-r border-[#3a3a3c]">
                   <div className="flex items-start gap-2 mb-1.5">
                     {sentimentIcon(div.pm_sentiment)}
                     <a
                       href={div.pm_headline.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-mono text-[12px] text-[#e8e8e0] hover:text-[#00ff88] leading-snug transition-colors line-clamp-2"
+                      className="text-[13px] text-[#e5e5e7] hover:text-[#0a84ff] leading-snug transition-colors line-clamp-2"
                     >
                       {div.pm_headline.title}
                     </a>
                   </div>
-                  <span className="font-mono text-[10px] text-[#555]">
+                  <span className="text-[10px] text-[#636366]">
                     {div.pm_headline.source_name}
                   </span>
                 </div>
@@ -99,7 +103,7 @@ function DivergenceAlerts({
                 {/* VS divider */}
                 <div className="flex flex-col items-center justify-center px-3 gap-1.5 shrink-0">
                   <span
-                    className="font-mono text-[9px] font-bold px-1.5 py-0.5"
+                    className="text-[9px] font-semibold px-1.5 py-0.5 rounded"
                     style={{
                       color: pmColor,
                       border: `1px solid ${pmColor}44`,
@@ -108,9 +112,9 @@ function DivergenceAlerts({
                   >
                     {pmLabel}
                   </span>
-                  <span className="font-mono text-[9px] text-[#333] font-bold">VS</span>
+                  <span className="text-[9px] text-[#48484a] font-semibold">VS</span>
                   <span
-                    className="font-mono text-[9px] font-bold px-1.5 py-0.5"
+                    className="text-[9px] font-semibold px-1.5 py-0.5 rounded"
                     style={{
                       color: mktColor,
                       border: `1px solid ${mktColor}44`,
@@ -131,24 +135,24 @@ function DivergenceAlerts({
                           href={topRelated.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-mono text-[12px] text-[#e8e8e0] hover:text-[#00ff88] leading-snug transition-colors line-clamp-2"
+                          className="text-[13px] text-[#e5e5e7] hover:text-[#0a84ff] leading-snug transition-colors line-clamp-2"
                         >
                           {topRelated.title}
                         </a>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-[10px] text-[#555]">
+                        <span className="text-[10px] text-[#636366]">
                           {topRelated.source_name}
                         </span>
                         {topRelated.category && (
-                          <span className="font-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 border border-[#33333388] text-[#666]">
+                          <span className="text-[9px] uppercase tracking-wide px-1.5 py-0.5 rounded border border-[#48484a] text-[#98989d] bg-[#48484a22]">
                             {topRelated.category}
                           </span>
                         )}
                       </div>
                     </>
                   ) : (
-                    <span className="font-mono text-[11px] text-[#444]">—</span>
+                    <span className="text-[11px] text-[#48484a]">—</span>
                   )}
                 </div>
               </div>
@@ -160,49 +164,49 @@ function DivergenceAlerts({
   );
 }
 
-/* ── Cross References ─────────────────────────────────────────────────────── */
+/* -- Cross References ---------------------------------------------------- */
 function CrossReferences({
   crossRefs,
 }: {
   crossRefs: PredictionSignals["cross_references"];
 }) {
   return (
-    <div className="border-2 border-[#333] bg-[#111] p-5 animate-fade-in-up" style={{ animationDelay: "60ms" }}>
+    <div className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up" style={{ animationDelay: "60ms" }}>
       <div className="flex items-center gap-3 mb-4">
-        <h2 className="font-mono text-[10px] uppercase tracking-widest text-[#555]">
+        <h2 className="text-xs text-[#636366] uppercase tracking-wide">
           Cross-References
         </h2>
-        <span className="font-mono text-[9px] px-1.5 py-0.5 border border-[#00ff8844] bg-[#00ff8811] text-[#00ff88]">
+        <span className="text-[9px] px-1.5 py-0.5 rounded border border-[#0a84ff44] bg-[#0a84ff11] text-[#0a84ff]">
           {crossRefs.length}
         </span>
       </div>
 
       {crossRefs.length === 0 ? (
-        <p className="font-mono text-[12px] text-[#444]">No cross-references found</p>
+        <p className="text-[13px] text-[#48484a]">No cross-references found</p>
       ) : (
         <div className="space-y-4">
           {crossRefs.map((xref, i) => (
-            <div key={i} className="border border-[#222]">
+            <div key={i} className="border border-[#3a3a3c] rounded-lg overflow-hidden">
               {/* PM headline */}
-              <div className="border-l-2 border-[#00ff88] pl-3 py-2.5 pr-3 bg-[#0d0d0d]">
+              <div className="border-l-[3px] border-[#0a84ff] pl-3 py-2.5 pr-3 bg-[#2c2c2e]">
                 <div className="flex items-start gap-2">
                   {sentimentIcon(xref.pm_headline.sentiment)}
                   <a
                     href={xref.pm_headline.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-mono text-[12px] text-[#e8e8e0] hover:text-[#00ff88] leading-snug transition-colors"
+                    className="text-[13px] text-[#e5e5e7] hover:text-[#0a84ff] leading-snug transition-colors"
                   >
                     {xref.pm_headline.title}
                   </a>
                 </div>
-                <span className="font-mono text-[10px] text-[#555] mt-1 block">
+                <span className="text-[10px] text-[#636366] mt-1 block">
                   {xref.pm_headline.source_name}
                 </span>
               </div>
 
               {/* Related headlines */}
-              <ul className="divide-y divide-[#1a1a1a]">
+              <ul className="divide-y divide-[#3a3a3c]">
                 {xref.related.map((rel, j) => (
                   <li key={j} className="px-3 py-2 flex items-start gap-2.5">
                     <div className="pt-0.5 shrink-0">{sentimentIcon(rel.sentiment)}</div>
@@ -211,20 +215,20 @@ function CrossReferences({
                         href={rel.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-mono text-[11px] text-[#bbb] hover:text-[#00ff88] leading-snug block transition-colors"
+                        className="text-[12px] text-[#98989d] hover:text-[#0a84ff] leading-snug block transition-colors"
                       >
                         {rel.title}
                       </a>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="font-mono text-[10px] text-[#555]">
+                        <span className="text-[10px] text-[#636366]">
                           {rel.source_name}
                         </span>
                         {rel.category && (
-                          <span className="font-mono text-[9px] uppercase tracking-wider px-1 py-0.5 border border-[#33333388] text-[#555]">
+                          <span className="text-[9px] uppercase tracking-wide px-1.5 py-0.5 rounded border border-[#48484a] text-[#98989d] bg-[#48484a22]">
                             {rel.category}
                           </span>
                         )}
-                        <span className="font-mono text-[9px] text-[#444]">
+                        <span className="text-[9px] text-[#48484a]">
                           {rel.shared_words} shared words
                         </span>
                       </div>
@@ -240,27 +244,27 @@ function CrossReferences({
   );
 }
 
-/* ── Prediction Market Headlines ──────────────────────────────────────────── */
+/* -- Prediction Market Headlines ----------------------------------------- */
 function PredictionHeadlines({
   headlines,
 }: {
   headlines: PredictionSignals["prediction_headlines"];
 }) {
   return (
-    <div className="border-2 border-[#333] bg-[#111] p-5 animate-fade-in-up" style={{ animationDelay: "120ms" }}>
+    <div className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 shadow-sm animate-fade-in-up" style={{ animationDelay: "120ms" }}>
       <div className="flex items-center gap-3 mb-4">
-        <h2 className="font-mono text-[10px] uppercase tracking-widest text-[#555]">
+        <h2 className="text-xs text-[#636366] uppercase tracking-wide">
           Prediction Market Headlines
         </h2>
-        <span className="font-mono text-[9px] px-1.5 py-0.5 border border-[#33333388] text-[#666]">
+        <span className="text-[9px] px-1.5 py-0.5 rounded border border-[#48484a] text-[#98989d]">
           {headlines.length}
         </span>
       </div>
 
       {headlines.length === 0 ? (
-        <p className="font-mono text-[12px] text-[#444]">No prediction market headlines found</p>
+        <p className="text-[13px] text-[#48484a]">No prediction market headlines found</p>
       ) : (
-        <ul className="divide-y divide-[#1a1a1a]">
+        <ul className="divide-y divide-[#3a3a3c]">
           {headlines.map((h, i) => (
             <li key={i} className="py-2.5 flex items-start gap-2.5">
               <div className="pt-0.5 shrink-0">{sentimentIcon(h.sentiment)}</div>
@@ -269,14 +273,14 @@ function PredictionHeadlines({
                   href={h.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-mono text-[12px] text-[#e8e8e0] hover:text-[#00ff88] leading-snug block transition-colors"
+                  className="text-[13px] text-[#e5e5e7] hover:text-[#0a84ff] leading-snug block transition-colors"
                 >
                   {h.title}
                 </a>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className="font-mono text-[10px] text-[#555]">{h.source_name}</span>
+                  <span className="text-[10px] text-[#636366]">{h.source_name}</span>
                   {h.topic && (
-                    <span className="font-mono text-[9px] uppercase tracking-wider px-1 py-0.5 border border-[#33333388] text-[#555]">
+                    <span className="text-[9px] uppercase tracking-wide px-1.5 py-0.5 rounded border border-[#48484a] text-[#98989d] bg-[#48484a22]">
                       {h.topic.replace(/_/g, " ")}
                     </span>
                   )}
@@ -290,7 +294,7 @@ function PredictionHeadlines({
   );
 }
 
-/* ── Main Page ────────────────────────────────────────────────────────────── */
+/* -- Main Page ----------------------------------------------------------- */
 export default function PredictionsPage() {
   const [period, setPeriod] = useState<Period>("24h");
   const [data, setData] = useState<PredictionSignals | null>(null);
@@ -308,31 +312,31 @@ export default function PredictionsPage() {
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
       <div className="flex items-baseline gap-4 mb-6">
-        <h1 className="font-mono text-2xl font-bold uppercase tracking-tight text-[#e8e8e0]">
+        <h1 className="text-2xl font-semibold text-[#e5e5e7]">
           Predictions
         </h1>
-        <span className="font-mono text-[10px] text-[#00ff88] tracking-widest uppercase">
+        <span className="text-xs text-[#636366] uppercase tracking-wide">
           Market Intelligence
         </span>
       </div>
 
       <Tabs value={period} onValueChange={(v) => setPeriod(v as Period)}>
-        <TabsList className="bg-[#111] border-2 border-[#333] mb-6 rounded-none p-0">
+        <TabsList className="bg-[#2c2c2e] border border-[#3a3a3c] mb-6 rounded-lg p-0.5">
           <TabsTrigger
             value="24h"
-            className="data-[state=active]:bg-[#00ff88] data-[state=active]:text-black text-[#777] font-mono text-xs rounded-none px-4 font-bold uppercase tracking-wider"
+            className="data-[state=active]:bg-[#0a84ff] data-[state=active]:text-white text-[#98989d] text-xs rounded-md px-4 py-1.5 font-medium"
           >
             24H
           </TabsTrigger>
           <TabsTrigger
             value="7d"
-            className="data-[state=active]:bg-[#00ff88] data-[state=active]:text-black text-[#777] font-mono text-xs rounded-none px-4 font-bold uppercase tracking-wider"
+            className="data-[state=active]:bg-[#0a84ff] data-[state=active]:text-white text-[#98989d] text-xs rounded-md px-4 py-1.5 font-medium"
           >
             7D
           </TabsTrigger>
           <TabsTrigger
             value="30d"
-            className="data-[state=active]:bg-[#00ff88] data-[state=active]:text-black text-[#777] font-mono text-xs rounded-none px-4 font-bold uppercase tracking-wider"
+            className="data-[state=active]:bg-[#0a84ff] data-[state=active]:text-white text-[#98989d] text-xs rounded-md px-4 py-1.5 font-medium"
           >
             30D
           </TabsTrigger>
@@ -343,7 +347,7 @@ export default function PredictionsPage() {
             {loading ? (
               <Loading message="Loading predictions..." />
             ) : !data ? (
-              <p className="text-[#555] font-mono text-sm text-center py-12">
+              <p className="text-[#636366] text-sm text-center py-12">
                 No predictions data available.
               </p>
             ) : (
