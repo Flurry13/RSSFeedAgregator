@@ -28,16 +28,19 @@ def seed():
     skipped = 0
     for feed in feeds:
         try:
+            category = feed.get("category", feed.get("group", ""))
             cur.execute(
-                """INSERT INTO sources (name, url, language, country, group_name)
-                   VALUES (%s, %s, %s, %s, %s)
+                """INSERT INTO sources (name, url, language, country, group_name, category, subcategory)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s)
                    ON CONFLICT (url) DO NOTHING""",
                 (
                     feed.get("name", ""),
                     feed["url"],
                     feed.get("language", "en"),
                     feed.get("country"),
-                    feed.get("group"),
+                    category,
+                    category,
+                    feed.get("subcategory"),
                 ),
             )
             if cur.rowcount > 0:

@@ -81,9 +81,11 @@ def load_feeds():
         # Return the feeds array, or empty list if 'feeds' key doesn't exist
         return data.get('feeds', [])
 
-# Load feed configurations at module import time
-# This ensures feeds are available immediately when the module is imported
-feedList = load_feeds()
+# Try to load feed configurations at module import time (non-fatal fallback)
+try:
+    feedList = load_feeds()
+except FileNotFoundError:
+    feedList = []
 
 def load_feeds_from_db():
     """Load active feed sources from the database."""
@@ -99,7 +101,9 @@ def load_feeds_from_db():
                 "url": s["url"],
                 "language": s.get("language", "en"),
                 "country": s.get("country", ""),
-                "group": s.get("group_name", ""),
+                "group": s.get("group_name", s.get("category", "")),
+                "category": s.get("category", s.get("group_name", "")),
+                "subcategory": s.get("subcategory", ""),
             }
             for s in sources
         ]
@@ -211,7 +215,9 @@ def process_single_feed(feed_item, feed_index, total_feeds):
                     'link': link,
                     'language': feed_item['language'],
                     'source': feed_item['name'],
-                    'group': feed_item['group'],
+                    'group': feed_item.get('group', feed_item.get('category', '')),
+                    'category': feed_item.get('category', feed_item.get('group', '')),
+                    'subcategory': feed_item.get('subcategory', ''),
                     'country': feed_item['country'],
                     'published': _extract_published(entry),
                     'source_id': feed_item.get('id'),

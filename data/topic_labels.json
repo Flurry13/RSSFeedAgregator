@@ -1,90 +1,90 @@
 {
   "labels": [
     {
-      "id": "politics",
-      "name": "Politics",
-      "description": "Political news, elections, government policy, diplomatic relations",
-      "keywords": ["government", "election", "policy", "politician", "vote", "parliament", "congress", "senate"],
-      "weight": 1.0,
-      "enabled": true
-    },
-    {
-      "id": "economy", 
-      "name": "Economy",
-      "description": "Economic news, markets, finance, trade, business economics",
-      "keywords": ["economy", "market", "finance", "trade", "GDP", "inflation", "stock", "investment"],
-      "weight": 1.0,
-      "enabled": true
-    },
-    {
-      "id": "technology",
-      "name": "Technology", 
-      "description": "Technology news, innovation, digital transformation, AI, cybersecurity",
-      "keywords": ["technology", "AI", "innovation", "digital", "software", "hardware", "startup", "tech"],
-      "weight": 1.0,
-      "enabled": true
-    },
-    {
-      "id": "science",
-      "name": "Science",
-      "description": "Scientific discoveries, research, medical breakthroughs, space exploration",
-      "keywords": ["science", "research", "study", "discovery", "medical", "space", "climate", "health"],
-      "weight": 1.0,
-      "enabled": true
-    },
-    {
-      "id": "environment",
-      "name": "Environment",
-      "description": "Environmental news, climate change, sustainability, natural disasters",
-      "keywords": ["environment", "climate", "sustainability", "green", "renewable", "carbon", "pollution"],
-      "weight": 1.0,
-      "enabled": true
-    },
-    {
-      "id": "entertainment",
-      "name": "Entertainment",
-      "description": "Entertainment news, celebrities, movies, music, TV shows, culture",
-      "keywords": ["entertainment", "celebrity", "movie", "music", "TV", "film", "culture", "festival"],
-      "weight": 0.8,
-      "enabled": true
-    },
-    {
-      "id": "world",
-      "name": "World",
-      "description": "International news, global events, conflicts, humanitarian issues",
-      "keywords": ["international", "global", "world", "conflict", "war", "humanitarian", "crisis"],
+      "id": "markets",
+      "name": "Markets",
+      "description": "Stock market movements, indices, trading activity, market sentiment",
+      "keywords": ["stock", "market", "S&P", "Nasdaq", "Dow", "NYSE", "shares", "rally", "selloff", "bull", "bear", "trading", "index", "equities", "Wall Street", "IPO"],
       "weight": 1.1,
       "enabled": true
     },
     {
-      "id": "business",
-      "name": "Business",
-      "description": "Corporate news, industry updates, mergers, acquisitions, entrepreneurship",
-      "keywords": ["business", "corporate", "company", "industry", "merger", "acquisition", "CEO"],
+      "id": "economy",
+      "name": "Economy & Macro",
+      "description": "Macroeconomic indicators, GDP, employment, inflation, monetary policy",
+      "keywords": ["economy", "GDP", "inflation", "unemployment", "jobs", "CPI", "interest rate", "recession", "Fed", "Federal Reserve", "monetary", "fiscal", "deficit", "debt ceiling", "treasury"],
+      "weight": 1.1,
+      "enabled": true
+    },
+    {
+      "id": "earnings",
+      "name": "Earnings & Corporate",
+      "description": "Corporate earnings reports, revenue, guidance, analyst ratings",
+      "keywords": ["earnings", "revenue", "profit", "EPS", "guidance", "quarterly", "annual report", "dividend", "buyback", "beat", "miss", "forecast", "outlook"],
       "weight": 1.0,
       "enabled": true
     },
     {
-      "id": "education",
-      "name": "Education",
-      "description": "Educational news, schools, universities, learning, academic research",
-      "keywords": ["education", "school", "university", "student", "teacher", "academic", "learning"],
+      "id": "crypto",
+      "name": "Crypto & Digital Assets",
+      "description": "Cryptocurrency, blockchain, DeFi, NFTs, digital asset regulation",
+      "keywords": ["bitcoin", "crypto", "ethereum", "blockchain", "DeFi", "NFT", "token", "mining", "wallet", "exchange", "stablecoin", "altcoin", "Web3"],
+      "weight": 1.0,
+      "enabled": true
+    },
+    {
+      "id": "commodities",
+      "name": "Commodities & Energy",
+      "description": "Oil, gas, metals, agriculture, energy markets, OPEC",
+      "keywords": ["oil", "gold", "silver", "copper", "natural gas", "OPEC", "crude", "commodity", "energy", "mining", "wheat", "corn", "lithium", "uranium"],
+      "weight": 1.0,
+      "enabled": true
+    },
+    {
+      "id": "real_estate",
+      "name": "Real Estate",
+      "description": "Housing market, commercial real estate, REITs, mortgage rates",
+      "keywords": ["housing", "real estate", "mortgage", "REIT", "home sales", "rental", "commercial property", "construction", "home prices", "foreclosure"],
       "weight": 0.9,
       "enabled": true
     },
     {
-      "id": "art",
-      "name": "Art & Culture",
-      "description": "Arts, culture, museums, exhibitions, cultural events, literature",
-      "keywords": ["art", "culture", "museum", "exhibition", "artist", "literature", "cultural"],
-      "weight": 0.7,
+      "id": "regulation",
+      "name": "Regulation & Policy",
+      "description": "SEC, CFTC, FDIC actions, financial legislation, compliance",
+      "keywords": ["SEC", "CFTC", "FDIC", "regulation", "compliance", "enforcement", "fine", "sanction", "legislation", "antitrust", "oversight", "investigation"],
+      "weight": 1.0,
+      "enabled": true
+    },
+    {
+      "id": "fintech",
+      "name": "Fintech & Payments",
+      "description": "Financial technology, digital payments, banking innovation, neobanks",
+      "keywords": ["fintech", "payments", "banking", "neobank", "digital banking", "mobile payments", "stripe", "PayPal", "Visa", "Mastercard", "BNPL", "open banking"],
+      "weight": 0.9,
+      "enabled": true
+    },
+    {
+      "id": "prediction_markets",
+      "name": "Prediction Markets",
+      "description": "Prediction market activity, forecasting, betting odds, Polymarket, Kalshi",
+      "keywords": ["prediction market", "Polymarket", "Kalshi", "Metaculus", "Manifold", "forecast", "betting", "odds", "probability", "prediction", "wager"],
+      "weight": 1.0,
+      "enabled": true
+    },
+    {
+      "id": "mergers",
+      "name": "M&A / Deals",
+      "description": "Mergers, acquisitions, IPOs, SPACs, venture capital, private equity",
+      "keywords": ["merger", "acquisition", "IPO", "SPAC", "venture capital", "private equity", "deal", "takeover", "buyout", "fundraising", "valuation", "unicorn"],
+      "weight": 1.0,
       "enabled": true
     }
   ],
   "metadata": {
-    "version": "2.0",
-    "optimization": "Reduced from 17 to 10 topics for 60% performance improvement",
-    "last_updated": "2024-01-01T00:00:00Z",
+    "version": "3.0",
+    "focus": "Financial markets classification — optimized for AI agent analysis",
+    "last_updated": "2026-03-19T00:00:00Z",
     "total_labels": 10,
     "performance_metrics": {
       "throughput": "1.6 requests/second",
@@ -92,10 +92,11 @@
       "processing_time": "~12s for 20 headlines"
     },
     "model_config": {
-      "model": "facebook/bart-large-mnli",
+      "model": "keyword-based",
       "multi_label": true,
       "top_k": 3,
       "confidence_threshold": 0.1
-    }
+    },
+    "ai_agent_notes": "Topics are designed for financial signal extraction. AI agents should cross-reference topic assignments with source category to identify signal strength and potential correlations."
   }
-} 
+}
