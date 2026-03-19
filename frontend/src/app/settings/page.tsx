@@ -70,8 +70,8 @@ function SaveButton({
       disabled={disabled}
       className={
         saved
-          ? "font-mono text-[10px] font-bold uppercase tracking-wider px-5 py-2 border-2 bg-[#33ff33] text-black border-[#33ff33] transition-colors"
-          : "font-mono text-[10px] font-bold uppercase tracking-wider px-5 py-2 border-2 bg-[#00ff88] text-black border-[#00ff88] hover:bg-[#00dd77] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          ? "text-sm font-medium px-5 py-2 rounded-lg text-[#30d158] bg-[#30d158]/10 border border-[#30d158]/30 transition-colors"
+          : "text-sm font-medium px-5 py-2 rounded-lg bg-[#0a84ff] text-white hover:bg-[#0a84ff]/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
       }
     >
       {saved ? (
@@ -152,47 +152,44 @@ export default function SettingsPage() {
   }
 
   const selectCls =
-    "bg-[#0a0a0a] border-2 border-[#333] text-[#e8e8e0] font-mono text-xs rounded-none";
-  const contentCls = "bg-[#111] border-2 border-[#333] rounded-none";
+    "bg-[#1c1c1e] border border-[#48484a] text-[#e5e5e7] text-sm rounded-lg";
+  const contentCls = "bg-[#2c2c2e] border border-[#3a3a3c] rounded-lg";
   const itemCls =
-    "text-[#e8e8e0] focus:bg-[#1a1a1a] font-mono text-xs rounded-none";
+    "text-[#e5e5e7] focus:bg-[#3a3a3c] text-sm rounded-lg";
 
   return (
     <div className="max-w-xl mx-auto px-6 py-8">
       {/* Header */}
       <div className="flex items-baseline gap-4 mb-8">
-        <h1 className="font-mono text-2xl font-bold uppercase tracking-tight text-[#e8e8e0]">
+        <h1 className="text-2xl font-bold text-[#e5e5e7]">
           Settings
         </h1>
-        <span className="font-mono text-[10px] text-[#00ff88] tracking-widest uppercase">
-          Server-backed
-        </span>
       </div>
 
       {loading && (
-        <p className="font-mono text-xs text-[#555] mb-6">Loading…</p>
+        <p className="text-xs text-[#636366] mb-6">Loading...</p>
       )}
       {error && (
-        <p className="font-mono text-xs text-red-500 mb-6">{error}</p>
+        <p className="text-xs text-[#ff453a] mb-6">{error}</p>
       )}
 
       <div className="space-y-6">
-        {/* ── Section 1: Pipeline Schedule ─────────────────────────── */}
-        <section className="border-2 border-[#333] bg-[#111]">
-          <div className="px-4 py-2 border-b-2 border-[#222]">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-[#555]">
+        {/* -- Section 1: Pipeline Schedule -- */}
+        <section className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] overflow-hidden">
+          <div className="px-4 py-2 bg-[#3a3a3c] rounded-t-[10px]">
+            <p className="text-[11px] uppercase tracking-wide text-[#636366]">
               Pipeline Schedule
             </p>
           </div>
 
-          <div className="divide-y-2 divide-[#222]">
+          <div className="divide-y divide-[#3a3a3c]">
             {/* Toggle */}
             <div className="flex items-center justify-between px-4 py-3">
               <div>
-                <p className="text-sm font-bold text-[#e8e8e0] font-mono">
+                <p className="text-[14px] font-medium text-[#e5e5e7]">
                   Auto-run
                 </p>
-                <p className="text-[10px] text-[#555] font-mono mt-0.5">
+                <p className="text-[12px] text-[#98989d] mt-0.5">
                   Run the pipeline on a schedule
                 </p>
               </div>
@@ -200,8 +197,8 @@ export default function SettingsPage() {
                 onClick={() => setScheduleEnabled((v) => !v)}
                 className={
                   scheduleEnabled
-                    ? "font-mono text-[10px] font-bold uppercase tracking-wider px-4 py-1.5 border-2 border-[#00ff88] text-[#00ff88] hover:bg-[#00ff8822] transition-colors"
-                    : "font-mono text-[10px] font-bold uppercase tracking-wider px-4 py-1.5 border-2 border-[#555] text-[#555] hover:border-[#777] hover:text-[#777] transition-colors"
+                    ? "text-sm font-medium px-4 py-1.5 rounded-lg bg-[#30d158] text-white transition-colors"
+                    : "text-sm font-medium px-4 py-1.5 rounded-lg bg-[#3a3a3c] text-[#98989d] hover:bg-[#48484a] transition-colors"
                 }
               >
                 {scheduleEnabled ? "Enabled" : "Disabled"}
@@ -211,10 +208,10 @@ export default function SettingsPage() {
             {/* Interval */}
             <div className="flex items-center justify-between px-4 py-3">
               <div>
-                <p className="text-sm font-bold text-[#e8e8e0] font-mono">
+                <p className="text-[14px] font-medium text-[#e5e5e7]">
                   Interval
                 </p>
-                <p className="text-[10px] text-[#555] font-mono mt-0.5">
+                <p className="text-[12px] text-[#98989d] mt-0.5">
                   How often to run
                 </p>
               </div>
@@ -236,7 +233,7 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div className="flex justify-end px-4 py-3 border-t-2 border-[#222]">
+          <div className="flex justify-end px-4 py-3 border-t border-[#3a3a3c]">
             <SaveButton
               onClick={saveSchedule}
               saved={savedSchedule}
@@ -245,18 +242,18 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* ── Section 2: Default Filters ───────────────────────────── */}
-        <section className="border-2 border-[#333] bg-[#111]">
-          <div className="px-4 py-2 border-b-2 border-[#222]">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-[#555]">
+        {/* -- Section 2: Default Filters -- */}
+        <section className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] overflow-hidden">
+          <div className="px-4 py-2 bg-[#3a3a3c] rounded-t-[10px]">
+            <p className="text-[11px] uppercase tracking-wide text-[#636366]">
               Default Filters
             </p>
           </div>
 
-          <div className="divide-y-2 divide-[#222]">
+          <div className="divide-y divide-[#3a3a3c]">
             {/* Topic */}
             <div className="flex items-center justify-between px-4 py-3">
-              <p className="text-sm font-bold text-[#e8e8e0] font-mono">
+              <p className="text-[14px] font-medium text-[#e5e5e7]">
                 Default topic
               </p>
               <Select value={defaultTopic} onValueChange={setDefaultTopic}>
@@ -275,7 +272,7 @@ export default function SettingsPage() {
 
             {/* Sentiment */}
             <div className="flex items-center justify-between px-4 py-3">
-              <p className="text-sm font-bold text-[#e8e8e0] font-mono">
+              <p className="text-[14px] font-medium text-[#e5e5e7]">
                 Default sentiment
               </p>
               <Select
@@ -296,8 +293,8 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between px-4 py-3 border-t-2 border-[#222]">
-            <p className="font-mono text-[10px] text-[#444]">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-[#3a3a3c]">
+            <p className="text-[12px] text-[#636366]">
               Applied when loading the feed page
             </p>
             <SaveButton
@@ -308,16 +305,16 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* ── Section 3: Data Retention ────────────────────────────── */}
-        <section className="border-2 border-[#333] bg-[#111]">
-          <div className="px-4 py-2 border-b-2 border-[#222]">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-[#555]">
+        {/* -- Section 3: Data Retention -- */}
+        <section className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] overflow-hidden">
+          <div className="px-4 py-2 bg-[#3a3a3c] rounded-t-[10px]">
+            <p className="text-[11px] uppercase tracking-wide text-[#636366]">
               Data Retention
             </p>
           </div>
 
           <div className="px-4 py-3 flex items-center justify-between">
-            <p className="text-sm font-bold text-[#e8e8e0] font-mono">
+            <p className="text-[14px] font-medium text-[#e5e5e7]">
               Keep headlines for
             </p>
             <Select value={retentionDays} onValueChange={setRetentionDays}>
@@ -336,14 +333,14 @@ export default function SettingsPage() {
 
           {retentionDays !== "0" && (
             <div className="px-4 pb-3">
-              <p className="font-mono text-[10px] text-yellow-500">
+              <p className="text-[12px] text-[#ff9f0a]">
                 Headlines older than {retentionDays} days will be deleted after
                 each pipeline run
               </p>
             </div>
           )}
 
-          <div className="flex justify-end px-4 py-3 border-t-2 border-[#222]">
+          <div className="flex justify-end px-4 py-3 border-t border-[#3a3a3c]">
             <SaveButton
               onClick={saveRetention}
               saved={savedRetention}
@@ -352,10 +349,10 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* ── Section 4: Export Data ───────────────────────────────── */}
-        <section className="border-2 border-[#333] bg-[#111]">
-          <div className="px-4 py-2 border-b-2 border-[#222]">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-[#555]">
+        {/* -- Section 4: Export Data -- */}
+        <section className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] overflow-hidden">
+          <div className="px-4 py-2 bg-[#3a3a3c] rounded-t-[10px]">
+            <p className="text-[11px] uppercase tracking-wide text-[#636366]">
               Export Data
             </p>
           </div>
@@ -363,15 +360,15 @@ export default function SettingsPage() {
           <div className="px-4 py-3 space-y-4">
             {/* Period selector */}
             <div className="flex items-center gap-2">
-              <p className="font-mono text-xs text-[#777] mr-2">Period:</p>
+              <p className="text-sm text-[#98989d] mr-2">Period:</p>
               {EXPORT_PERIODS.map((p) => (
                 <button
                   key={p}
                   onClick={() => setExportPeriod(p)}
                   className={
                     exportPeriod === p
-                      ? "font-mono text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 border-2 border-[#00ff88] text-[#00ff88] transition-colors"
-                      : "font-mono text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 border-2 border-[#333] text-[#555] hover:border-[#555] hover:text-[#777] transition-colors"
+                      ? "text-sm font-medium px-3 py-1.5 rounded-lg bg-[#0a84ff] text-white transition-colors"
+                      : "text-sm font-medium px-3 py-1.5 rounded-lg bg-transparent border border-[#48484a] text-[#98989d] hover:border-[#636366] hover:text-[#e5e5e7] transition-colors"
                   }
                 >
                   {p}
@@ -384,32 +381,32 @@ export default function SettingsPage() {
               <a
                 href={exportUrl("csv")}
                 download
-                className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-wider px-4 py-2 border-2 border-[#333] text-[#e8e8e0] hover:border-[#00ff88] hover:text-[#00ff88] transition-colors"
+                className="flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-lg bg-transparent border border-[#48484a] text-[#e5e5e7] hover:border-[#0a84ff] hover:text-[#0a84ff] transition-colors"
               >
-                <Download className="w-3 h-3" />
+                <Download className="w-3.5 h-3.5" />
                 Download CSV
               </a>
               <a
                 href={exportUrl("json")}
                 download
-                className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-wider px-4 py-2 border-2 border-[#333] text-[#e8e8e0] hover:border-[#00ff88] hover:text-[#00ff88] transition-colors"
+                className="flex items-center gap-1.5 text-sm font-medium px-4 py-2 rounded-lg bg-transparent border border-[#48484a] text-[#e5e5e7] hover:border-[#0a84ff] hover:text-[#0a84ff] transition-colors"
               >
-                <Download className="w-3 h-3" />
+                <Download className="w-3.5 h-3.5" />
                 Download JSON
               </a>
             </div>
           </div>
         </section>
 
-        {/* ── Section 5: About ─────────────────────────────────────── */}
-        <section className="border-t-2 border-[#222] pt-6">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-[#444] mb-2">
+        {/* -- Section 5: About -- */}
+        <section className="pt-6">
+          <p className="text-[11px] uppercase tracking-wide text-[#636366] mb-2">
             About
           </p>
-          <p className="text-[#777] font-mono text-sm">
-            RSSFeed2 — Financial News Intelligence Platform
+          <p className="text-[#98989d] text-sm">
+            RSSFeed2 -- Financial News Intelligence Platform
           </p>
-          <p className="font-mono text-[10px] text-[#444] mt-1">
+          <p className="text-[12px] text-[#636366] mt-1">
             Settings stored on server
           </p>
         </section>
