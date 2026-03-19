@@ -34,18 +34,13 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback;
       return (
-        <div className="flex flex-col items-center justify-center min-h-[200px] gap-4 p-8 text-center">
-          <p className="text-zinc-400 text-sm">Something went wrong.</p>
-          {this.state.error && (
-            <pre className="text-zinc-500 text-xs bg-zinc-900 rounded p-3 max-w-md overflow-auto">
-              {this.state.error.message}
-            </pre>
-          )}
+        <div className="bg-[#2c2c2e] border border-[#3a3a3c] rounded-[10px] p-5 text-center">
+          <p className="text-[#98989d] text-sm">Failed to load this section</p>
           <button
             onClick={this.handleRetry}
-            className="px-4 py-2 rounded-md bg-zinc-800 text-zinc-200 text-sm hover:bg-zinc-700 transition-colors"
+            className="text-[#0a84ff] text-xs mt-2 hover:underline"
           >
-            Try again
+            Retry
           </button>
         </div>
       );

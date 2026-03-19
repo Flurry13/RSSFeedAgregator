@@ -37,15 +37,19 @@ CREATE TABLE sources (
     language TEXT NOT NULL DEFAULT 'en',
     country TEXT,
     group_name TEXT,
+    category TEXT,
+    subcategory TEXT,
     active BOOLEAN DEFAULT TRUE,
     last_fetched_at TIMESTAMPTZ,
     fetch_error TEXT,
+    error_count INTEGER DEFAULT 0,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE INDEX idx_sources_active ON sources(active);
 CREATE INDEX idx_sources_language ON sources(language);
+CREATE INDEX idx_sources_category ON sources(category);
 
 -- Headlines table (simplified)
 CREATE TABLE headlines (
@@ -61,6 +65,8 @@ CREATE TABLE headlines (
     topic_confidence FLOAT,
     entities JSONB,
     event_type TEXT,
+    sentiment TEXT,
+    sentiment_score FLOAT,
     embedding_id TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
@@ -72,6 +78,8 @@ CREATE INDEX idx_headlines_published_at ON headlines(published_at);
 CREATE INDEX idx_headlines_language ON headlines(language);
 CREATE INDEX idx_headlines_topic ON headlines(topic);
 CREATE INDEX idx_headlines_title_fts ON headlines USING gin(to_tsvector('simple', title));
+CREATE INDEX idx_headlines_sentiment ON headlines(sentiment);
+CREATE INDEX idx_headlines_topic_source ON headlines(topic, source_id);
 
 -- Event clusters table
 CREATE TABLE event_clusters (
@@ -97,6 +105,38 @@ CREATE TABLE event_cluster_members (
 );
 
 CREATE INDEX idx_ecm_headline_id ON event_cluster_members(headline_id);
+
+-- Pipeline runs table (tracks each full pipeline execution)
+CREATE TABLE IF NOT EXISTS pipeline_runs (
+    id SERIAL PRIMARY KEY,
+    started_at TIMESTAMPTZ NOT NULL,
+    completed_at TIMESTAMPTZ,
+    status TEXT NOT NULL DEFAULT 'running',
+    headlines_gathered INTEGER DEFAULT 0,
+    headlines_inserted INTEGER DEFAULT 0,
+    feeds_success INTEGER DEFAULT 0,
+    feeds_failed INTEGER DEFAULT 0,
+    duration_ms INTEGER,
+    error TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_pipeline_runs_started_at ON pipeline_runs(started_at);
+
+-- Settings table (key-value store for application configuration)
+CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+INSERT INTO settings (key, value) VALUES
+    ('pipeline_schedule_enabled', 'false'),
+    ('pipeline_schedule_interval', '30'),
+    ('retention_days', '0'),
+    ('default_topic', 'all'),
+    ('default_sentiment', 'all')
+ON CONFLICT (key) DO NOTHING;
 
 -- Views
 CREATE VIEW v_recent_headlines AS

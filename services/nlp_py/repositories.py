@@ -94,19 +94,30 @@ class SourceRepository:
 
     @staticmethod
     def update_last_fetched(source_id: int, error: Optional[str] = None) -> bool:
-        """Stamp last_fetched_at (and optionally last_error) for a source."""
+        """Stamp last_fetched_at for a source. On error, increments error_count;
+        on success, resets error_count to 0 and clears fetch_error."""
         try:
             with get_db_cursor() as cursor:
-                cursor.execute(
-                    """
-                    UPDATE sources
-                    SET last_fetched_at = NOW(),
-                        fetch_error = %(error)s,
-                        updated_at = NOW()
-                    WHERE id = %(source_id)s
-                    """,
-                    {"source_id": source_id, "error": error},
-                )
+                if error:
+                    cursor.execute(
+                        """UPDATE sources
+                           SET last_fetched_at = NOW(),
+                               fetch_error = %(error)s,
+                               error_count = COALESCE(error_count, 0) + 1,
+                               updated_at = NOW()
+                           WHERE id = %(source_id)s""",
+                        {"source_id": source_id, "error": error},
+                    )
+                else:
+                    cursor.execute(
+                        """UPDATE sources
+                           SET last_fetched_at = NOW(),
+                               fetch_error = NULL,
+                               error_count = 0,
+                               updated_at = NOW()
+                           WHERE id = %(source_id)s""",
+                        {"source_id": source_id},
+                    )
                 return True
         except Exception as e:
             print(f"Error updating last_fetched for source {source_id}: {e}")
@@ -119,6 +130,8 @@ class SourceRepository:
         active: Optional[bool] = None,
         language: Optional[str] = None,
         group_name: Optional[str] = None,
+        category: Optional[str] = None,
+        subcategory: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Return a paginated list of sources with optional filters.
@@ -138,6 +151,12 @@ class SourceRepository:
         if group_name:
             conditions.append("group_name = %(group_name)s")
             params["group_name"] = group_name
+        if category:
+            conditions.append("category = %(category)s")
+            params["category"] = category
+        if subcategory:
+            conditions.append("subcategory = %(subcategory)s")
+            params["subcategory"] = subcategory
 
         where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
         offset = (page - 1) * limit
@@ -210,7 +229,7 @@ class HeadlineRepository:
                             "title": h.get("title"),
                             "url": h.get("url") or h.get("link"),
                             "language": h.get("language", "en"),
-                            "published_at": h.get("published_at") or h.get("published"),
+                            "published_at": h.get("published_at") or h.get("published") or None,
                         },
                     )
                     if cursor.fetchone():
@@ -231,6 +250,7 @@ class HeadlineRepository:
         language: Optional[str] = None,
         source_id: Optional[int] = None,
         q: Optional[str] = None,
+        sentiment: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Return paginated headlines joined with source name.
@@ -260,6 +280,13 @@ class HeadlineRepository:
                 "to_tsvector('simple', h.title) @@ plainto_tsquery('simple', %(q)s)"
             )
             params["q"] = q
+        if sentiment:
+            conditions.append("h.sentiment = %(sentiment)s")
+            params["sentiment"] = sentiment
+
+        # Default to English-only unless language filter specified
+        if not language:
+            conditions.append("h.language = 'en'")
 
         where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
         offset = (page - 1) * limit
@@ -378,6 +405,26 @@ class HeadlineRepository:
             return False
 
     @staticmethod
+    def update_sentiment(headline_id: int, sentiment: str, score: float) -> bool:
+        """Persist sentiment analysis result for a headline."""
+        try:
+            with get_db_cursor() as cursor:
+                cursor.execute(
+                    """
+                    UPDATE headlines
+                    SET sentiment = %(sentiment)s,
+                        sentiment_score = %(score)s,
+                        updated_at = NOW()
+                    WHERE id = %(headline_id)s
+                    """,
+                    {"headline_id": headline_id, "sentiment": sentiment, "score": score},
+                )
+                return True
+        except Exception as e:
+            print(f"Error updating sentiment for headline {headline_id}: {e}")
+            return False
+
+    @staticmethod
     def update_embedding_id(headline_id: int, embedding_id: str) -> bool:
         """Store the Qdrant point ID for a headline's embedding."""
         try:
@@ -395,6 +442,46 @@ class HeadlineRepository:
         except Exception as e:
             print(f"Error updating embedding_id for headline {headline_id}: {e}")
             return False
+
+    @staticmethod
+    def get_for_export(
+        period: str = "24h",
+        topic: Optional[str] = None,
+        sentiment: Optional[str] = None,
+        category: Optional[str] = None,
+        limit: int = 10000,
+    ) -> List[Dict]:
+        interval_map = {"24h": "24 hours", "7d": "7 days", "30d": "30 days"}
+        interval = interval_map.get(period, "24 hours")
+        conditions = ["h.created_at >= NOW() - %(interval)s::INTERVAL"]
+        params: Dict[str, Any] = {"interval": interval, "limit": limit}
+        if topic:
+            conditions.append("h.topic = %(topic)s")
+            params["topic"] = topic
+        if sentiment:
+            conditions.append("h.sentiment = %(sentiment)s")
+            params["sentiment"] = sentiment
+        if category:
+            conditions.append("s.category = %(category)s")
+            params["category"] = category
+        where = " AND ".join(conditions)
+        try:
+            with get_db_cursor() as cursor:
+                cursor.execute(
+                    f"""SELECT h.title, h.url, h.topic, h.topic_confidence,
+                               h.sentiment, h.sentiment_score, h.published_at,
+                               s.name AS source_name, s.category
+                        FROM headlines h
+                        JOIN sources s ON h.source_id = s.id
+                        WHERE {where}
+                        ORDER BY h.published_at DESC NULLS LAST
+                        LIMIT %(limit)s""",
+                    params,
+                )
+                return [dict(r) for r in cursor.fetchall()]
+        except Exception as e:
+            print(f"Error fetching export data: {e}")
+            return []
 
 
 # ---------------------------------------------------------------------------
@@ -589,7 +676,10 @@ class AnalyticsRepository:
             "topic_distribution": [],
             "source_breakdown": [],
             "language_breakdown": [],
+            "category_breakdown": [],
             "daily_volume": [],
+            "sentiment_distribution": [],
+            "topic_category_heatmap": [],
         }
         try:
             with get_db_cursor() as cursor:
@@ -614,7 +704,7 @@ class AnalyticsRepository:
                     FROM headlines h
                     LEFT JOIN sources s ON h.source_id = s.id
                     WHERE h.created_at >= NOW() - %(interval)s::INTERVAL
-                    GROUP BY s.name
+                    GROUP BY s.id, s.name
                     ORDER BY count DESC
                     """,
                     params,
@@ -634,21 +724,590 @@ class AnalyticsRepository:
                 )
                 result["language_breakdown"] = [dict(r) for r in cursor.fetchall()]
 
+                # Category breakdown
+                cursor.execute(
+                    """
+                    SELECT s.category, COUNT(h.id) AS count
+                    FROM headlines h
+                    JOIN sources s ON h.source_id = s.id
+                    WHERE h.created_at >= NOW() - %(interval)s::INTERVAL
+                      AND s.category IS NOT NULL
+                    GROUP BY s.category
+                    ORDER BY count DESC
+                    """,
+                    params,
+                )
+                result["category_breakdown"] = [dict(r) for r in cursor.fetchall()]
+
                 # Daily volume
                 cursor.execute(
                     """
                     SELECT DATE(created_at) AS date, COUNT(*) AS count
                     FROM headlines
                     WHERE created_at >= NOW() - %(interval)s::INTERVAL
-                    GROUP BY day
-                    ORDER BY day ASC
+                    GROUP BY DATE(created_at)
+                    ORDER BY DATE(created_at) ASC
                     """,
                     params,
                 )
                 result["daily_volume"] = [dict(r) for r in cursor.fetchall()]
+
+                # Sentiment distribution
+                cursor.execute(
+                    """
+                    SELECT sentiment, COUNT(*) AS count
+                    FROM headlines
+                    WHERE sentiment IS NOT NULL
+                      AND created_at >= NOW() - %(interval)s::INTERVAL
+                    GROUP BY sentiment
+                    ORDER BY count DESC
+                    """,
+                    params,
+                )
+                result["sentiment_distribution"] = [dict(r) for r in cursor.fetchall()]
+
+                # Topic x Category heatmap
+                cursor.execute(
+                    """
+                    SELECT h.topic, s.category, COUNT(*) AS count
+                    FROM headlines h
+                    JOIN sources s ON h.source_id = s.id
+                    WHERE h.created_at >= NOW() - %(interval)s::INTERVAL
+                      AND h.topic IS NOT NULL
+                      AND s.category IS NOT NULL
+                    GROUP BY h.topic, s.category
+                    ORDER BY count DESC
+                    """,
+                    params,
+                )
+                result["topic_category_heatmap"] = [dict(r) for r in cursor.fetchall()]
 
         except Exception as e:
             print(f"Error fetching analytics: {e}")
 
         result["period"] = period
         return result
+
+
+# ---------------------------------------------------------------------------
+
+
+class InsightsRepository:
+    """Aggregation queries for AI agent consumption."""
+
+    _PERIOD_MAP = {
+        "24h": "24 hours",
+        "7d": "7 days",
+        "30d": "30 days",
+    }
+
+    @staticmethod
+    def get_summary(period: str = "24h") -> Dict[str, Any]:
+        """
+        Return structured financial intelligence for the requested time window.
+
+        Returned structure:
+            {
+                "top_headlines_by_category": {
+                    "<category>": [
+                        {"title", "url", "topic", "topic_confidence", "source_name"},
+                        ...
+                    ],
+                    ...
+                },
+                "topic_counts":     [{"topic": str, "count": int}, ...],
+                "category_volume":  [{"category": str, "count": int}, ...],
+                "top_clusters":     [{"label", "event_type", "headline_count"}, ...],
+                "feed_health":      {"healthy": int, "erroring": int, "inactive": int},
+                "period":           str,
+            }
+        """
+        interval = InsightsRepository._PERIOD_MAP.get(period, "24 hours")
+        params = {"interval": interval}
+        result: Dict[str, Any] = {
+            "top_headlines_by_category": {},
+            "topic_counts": [],
+            "category_volume": [],
+            "top_clusters": [],
+            "feed_health": {"healthy": 0, "erroring": 0, "inactive": 0},
+            "sentiment_breakdown": {},
+            "sentiment_by_category": {},
+        }
+        try:
+            with get_db_cursor() as cursor:
+                # Top 5 headlines per source category (excluding "general" topic)
+                cursor.execute(
+                    """
+                    SELECT s.category,
+                           h.title,
+                           h.url,
+                           h.topic,
+                           h.topic_confidence,
+                           s.name AS source_name,
+                           ROW_NUMBER() OVER (
+                               PARTITION BY s.category
+                               ORDER BY h.topic_confidence DESC
+                           ) AS rn
+                    FROM headlines h
+                    JOIN sources s ON h.source_id = s.id
+                    WHERE h.topic IS NOT NULL
+                      AND h.topic <> 'general'
+                      AND h.created_at >= NOW() - %(interval)s::INTERVAL
+                      AND s.category IS NOT NULL
+                    """,
+                    params,
+                )
+                rows = cursor.fetchall()
+                by_category: Dict[str, List[Dict]] = {}
+                for row in rows:
+                    if row["rn"] > 5:
+                        continue
+                    cat = row["category"]
+                    if cat not in by_category:
+                        by_category[cat] = []
+                    by_category[cat].append(
+                        {
+                            "title": row["title"],
+                            "url": row["url"],
+                            "topic": row["topic"],
+                            "topic_confidence": row["topic_confidence"],
+                            "source_name": row["source_name"],
+                        }
+                    )
+                result["top_headlines_by_category"] = by_category
+
+                # Topic counts
+                cursor.execute(
+                    """
+                    SELECT topic, COUNT(*) AS count
+                    FROM headlines
+                    WHERE topic IS NOT NULL
+                      AND created_at >= NOW() - %(interval)s::INTERVAL
+                    GROUP BY topic
+                    ORDER BY count DESC
+                    """,
+                    params,
+                )
+                result["topic_counts"] = [dict(r) for r in cursor.fetchall()]
+
+                # Category volume
+                cursor.execute(
+                    """
+                    SELECT s.category, COUNT(h.id) AS count
+                    FROM headlines h
+                    JOIN sources s ON h.source_id = s.id
+                    WHERE h.created_at >= NOW() - %(interval)s::INTERVAL
+                      AND s.category IS NOT NULL
+                    GROUP BY s.category
+                    ORDER BY count DESC
+                    """,
+                    params,
+                )
+                result["category_volume"] = [dict(r) for r in cursor.fetchall()]
+
+                # Top 10 event clusters by member count (aggregated by label)
+                cursor.execute(
+                    """
+                    SELECT label,
+                           MAX(event_type) AS event_type,
+                           COUNT(DISTINCT m.headline_id) AS headline_count
+                    FROM event_clusters c
+                    JOIN event_cluster_members m ON m.cluster_id = c.id
+                    WHERE c.created_at >= NOW() - %(interval)s::INTERVAL
+                      AND c.label NOT IN ('Event cluster', 'Uncategorized', 'Event')
+                    GROUP BY label
+                    ORDER BY headline_count DESC
+                    LIMIT 10
+                    """,
+                    params,
+                )
+                raw_clusters = [dict(r) for r in cursor.fetchall()]
+
+                # Merge clusters with known entity aliases
+                _ENTITY_ALIASES = {
+                    'Federal Reserve Board': 'Fed',
+                    'Federal Reserve': 'Fed',
+                    'the Federal Reserve': 'Fed',
+                    'The Federal Reserve': 'Fed',
+                    'U.S.': 'US',
+                    'United States': 'US',
+                    'U.K.': 'UK',
+                    'United Kingdom': 'UK',
+                }
+                merged: Dict[str, Dict] = {}
+                for cluster in raw_clusters:
+                    canonical = _ENTITY_ALIASES.get(cluster['label'], cluster['label'])
+                    if canonical in merged:
+                        merged[canonical]['headline_count'] += cluster['headline_count']
+                    else:
+                        merged[canonical] = dict(cluster)
+                        merged[canonical]['label'] = canonical
+                result["top_clusters"] = sorted(
+                    merged.values(),
+                    key=lambda x: x['headline_count'],
+                    reverse=True,
+                )[:10]
+
+                # Feed health
+                cursor.execute(
+                    """
+                    SELECT
+                        COUNT(*) FILTER (
+                            WHERE active = TRUE AND (fetch_error IS NULL OR fetch_error = '')
+                        ) AS healthy,
+                        COUNT(*) FILTER (
+                            WHERE active = TRUE AND fetch_error IS NOT NULL AND fetch_error <> ''
+                        ) AS erroring,
+                        COUNT(*) FILTER (WHERE active = FALSE) AS inactive
+                    FROM sources
+                    """
+                )
+                row = cursor.fetchone()
+                if row:
+                    result["feed_health"] = {
+                        "healthy": row["healthy"],
+                        "erroring": row["erroring"],
+                        "inactive": row["inactive"],
+                    }
+
+                # Sentiment breakdown
+                cursor.execute(
+                    """
+                    SELECT sentiment, COUNT(*) AS count
+                    FROM headlines
+                    WHERE sentiment IS NOT NULL
+                      AND created_at >= NOW() - %(interval)s::INTERVAL
+                    GROUP BY sentiment
+                    """,
+                    params,
+                )
+                result["sentiment_breakdown"] = {
+                    r["sentiment"]: r["count"] for r in cursor.fetchall()
+                }
+
+                # Sentiment by category
+                cursor.execute(
+                    """
+                    SELECT s.category, h.sentiment, COUNT(*) AS count
+                    FROM headlines h
+                    JOIN sources s ON h.source_id = s.id
+                    WHERE h.sentiment IS NOT NULL
+                      AND h.created_at >= NOW() - %(interval)s::INTERVAL
+                    GROUP BY s.category, h.sentiment
+                    ORDER BY s.category
+                    """,
+                    params,
+                )
+                by_cat: Dict[str, Dict[str, int]] = {}
+                for row in cursor.fetchall():
+                    cat = row["category"]
+                    by_cat.setdefault(cat, {"bullish": 0, "bearish": 0, "neutral": 0})
+                    by_cat[cat][row["sentiment"]] = row["count"]
+                result["sentiment_by_category"] = by_cat
+
+        except Exception as e:
+            print(f"Error fetching insights summary: {e}")
+
+        result["period"] = period
+        return result
+
+    STOP_WORDS = {
+        'the', 'and', 'for', 'with', 'from', 'that', 'this', 'have', 'will',
+        'been', 'more', 'about', 'into', 'than', 'also', 'over', 'after',
+        'its', 'are', 'was', 'were', 'has', 'had', 'but', 'not', 'what',
+        'all', 'can', 'her', 'his', 'one', 'our', 'out', 'you', 'new',
+        'could', 'would', 'should', 'their', 'there', 'when', 'who', 'how',
+        'may', 'says', 'said', 'just', 'like', 'make', 'does',
+    }
+
+    @staticmethod
+    def _significant_words(text: str) -> set:
+        if not text:
+            return set()
+        return {w for w in text.lower().split() if len(w) > 3 and w not in InsightsRepository.STOP_WORDS}
+
+    @staticmethod
+    def get_prediction_signals(period: str = "24h") -> Dict[str, Any]:
+        interval = InsightsRepository._PERIOD_MAP.get(period, "24 hours")
+        params = {"interval": interval}
+        result: Dict[str, Any] = {
+            "period": period,
+            "prediction_headlines": [],
+            "cross_references": [],
+            "divergences": [],
+            "stats": {"pm_headline_count": 0, "cross_references_found": 0, "divergences_found": 0},
+        }
+        try:
+            with get_db_cursor() as cursor:
+                cursor.execute("""
+                    SELECT h.title, h.url, h.sentiment, h.sentiment_score,
+                           h.topic, s.name AS source_name
+                    FROM headlines h
+                    JOIN sources s ON h.source_id = s.id
+                    WHERE s.category = 'prediction_markets'
+                      AND h.created_at >= NOW() - %(interval)s::INTERVAL
+                    ORDER BY h.created_at DESC
+                """, params)
+                pm_headlines = [dict(r) for r in cursor.fetchall()]
+                result["prediction_headlines"] = pm_headlines
+                result["stats"]["pm_headline_count"] = len(pm_headlines)
+
+                if not pm_headlines:
+                    return result
+
+                cursor.execute("""
+                    SELECT h.title, h.url, h.sentiment, h.sentiment_score,
+                           h.topic, s.name AS source_name, s.category
+                    FROM headlines h
+                    JOIN sources s ON h.source_id = s.id
+                    WHERE s.category != 'prediction_markets'
+                      AND h.created_at >= NOW() - %(interval)s::INTERVAL
+                      AND h.sentiment IS NOT NULL
+                    ORDER BY h.created_at DESC
+                """, params)
+                other_headlines = [dict(r) for r in cursor.fetchall()]
+
+            # Pre-compute significant words
+            for oh in other_headlines:
+                oh["_words"] = InsightsRepository._significant_words(oh["title"])
+
+            cross_refs = []
+            divergences = []
+
+            for pm in pm_headlines:
+                pm_words = InsightsRepository._significant_words(pm["title"])
+                if not pm_words:
+                    continue
+
+                matches = []
+                for oh in other_headlines:
+                    shared = pm_words & oh["_words"]
+                    if len(shared) >= 2:
+                        matches.append({
+                            "title": oh["title"], "url": oh["url"],
+                            "sentiment": oh["sentiment"], "source_name": oh["source_name"],
+                            "category": oh["category"], "shared_words": len(shared),
+                        })
+
+                matches.sort(key=lambda m: m["shared_words"], reverse=True)
+                top_matches = matches[:3]
+
+                if top_matches:
+                    pm_ref = {"title": pm["title"], "url": pm["url"],
+                              "sentiment": pm["sentiment"], "source_name": pm["source_name"]}
+                    cross_refs.append({"pm_headline": pm_ref, "related": top_matches})
+
+                    pm_sent = pm.get("sentiment")
+                    if pm_sent and pm_sent != "neutral":
+                        related_sentiments = [m["sentiment"] for m in top_matches if m.get("sentiment") and m["sentiment"] != "neutral"]
+                        if related_sentiments:
+                            from collections import Counter
+                            majority = Counter(related_sentiments).most_common(1)[0][0]
+                            if majority != pm_sent:
+                                divergences.append({
+                                    "pm_headline": pm_ref,
+                                    "related_headlines": top_matches,
+                                    "pm_sentiment": pm_sent,
+                                    "market_sentiment": majority,
+                                    "type": f"pm_{pm_sent}_market_{majority}",
+                                })
+
+            result["cross_references"] = cross_refs
+            result["divergences"] = divergences
+            result["stats"]["cross_references_found"] = len(cross_refs)
+            result["stats"]["divergences_found"] = len(divergences)
+
+        except Exception as e:
+            print(f"Error fetching prediction signals: {e}")
+            result["error"] = str(e)
+        return result
+
+    @staticmethod
+    def get_category_detail(category: str, period: str = "24h") -> Dict[str, Any]:
+        """
+        Return detailed insights for a single source category.
+
+        Returned structure:
+            {
+                "category":             str,
+                "period":               str,
+                "headlines":            [top 25, ordered by topic_confidence DESC],
+                "topic_distribution":   [{"topic": str, "count": int}, ...],
+                "sources":              [{"source_id", "name", "headline_count",
+                                          "active", "fetch_error"}, ...],
+            }
+        """
+        interval = InsightsRepository._PERIOD_MAP.get(period, "24 hours")
+        params = {"interval": interval, "category": category}
+        result: Dict[str, Any] = {
+            "category": category,
+            "headlines": [],
+            "topic_distribution": [],
+            "sources": [],
+        }
+        try:
+            with get_db_cursor() as cursor:
+                # Top 25 headlines for this category
+                cursor.execute(
+                    """
+                    SELECT h.id,
+                           h.title,
+                           h.url,
+                           h.topic,
+                           h.topic_confidence,
+                           h.published_at,
+                           s.name AS source_name
+                    FROM headlines h
+                    JOIN sources s ON h.source_id = s.id
+                    WHERE s.category = %(category)s
+                      AND h.created_at >= NOW() - %(interval)s::INTERVAL
+                    ORDER BY h.topic_confidence DESC NULLS LAST
+                    LIMIT 25
+                    """,
+                    params,
+                )
+                result["headlines"] = [dict(r) for r in cursor.fetchall()]
+
+                # Topic distribution within this category
+                cursor.execute(
+                    """
+                    SELECT h.topic, COUNT(*) AS count
+                    FROM headlines h
+                    JOIN sources s ON h.source_id = s.id
+                    WHERE s.category = %(category)s
+                      AND h.topic IS NOT NULL
+                      AND h.created_at >= NOW() - %(interval)s::INTERVAL
+                    GROUP BY h.topic
+                    ORDER BY count DESC
+                    """,
+                    params,
+                )
+                result["topic_distribution"] = [dict(r) for r in cursor.fetchall()]
+
+                # Sources in this category with headline count and health info
+                cursor.execute(
+                    """
+                    SELECT s.id AS source_id,
+                           s.name,
+                           s.active,
+                           s.fetch_error,
+                           COUNT(h.id) AS headline_count
+                    FROM sources s
+                    LEFT JOIN headlines h
+                        ON h.source_id = s.id
+                        AND h.created_at >= NOW() - %(interval)s::INTERVAL
+                    WHERE s.category = %(category)s
+                    GROUP BY s.id, s.name, s.active, s.fetch_error
+                    ORDER BY headline_count DESC
+                    """,
+                    params,
+                )
+                result["sources"] = [dict(r) for r in cursor.fetchall()]
+
+        except Exception as e:
+            print(f"Error fetching category detail for '{category}': {e}")
+
+        result["period"] = period
+        return result
+
+
+# ---------------------------------------------------------------------------
+
+
+class PipelineRunRepository:
+    """Repository for tracking pipeline execution history."""
+
+    @staticmethod
+    def create_run() -> Optional[int]:
+        try:
+            with get_db_cursor() as cursor:
+                cursor.execute(
+                    "INSERT INTO pipeline_runs (started_at, status) VALUES (NOW(), 'running') RETURNING id"
+                )
+                row = cursor.fetchone()
+                return row["id"] if row else None
+        except Exception as e:
+            print(f"Error creating pipeline run: {e}")
+            return None
+
+    @staticmethod
+    def complete_run(run_id: int, stats: Dict[str, Any], error: Optional[str] = None):
+        try:
+            with get_db_cursor() as cursor:
+                cursor.execute(
+                    """UPDATE pipeline_runs
+                       SET completed_at = NOW(),
+                           status = %(status)s,
+                           headlines_gathered = %(gathered)s,
+                           headlines_inserted = %(inserted)s,
+                           feeds_success = %(feeds_ok)s,
+                           feeds_failed = %(feeds_err)s,
+                           duration_ms = %(duration)s,
+                           error = %(error)s
+                       WHERE id = %(run_id)s""",
+                    {
+                        "run_id": run_id,
+                        "status": "error" if error else "completed",
+                        "gathered": stats.get("gathered", 0),
+                        "inserted": stats.get("inserted", 0),
+                        "feeds_success": stats.get("feeds_success", 0),
+                        "feeds_failed": stats.get("feeds_failed", 0),
+                        "duration": stats.get("duration_ms", 0),
+                        "error": error,
+                    },
+                )
+        except Exception as e:
+            print(f"Error completing pipeline run: {e}")
+
+    @staticmethod
+    def get_recent(limit: int = 10) -> List[Dict]:
+        try:
+            with get_db_cursor() as cursor:
+                cursor.execute(
+                    "SELECT * FROM pipeline_runs ORDER BY started_at DESC LIMIT %s",
+                    (limit,),
+                )
+                return [dict(r) for r in cursor.fetchall()]
+        except Exception as e:
+            print(f"Error fetching pipeline runs: {e}")
+            return []
+
+
+# ---------------------------------------------------------------------------
+
+
+class SettingsRepository:
+    """Key-value store for application configuration backed by the settings table."""
+
+    @staticmethod
+    def get(key: str) -> Optional[str]:
+        try:
+            with get_db_cursor() as cursor:
+                cursor.execute("SELECT value FROM settings WHERE key = %s", (key,))
+                row = cursor.fetchone()
+                return row["value"] if row else None
+        except Exception as e:
+            print(f"Error fetching setting {key}: {e}")
+            return None
+
+    @staticmethod
+    def set(key: str, value: str):
+        try:
+            with get_db_cursor() as cursor:
+                cursor.execute(
+                    """INSERT INTO settings (key, value, updated_at) VALUES (%s, %s, NOW())
+                       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()""",
+                    (key, value),
+                )
+        except Exception as e:
+            print(f"Error setting {key}: {e}")
+
+    @staticmethod
+    def get_all() -> Dict[str, str]:
+        try:
+            with get_db_cursor() as cursor:
+                cursor.execute("SELECT key, value FROM settings")
+                return {r["key"]: r["value"] for r in cursor.fetchall()}
+        except Exception as e:
+            print(f"Error fetching settings: {e}")
+            return {}

@@ -27,19 +27,6 @@ services:
       timeout: 5s
       retries: 5
 
-  qdrant:
-    image: qdrant/qdrant:latest
-    ports:
-      - "6333:6333"
-      - "6334:6334"
-    volumes:
-      - qdrant_data:/qdrant/storage
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   nlp_service:
     build:
       context: ./services/nlp_py
@@ -54,8 +41,6 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-news_pass}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - QDRANT_HOST=qdrant
-      - QDRANT_PORT=6333
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
       - LOG_LEVEL=${LOG_LEVEL:-info}
     depends_on:
@@ -63,19 +48,13 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      qdrant:
-        condition: service_healthy
-    volumes:
-      - model_cache:/app/models
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 10s
 
 volumes:
   postgres_data:
   redis_data:
-  qdrant_data:
-  model_cache:

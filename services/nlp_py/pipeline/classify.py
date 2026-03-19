@@ -1,215 +1,281 @@
 """
 Topic Classification Module
-Zero-shot text classification using BART-MNLI model via Hugging Face
+Keyword-based text classification — no ML models required.
 """
 
-import os
+import re
 import time
-import asyncio
 from typing import List, Dict, Any, Optional
-from transformers import pipeline
-import torch
-from dotenv import load_dotenv
 
-load_dotenv()
-
-# Configuration
-HF_API_KEY = os.getenv('HUGGINGFACE_API_KEY')
-MODEL_NAME = "facebook/bart-large-mnli"
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
-# Default topic labels (optimized 10-topic system)
+# Default topic labels — financial markets focus
 DEFAULT_TOPICS = [
-    'politics', 'economy', 'technology', 'science', 'environment',
-    'entertainment', 'world', 'business', 'education', 'art'
+    'markets', 'economy', 'earnings', 'crypto', 'commodities',
+    'real_estate', 'regulation', 'fintech', 'prediction_markets', 'mergers'
 ]
+
+# Maps source category names (from RSS feed metadata) to topic labels
+CATEGORY_TO_TOPIC: Dict[str, str] = {
+    'equities': 'markets',
+    'macro': 'economy',
+    'crypto': 'crypto',
+    'prediction_markets': 'prediction_markets',
+    'commodities': 'commodities',
+    'real_estate': 'real_estate',
+    'regulation': 'regulation',
+    'fintech': 'fintech',
+    'earnings': 'earnings',
+    'international': 'markets',
+}
+
+# Keyword rules: topic -> list of keywords/phrases (matched case-insensitively)
+TOPIC_KEYWORDS: Dict[str, List[str]] = {
+    'markets': [
+        # original
+        'stock', 'market', 's&p', 'nasdaq', 'dow jones', 'nyse', 'shares',
+        'rally', 'selloff', 'sell-off', 'bull', 'bear', 'trading', 'index',
+        'equities', 'wall street', 'futures', 'options', 'hedge fund',
+        'etf', 'mutual fund', 'portfolio', 'volatility', 'vix',
+        'blue chip', 'small cap', 'large cap', 'mid cap', 'penny stock',
+        # expanded
+        'investor', 'gain', 'loss', 'rise', 'fall', 'surge', 'plunge',
+        'decline', 'advance', 'retreat', 'rebound', 'correction',
+        'all-time high', 'record high', 'record low', 'outperform',
+        'underperform', 'overweight', 'underweight', 'upgrade', 'downgrade',
+        'buy rating', 'sell rating', 'hold rating', 'price target',
+        'market cap', 'volume', 'turnover', 'momentum', 'breakout',
+        'support level', 'resistance', 'moving average', 'rsi',
+        'short selling', 'margin call', 'liquidation', 'sector rotation',
+        'risk-on', 'risk-off', 'flight to safety',
+    ],
+    'economy': [
+        # original
+        'gdp', 'inflation', 'unemployment', 'jobs report', 'cpi', 'ppi',
+        'interest rate', 'recession', 'federal reserve', 'fed ', ' fomc',
+        'monetary policy', 'fiscal', 'deficit', 'debt ceiling', 'treasury',
+        'yield curve', 'economic growth', 'consumer spending', 'retail sales',
+        'trade deficit', 'tariff', 'labor market', 'payroll', 'wage',
+        'central bank', 'quantitative', 'rate cut', 'rate hike', 'dovish',
+        'hawkish', 'stagflation', 'disinflation',
+        # expanded
+        'nonfarm', 'jobless claims', 'consumer confidence', 'ism ',
+        'manufacturing', 'services sector', 'housing starts', 'building permits',
+        'durable goods', 'trade balance', 'current account', 'budget',
+        'spending bill', 'stimulus', 'tightening', 'easing', 'pivot',
+        'soft landing', 'hard landing', 'basis points', 'bps',
+        'treasury yield', 'bond', 'note', 'auction', 'bid-to-cover',
+        'real wages', 'core inflation', 'pce ', 'personal consumption',
+        'beige book', 'dot plot', 'economic indicator', 'leading indicator',
+        'lagging indicator',
+    ],
+    'earnings': [
+        # original
+        'earnings', 'revenue', 'profit', ' eps', 'guidance', 'quarterly',
+        'annual report', 'dividend', 'buyback', 'beat expectations',
+        'miss expectations', 'forecast', 'outlook', 'same-store sales',
+        'operating income', 'net income', 'gross margin', 'ebitda',
+        'analyst estimate', 'earnings call', 'earnings season',
+        'top line', 'bottom line', 'year-over-year',
+        # expanded
+        'results', 'quarter', 'fiscal year', 'profit margin', 'operating margin',
+        'free cash flow', 'cash flow', 'balance sheet', 'income statement',
+        'backlog', 'order book', 'subscriber', 'user growth', 'arpu',
+        'churn', 'retention', 'comp sales', 'organic growth',
+        'adjusted earnings', 'non-gaap', 'gaap', 'write-down', 'impairment',
+        'restructuring', 'cost cutting', 'shareholder', 'return on equity',
+        'book value',
+    ],
+    'crypto': [
+        # original
+        'bitcoin', 'crypto', 'ethereum', 'blockchain', 'defi',
+        'nft', 'token', 'mining', 'wallet', 'exchange', 'stablecoin',
+        'altcoin', 'web3', 'solana', 'cardano', 'ripple', ' xrp',
+        'binance', 'coinbase', 'decentralized', 'smart contract',
+        'layer 2', 'halving', 'memecoin', 'airdrop',
+        # expanded
+        'satoshi', 'hash rate', 'proof of stake', 'proof of work',
+        'validator', 'staking', 'yield farming', 'liquidity pool',
+        'dex', 'cex', 'on-chain', 'off-chain', 'gas fee', 'whale',
+        'hodl', 'btc', 'eth', 'usdt', 'usdc', 'dao', 'governance token',
+        'tokenomics', 'tvl', 'total value locked', 'bridge', 'rollup',
+        'sidechain', 'digital asset', 'virtual currency', 'cbdc',
+    ],
+    'commodities': [
+        # original
+        'oil', 'gold', 'silver', 'copper', 'natural gas', 'opec',
+        'crude', 'commodity', 'energy', 'mining', 'wheat', 'corn',
+        'lithium', 'uranium', 'platinum', 'palladium', 'iron ore',
+        'brent', 'wti', 'barrel', 'refinery', 'pipeline', 'lng',
+        'rare earth', 'cobalt', 'nickel',
+        # expanded
+        'aluminium', 'aluminum', 'zinc', 'tin', 'lead', 'soybean',
+        'coffee', 'cocoa', 'sugar', 'cotton', 'lumber', 'timber',
+        'cattle', 'hog', 'lean hog', 'precious metal', 'base metal',
+        'industrial metal', 'spot price', 'futures contract', 'contango',
+        'backwardation', 'drilling', 'fracking', 'shale', 'offshore',
+        'renewable energy', 'solar', 'wind', 'nuclear', 'power grid',
+        'electricity', 'utility', 'eia ', 'api inventory', 'stockpile',
+        'reserve',
+    ],
+    'real_estate': [
+        # original
+        'housing', 'real estate', 'mortgage', 'reit', 'home sales',
+        'rental', 'commercial property', 'construction', 'home prices',
+        'foreclosure', 'homebuilder', 'housing starts', 'pending home',
+        'existing home', 'new home', 'apartment', 'vacancy rate',
+        'cap rate', 'property value', 'zoning',
+        # expanded
+        'mortgage rate', 'refinance', 'home equity', 'down payment',
+        'closing', 'appraisal', 'listing', 'inventory', 'median home price',
+        'case-shiller', 'zillow', 'redfin', 'realtor', 'broker', 'mls',
+        'single family', 'multi-family', 'condo', 'townhouse', 'office space',
+        'retail space', 'industrial property', 'warehouse', 'landlord',
+        'tenant', 'lease', 'eviction', 'affordable housing', 'housing crisis',
+        'housing bubble',
+    ],
+    'regulation': [
+        # original
+        'sec ', 'cftc', 'fdic', 'regulation', 'compliance', 'enforcement',
+        'fine', 'sanction', 'legislation', 'antitrust', 'oversight',
+        'investigation', 'subpoena', 'indictment', 'settlement',
+        'dodd-frank', 'basel', 'aml', 'kyc', 'whistleblower',
+        'insider trading', 'market manipulation', 'fraud',
+        # expanded
+        'regulator', 'regulatory', 'watchdog', 'probe', 'inquiry',
+        'consent order', 'cease and desist', 'penalty', 'lawsuit',
+        'class action', 'plaintiff', 'defendant', 'ruling', 'verdict',
+        'injunction', 'fiduciary', 'suitability', 'disclosure', 'filing',
+        'registration', 'license', 'charter', 'stress test',
+        'capital requirement', 'reserve requirement', 'systemic risk',
+        'too big to fail', 'bailout', 'congressional hearing', 'testimony',
+        'gensler', 'warren',
+    ],
+    'fintech': [
+        # original
+        'fintech', 'payments', 'banking', 'neobank', 'digital banking',
+        'mobile payments', 'stripe', 'paypal', 'visa', 'mastercard',
+        'bnpl', 'buy now pay later', 'open banking', 'embedded finance',
+        'robo-advisor', 'digital wallet', 'contactless', 'remittance',
+        'insurtech', 'regtech', 'wealthtech',
+        # expanded
+        'payment processing', 'checkout', 'point of sale', 'pos',
+        'acquiring', 'issuing', 'interchange', 'merchant',
+        'cross-border payment', 'real-time payment', 'instant payment',
+        'account-to-account', 'a2a', 'swift', 'ach',
+        'banking as a service', 'baas', 'api banking', 'credit scoring',
+        'underwriting', 'lending platform', 'peer-to-peer', 'crowdfunding',
+        'revenue-based financing', 'super app', 'digital identity',
+        'biometric',
+    ],
+    'prediction_markets': [
+        # original
+        'prediction market', 'polymarket', 'kalshi', 'metaculus',
+        'manifold', 'forecast', 'betting', 'odds', 'probability',
+        'prediction', 'wager', 'event contract', 'binary option',
+        'information market', 'futarchy',
+        # expanded
+        'betting odds', 'implied probability', 'market odds',
+        'prediction platform', 'event outcome', 'contract', 'yes shares',
+        'no shares', 'resolution', 'market maker', 'liquidity', 'order book',
+        'spread', 'bid', 'ask', 'election odds', 'political betting',
+        'sports betting', 'prop bet', 'over under', 'moneyline',
+        'forecasting tournament', 'superforecaster', 'brier score',
+        'calibration', 'base rate', 'prior', 'posterior',
+    ],
+    'mergers': [
+        # original
+        'merger', 'acquisition', ' ipo', 'spac', 'venture capital',
+        'private equity', 'deal', 'takeover', 'buyout', 'fundraising',
+        'valuation', 'unicorn', 'series a', 'series b', 'seed round',
+        'leveraged buyout', 'hostile takeover', 'divestiture', 'spinoff',
+        'joint venture', 'strategic investment',
+        # expanded
+        'acquirer', 'target', 'bid', 'offer', 'premium', 'due diligence',
+        'synergy', 'accretive', 'dilutive', 'shareholder approval',
+        'regulatory approval', 'antitrust review', 'break-up fee',
+        'go-shop', 'no-shop', 'fairness opinion', 'pipe deal',
+        'secondary offering', 'follow-on', 'shelf registration',
+        'direct listing', 'de-spac', 'blank check', 'growth equity',
+        'mezzanine', 'bridge loan', 'exit', 'liquidity event',
+        'portfolio company',
+    ],
+}
+
+# Pre-compile patterns for each topic
+_TOPIC_PATTERNS: Dict[str, List[re.Pattern]] = {}
+for _topic, _keywords in TOPIC_KEYWORDS.items():
+    _TOPIC_PATTERNS[_topic] = [
+        re.compile(re.escape(kw.strip()), re.IGNORECASE) for kw in _keywords
+    ]
 
 
 class TopicClassifier:
-    """Topic classification using zero-shot classification"""
-    
-    def __init__(self, model_name: str = MODEL_NAME, topics: List[str] = None):
-        self.model_name = model_name
+    """Topic classification using keyword matching."""
+
+    def __init__(self, topics: Optional[List[str]] = None):
         self.topics = topics or DEFAULT_TOPICS
-        self.classifier = None
-        self._initialize_model()
-    
-    def _initialize_model(self):
-        """Initialize the classification model"""
-        try:
-            print(f"🔧 Initializing classifier: {self.model_name}")
-            self.classifier = pipeline(
-                "zero-shot-classification",
-                model=self.model_name,
-                device=0 if DEVICE == "cuda" else -1
-            )
-            print(f"✅ Classifier ready on {DEVICE}")
-        except Exception as e:
-            print(f"❌ Failed to initialize classifier: {e}")
-            self.classifier = None
-    
-    def classify_single(self, text: str, candidate_labels: Optional[List[str]] = None) -> Dict[str, Any]:
-        """
-        Classify a single text into topics
-        
-        Args:
-            text: Text to classify
-            candidate_labels: List of candidate topic labels (optional)
-            
-        Returns:
-            Dictionary with classification results
-        """
-        if not self.classifier:
-            return self._fallback_classification(text)
-        
+
+    def classify_single(
+        self,
+        text: str,
+        candidate_labels: Optional[List[str]] = None,
+        source_category: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Classify a single text into topics using keyword matching."""
         labels = candidate_labels or self.topics
         start_time = time.time()
-        
-        try:
-            print(f"🔍 Classifying: \"{text[:60]}{'...' if len(text) > 60 else ''}\"")
-            
-            result = self.classifier(text, labels, multi_label=True)
-            
-            processing_time = time.time() - start_time
-            
-            # Format results
-            classification = {
-                'text': text,
-                'topics': result['labels'],
-                'scores': result['scores'],
-                'topTopics': [
-                    {
-                        'topic': label,
-                        'confidence': score
-                    }
-                    for label, score in zip(result['labels'][:3], result['scores'][:3])
-                ],
-                'processing_time': processing_time,
-                'model_version': self.model_name
-            }
-            
-            print(f"✅ Top topics: {', '.join([f\"{t['topic']} ({t['confidence']:.1%})\" for t in classification['topTopics']])}")
-            
-            return classification
-            
-        except Exception as e:
-            print(f"❌ Classification failed: {e}")
-            return self._fallback_classification(text)
-    
-    async def classify_batch(self, texts: List[str], candidate_labels: Optional[List[str]] = None) -> List[Dict[str, Any]]:
-        """
-        Classify multiple texts concurrently
-        
-        Args:
-            texts: List of texts to classify
-            candidate_labels: List of candidate topic labels (optional)
-            
-        Returns:
-            List of classification results
-        """
-        if not texts:
-            return []
-        
-        print(f"🚀 Starting batch classification of {len(texts)} texts")
-        start_time = time.time()
-        
-        # Process all texts concurrently
-        tasks = [
-            asyncio.create_task(self._classify_async(text, candidate_labels))
-            for text in texts
+
+        scores: Dict[str, float] = {}
+        text_lower = f" {text.lower()} "
+
+        for topic in labels:
+            patterns = _TOPIC_PATTERNS.get(topic, [])
+            hits = sum(1 for p in patterns if p.search(text_lower))
+            scores[topic] = hits / max(len(patterns), 1)
+
+        # Sort by score descending
+        ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+        top_topics = [
+            {'topic': t, 'confidence': round(s, 3)}
+            for t, s in ranked[:3]
         ]
-        
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        # Handle exceptions
-        final_results = []
-        for i, result in enumerate(results):
-            if isinstance(result, Exception):
-                print(f"❌ Text {i+1} failed: {result}")
-                final_results.append(self._fallback_classification(texts[i]))
-            else:
-                final_results.append(result)
-        
-        total_time = time.time() - start_time
-        success_rate = len([r for r in final_results if r['topics'][0] != 'general']) / len(final_results)
-        
-        print(f"🎉 Batch completed: {len(final_results)} texts in {total_time:.2f}s")
-        print(f"📊 Success rate: {success_rate:.1%}")
-        
-        return final_results
-    
-    async def _classify_async(self, text: str, candidate_labels: Optional[List[str]] = None) -> Dict[str, Any]:
-        """Async wrapper for single classification"""
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self.classify_single, text, candidate_labels)
-    
-    def _fallback_classification(self, text: str) -> Dict[str, Any]:
-        """Fallback classification when model fails"""
+
+        # If no keywords matched at all, fall back to source category or 'general'
+        if ranked[0][1] == 0:
+            return self._fallback_classification(text, source_category)
+
+        processing_time = time.time() - start_time
         return {
             'text': text,
-            'topics': ['general'],
-            'scores': [1.0],
-            'topTopics': [{'topic': 'general', 'confidence': 1.0}],
+            'topics': [t for t, _ in ranked],
+            'scores': [s for _, s in ranked],
+            'topTopics': top_topics,
+            'processing_time': processing_time,
+            'model_version': 'keyword-v1',
+        }
+
+    def _fallback_classification(self, text: str, source_category: Optional[str] = None) -> Dict[str, Any]:
+        """Fallback when no keywords match. Uses source category if available."""
+        fallback_topic = CATEGORY_TO_TOPIC.get(source_category, 'general') if source_category else 'general'
+        return {
+            'text': text,
+            'topics': [fallback_topic],
+            'scores': [0.5],
+            'topTopics': [{'topic': fallback_topic, 'confidence': 0.5}],
             'processing_time': 0.0,
-            'model_version': 'fallback'
+            'model_version': 'keyword-v1-fallback',
         }
 
 
 # Global classifier instance
 _classifier = None
 
+
 def get_classifier() -> TopicClassifier:
-    """Get or create global classifier instance"""
     global _classifier
     if _classifier is None:
         _classifier = TopicClassifier()
     return _classifier
 
-def classify(text: str, candidate_labels: Optional[List[str]] = None) -> Dict[str, Any]:
-    """
-    Classify a single text (convenience function)
-    
-    Args:
-        text: Text to classify
-        candidate_labels: Optional list of candidate labels
-        
-    Returns:
-        Classification result dictionary
-    """
-    classifier = get_classifier()
-    return classifier.classify_single(text, candidate_labels)
 
-async def classify_batch(texts: List[str], candidate_labels: Optional[List[str]] = None) -> List[Dict[str, Any]]:
-    """
-    Classify multiple texts (convenience function)
-    
-    Args:
-        texts: List of texts to classify
-        candidate_labels: Optional list of candidate labels
-        
-    Returns:
-        List of classification results
-    """
-    classifier = get_classifier()
-    return await classifier.classify_batch(texts, candidate_labels)
-
-# Example usage
-if __name__ == "__main__":
-    # Test classification
-    test_texts = [
-        "Breaking: New AI technology revolutionizes healthcare",
-        "Climate summit reaches historic agreement on emissions",
-        "Stock market hits record highs amid economic recovery"
-    ]
-    
-    # Single classification
-    result = classify(test_texts[0])
-    print("Single classification result:", result)
-    
-    # Batch classification
-    async def test_batch():
-        results = await classify_batch(test_texts)
-        for i, result in enumerate(results):
-            print(f"Text {i+1}: {result['topTopics'][0]['topic']} ({result['topTopics'][0]['confidence']:.1%})")
-    
-    asyncio.run(test_batch()) 
+def classify(text: str, candidate_labels: Optional[List[str]] = None, source_category: Optional[str] = None) -> Dict[str, Any]:
+    return get_classifier().classify_single(text, candidate_labels, source_category)

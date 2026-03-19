@@ -22,6 +22,8 @@ export interface Headline {
   language?: string;
   published_at?: string;
   created_at: string;
+  sentiment?: string;
+  sentiment_score?: number;
 }
 
 export interface Event {
@@ -31,14 +33,55 @@ export interface Event {
   headline_count: number;
   created_at: string;
   headlines?: Headline[];
+  members?: Headline[];
 }
 
 export interface AnalyticsData {
   period: string;
   topic_distribution: { topic: string; count: number }[];
   language_breakdown: { language: string; count: number }[];
+  category_breakdown: { category: string; count: number }[];
   daily_volume: { date: string; count: number }[];
   source_breakdown: { source_id: number; name: string; count: number }[];
+  sentiment_distribution: { sentiment: string; count: number }[];
+  topic_category_heatmap: { topic: string; category: string; count: number }[];
+}
+
+export interface InsightsSummary {
+  period: string;
+  top_headlines_by_category: Record<string, { title: string; url: string; topic: string; topic_confidence: number; source_name: string }[]>;
+  topic_counts: { topic: string; count: number }[];
+  category_volume: { category: string; count: number }[];
+  top_clusters: { label: string; event_type: string; headline_count: number }[];
+  feed_health: { healthy: number; erroring: number; inactive: number };
+  sentiment_breakdown: Record<string, number>;
+  sentiment_by_category: Record<string, { bullish: number; bearish: number; neutral: number }>;
+}
+
+export interface AppSettings {
+  pipeline_schedule_enabled: string;
+  pipeline_schedule_interval: string;
+  retention_days: string;
+  default_topic: string;
+  default_sentiment: string;
+}
+
+export interface PredictionSignals {
+  period: string;
+  prediction_headlines: {
+    title: string; url: string; sentiment: string;
+    sentiment_score: number; source_name: string; topic: string;
+  }[];
+  cross_references: {
+    pm_headline: { title: string; url: string; sentiment: string; source_name: string };
+    related: { title: string; url: string; sentiment: string; source_name: string; category: string; shared_words: number }[];
+  }[];
+  divergences: {
+    pm_headline: { title: string; url: string; sentiment: string; source_name: string };
+    related_headlines: { title: string; url: string; sentiment: string; source_name: string; category: string }[];
+    pm_sentiment: string; market_sentiment: string; type: string;
+  }[];
+  stats: { pm_headline_count: number; cross_references_found: number; divergences_found: number };
 }
 
 export interface Source {
@@ -47,8 +90,11 @@ export interface Source {
   url: string;
   language?: string;
   country?: string;
+  category?: string;
   active: boolean;
-  error?: string;
+  fetch_error?: string | null;
+  error_count?: number;
+  last_fetched_at?: string | null;
   created_at: string;
 }
 
@@ -60,6 +106,20 @@ export interface PipelineStatus {
   message: string;
   last_run?: string;
   last_duration_ms?: number;
+}
+
+export interface PipelineRun {
+  id: number;
+  started_at: string;
+  completed_at?: string | null;
+  status: "running" | "completed" | "error";
+  headlines_gathered: number;
+  headlines_inserted: number;
+  feeds_success: number;
+  feeds_failed: number;
+  duration_ms?: number | null;
+  error?: string | null;
+  created_at: string;
 }
 
 export interface SearchResult {
@@ -103,6 +163,7 @@ export const api = {
       topic?: string;
       language?: string;
       q?: string;
+      sentiment?: string;
     } = {}): Promise<ListResponse<Headline>> {
       return request(`/api/headlines${buildQuery(params)}`);
     },
@@ -151,6 +212,9 @@ export const api = {
     status(): Promise<PipelineStatus> {
       return request("/api/pipeline/status");
     },
+    history(limit = 10): Promise<PipelineRun[]> {
+      return request(`/api/pipeline/history${buildQuery({ limit })}`);
+    },
     gather(): Promise<{ ok: boolean }> {
       return request("/api/gather", { method: "POST" });
     },
@@ -168,6 +232,31 @@ export const api = {
   search: {
     query(q: string, limit = 10): Promise<SearchResult[]> {
       return request(`/api/search${buildQuery({ q, limit })}`);
+    },
+  },
+
+  settings: {
+    get(): Promise<AppSettings> {
+      return request("/api/settings");
+    },
+    update(data: Partial<AppSettings>): Promise<AppSettings> {
+      return request("/api/settings", {
+        method: "PUT",
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" },
+      });
+    },
+  },
+
+  insights: {
+    summary(period: string = "24h"): Promise<InsightsSummary> {
+      return request(`/api/insights/summary?period=${period}`);
+    },
+    category(category: string, period: string = "24h"): Promise<any> {
+      return request(`/api/insights/category/${category}?period=${period}`);
+    },
+    predictions(period: string = "24h"): Promise<PredictionSignals> {
+      return request(`/api/insights/predictions?period=${period}`);
     },
   },
 };

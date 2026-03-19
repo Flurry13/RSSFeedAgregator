@@ -63,9 +63,11 @@ export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
 
   useEffect(() => {
     const socket = io(WS_URL, {
-      transports: ["websocket"],
-      reconnectionAttempts: 10,
-      reconnectionDelay: 2000,
+      transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 30000,
     });
 
     socketRef.current = socket;
@@ -85,7 +87,15 @@ export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
       addLog({
         timestamp: new Date().toISOString(),
         level: "warn",
-        message: "Disconnected from pipeline server",
+        message: "Disconnected from pipeline server — reconnecting…",
+      });
+    });
+
+    socket.on("connect_error", () => {
+      addLog({
+        timestamp: new Date().toISOString(),
+        level: "warn",
+        message: "Connection error — retrying with backoff…",
       });
     });
 

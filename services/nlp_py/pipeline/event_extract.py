@@ -32,11 +32,12 @@ class EventExtractor:
         
         # Event type keywords for classification
         self.event_type_keywords = {
-            "political": ["election", "vote", "government", "policy", "parliament", "congress", "minister", "president"],
-            "economic": ["stock", "market", "economy", "trade", "GDP", "inflation", "recession", "bank", "financial"],
-            "social": ["protest", "demonstration", "rally", "social", "community", "rights", "civil", "movement"],
-            "environmental": ["climate", "environment", "pollution", "carbon", "emissions", "renewable", "green"],
-            "technological": ["technology", "tech", "AI", "artificial intelligence", "software", "hardware", "innovation"],
+            "earnings_report": ["earnings", "revenue", "profit", "quarterly", "results", "guidance", "eps", "dividend"],
+            "policy_decision": ["fed", "federal reserve", "interest rate", "rate cut", "rate hike", "monetary", "fomc", "central bank"],
+            "market_move": ["rally", "selloff", "crash", "surge", "plunge", "correction", "record high", "all-time", "volatility"],
+            "deal": ["merger", "acquisition", "ipo", "buyout", "takeover", "deal", "venture", "fundraising"],
+            "regulatory_action": ["sec", "cftc", "fdic", "fine", "enforcement", "investigation", "settlement", "lawsuit", "regulation"],
+            "crypto_event": ["bitcoin", "crypto", "ethereum", "blockchain", "defi", "token", "exchange", "mining"],
             "other": []
         }
     

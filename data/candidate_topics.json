@@ -1,12 +1,14 @@
 {
-    "topics": [
-        "politics",
-        "economy",
-        "technology",
-        "science",
-        "environment",
-        "entertainment",
-        "world",
-        "business"
-    ]
+  "topics": [
+    "markets",
+    "economy",
+    "earnings",
+    "crypto",
+    "commodities",
+    "real_estate",
+    "regulation",
+    "fintech",
+    "prediction_markets",
+    "mergers"
+  ]
 }
