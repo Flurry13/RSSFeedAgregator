@@ -2,7 +2,7 @@
 Parallel ML Pipeline
 ====================
 
-Runs classify and extract stages concurrently using ThreadPoolExecutor.
+Runs classify, extract, and sentiment stages concurrently using ThreadPoolExecutor.
 Each stage writes to distinct fields so merge is conflict-free.
 """
 
@@ -62,6 +62,22 @@ def extract_batch_wrapper(headlines: List[Dict]) -> List[Dict]:
     return results
 
 
+def sentiment_batch_wrapper(headlines: List[Dict]) -> List[Dict]:
+    """Analyze sentiment for each headline."""
+    from sentiment import analyze_sentiment
+
+    results = []
+    for h in headlines:
+        text = h.get("title") or h.get("text") or ""
+        try:
+            result = analyze_sentiment(text)
+            results.append(result)
+        except Exception as e:
+            logger.warning("sentiment_batch_wrapper error for %r: %s", text[:60], e)
+            results.append({"sentiment": "neutral", "sentiment_score": 0.5})
+    return results
+
+
 # ---------------------------------------------------------------------------
 # Parallel runner
 # ---------------------------------------------------------------------------
@@ -70,15 +86,17 @@ def run_parallel_ml(
     headlines: List[Dict],
     classify_fn: Callable[[List[Dict]], List[Dict]] = classify_batch_wrapper,
     extract_fn: Callable[[List[Dict]], List[Dict]] = extract_batch_wrapper,
+    sentiment_fn: Callable[[List[Dict]], List[Dict]] = sentiment_batch_wrapper,
     progress_callback: Optional[Callable[..., None]] = None,
     **_kwargs,
 ) -> List[Dict]:
     """
-    Run classify and extract on *headlines* concurrently.
+    Run classify, extract, and sentiment on *headlines* concurrently.
 
     Each function receives the full list of headline dicts and returns a
     parallel list of result dicts.  Because each stage writes to distinct
-    fields (topic/confidence, entities/event_type) the merge is conflict-free.
+    fields (topic/confidence, entities/event_type, sentiment/sentiment_score)
+    the merge is conflict-free.
     """
     if not headlines:
         return []
@@ -96,10 +114,11 @@ def run_parallel_ml(
                 pass
         return name, result
 
-    with ThreadPoolExecutor(max_workers=2) as pool:
+    with ThreadPoolExecutor(max_workers=3) as pool:
         futures = {
             pool.submit(_run, "classify", classify_fn, headlines): "classify",
             pool.submit(_run, "extract", extract_fn, headlines): "extract",
+            pool.submit(_run, "sentiment", sentiment_fn, headlines): "sentiment",
         }
 
         for future in as_completed(futures):
@@ -117,6 +136,10 @@ def run_parallel_ml(
                     stage_results["extract"] = [
                         {"entities": [], "event_type": "other"} for _ in headlines
                     ]
+                elif stage_name == "sentiment":
+                    stage_results["sentiment"] = [
+                        {"sentiment": "neutral", "sentiment_score": 0.5} for _ in headlines
+                    ]
 
     # Merge
     enriched = []
@@ -124,6 +147,7 @@ def run_parallel_ml(
         merged = dict(headline)
         merged.update(stage_results.get("classify", [{}] * len(headlines))[i])
         merged.update(stage_results.get("extract", [{}] * len(headlines))[i])
+        merged.update(stage_results.get("sentiment", [{}] * len(headlines))[i])
         enriched.append(merged)
 
     return enriched
