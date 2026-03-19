@@ -562,7 +562,22 @@ def _run_pipeline_body():
                     continue
                 summary = g.get("summary", {})
                 common_ents = summary.get("common_entities", [])
-                label = common_ents[0]["text"] if common_ents else "Event cluster"
+                if common_ents:
+                    label = common_ents[0]["text"]
+                else:
+                    # Fallback: use most common significant word from headlines
+                    from collections import Counter
+                    words = []
+                    for mid in member_ids:
+                        h = next((x for x in db_headlines if str(x["id"]) == str(mid)), None)
+                        if h:
+                            for w in (h.get("title") or "").split():
+                                if len(w) > 3 and w[0].isupper():
+                                    words.append(w.rstrip("'s").rstrip(",").rstrip("."))
+                    if words:
+                        label = Counter(words).most_common(1)[0][0]
+                    else:
+                        label = "Uncategorized"
                 cohesion = summary.get("cohesion_score", 0.5)
                 time_span = summary.get("time_span", {})
                 EventClusterRepository.create_cluster(

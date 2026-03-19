@@ -901,16 +901,16 @@ class InsightsRepository:
                 )
                 result["category_volume"] = [dict(r) for r in cursor.fetchall()]
 
-                # Top 10 event clusters by member count
+                # Top 10 event clusters by member count (aggregated by label)
                 cursor.execute(
                     """
-                    SELECT c.label,
-                           c.event_type,
-                           COUNT(m.headline_id) AS headline_count
+                    SELECT label,
+                           MAX(event_type) AS event_type,
+                           COUNT(DISTINCT m.headline_id) AS headline_count
                     FROM event_clusters c
                     JOIN event_cluster_members m ON m.cluster_id = c.id
                     WHERE c.created_at >= NOW() - %(interval)s::INTERVAL
-                    GROUP BY c.id, c.label, c.event_type
+                    GROUP BY label
                     ORDER BY headline_count DESC
                     LIMIT 10
                     """,

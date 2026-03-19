@@ -54,7 +54,9 @@ function sentimentIcon(sentiment?: string) {
     return <TrendingUp className="w-3.5 h-3.5 text-[#30d158]" />;
   if (sentiment === "bearish")
     return <TrendingDown className="w-3.5 h-3.5 text-[#ff453a]" />;
-  return <Minus className="w-3.5 h-3.5 text-[#98989d]" />;
+  if (sentiment === "neutral")
+    return <Minus className="w-3.5 h-3.5 text-[#636366]" />;
+  return null;
 }
 
 export default function FeedPage() {
@@ -233,8 +235,8 @@ export default function FeedPage() {
                   <div className="shrink-0 text-right">
                     <span className="text-[12px] text-[#98989d]">
                       {h.source_name}
-                      {h.published_at &&
-                        ` · ${new Date(h.published_at).toLocaleDateString()}`}
+                      {(h.published_at || h.created_at) &&
+                        ` · ${new Date(h.published_at || h.created_at).toLocaleDateString()}`}
                     </span>
                   </div>
                 </div>
