@@ -914,13 +914,39 @@ class InsightsRepository:
                     FROM event_clusters c
                     JOIN event_cluster_members m ON m.cluster_id = c.id
                     WHERE c.created_at >= NOW() - %(interval)s::INTERVAL
+                      AND c.label NOT IN ('Event cluster', 'Uncategorized', 'Event')
                     GROUP BY label
                     ORDER BY headline_count DESC
                     LIMIT 10
                     """,
                     params,
                 )
-                result["top_clusters"] = [dict(r) for r in cursor.fetchall()]
+                raw_clusters = [dict(r) for r in cursor.fetchall()]
+
+                # Merge clusters with known entity aliases
+                _ENTITY_ALIASES = {
+                    'Federal Reserve Board': 'Fed',
+                    'Federal Reserve': 'Fed',
+                    'the Federal Reserve': 'Fed',
+                    'The Federal Reserve': 'Fed',
+                    'U.S.': 'US',
+                    'United States': 'US',
+                    'U.K.': 'UK',
+                    'United Kingdom': 'UK',
+                }
+                merged: Dict[str, Dict] = {}
+                for cluster in raw_clusters:
+                    canonical = _ENTITY_ALIASES.get(cluster['label'], cluster['label'])
+                    if canonical in merged:
+                        merged[canonical]['headline_count'] += cluster['headline_count']
+                    else:
+                        merged[canonical] = dict(cluster)
+                        merged[canonical]['label'] = canonical
+                result["top_clusters"] = sorted(
+                    merged.values(),
+                    key=lambda x: x['headline_count'],
+                    reverse=True,
+                )[:10]
 
                 # Feed health
                 cursor.execute(

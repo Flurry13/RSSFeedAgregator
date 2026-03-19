@@ -72,7 +72,7 @@ function EventCard({
     >
       <div className="flex items-start justify-between gap-3 mb-2">
         <span className="text-[15px] font-medium leading-snug text-[#e5e5e7] group-hover:text-[#0a84ff] transition-colors">
-          {event.label}
+          {event.label.replace(/['".,;:!?]+$/, '').trim()}
         </span>
         {event.event_type && etc && (
           <span
@@ -194,7 +194,7 @@ function EventDetail({
       <div className="border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] p-5 mb-6" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }}>
         <div className="flex items-start justify-between gap-4 mb-2">
           <h2 className="text-2xl font-bold text-[#e5e5e7]">
-            {event.label}
+            {event.label.replace(/['".,;:!?]+$/, '').trim()}
           </h2>
           {event.event_type && etc && (
             <span

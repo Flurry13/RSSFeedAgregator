@@ -156,7 +156,7 @@ function TopClusters({ clusters }: { clusters: InsightsSummary["top_clusters"] }
               </span>
               <div className="flex-1 min-w-0">
                 <p className="text-[13px] text-[#e5e5e7] leading-snug truncate">
-                  {c.label}
+                  {c.label.replace(/['".,;:!?]+$/, '').trim()}
                 </p>
               </div>
               <span
