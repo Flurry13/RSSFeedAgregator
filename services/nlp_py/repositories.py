@@ -119,6 +119,8 @@ class SourceRepository:
         active: Optional[bool] = None,
         language: Optional[str] = None,
         group_name: Optional[str] = None,
+        category: Optional[str] = None,
+        subcategory: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Return a paginated list of sources with optional filters.
@@ -138,6 +140,12 @@ class SourceRepository:
         if group_name:
             conditions.append("group_name = %(group_name)s")
             params["group_name"] = group_name
+        if category:
+            conditions.append("category = %(category)s")
+            params["category"] = category
+        if subcategory:
+            conditions.append("subcategory = %(subcategory)s")
+            params["subcategory"] = subcategory
 
         where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
         offset = (page - 1) * limit
@@ -210,7 +218,7 @@ class HeadlineRepository:
                             "title": h.get("title"),
                             "url": h.get("url") or h.get("link"),
                             "language": h.get("language", "en"),
-                            "published_at": h.get("published_at") or h.get("published"),
+                            "published_at": h.get("published_at") or h.get("published") or None,
                         },
                     )
                     if cursor.fetchone():
@@ -614,7 +622,7 @@ class AnalyticsRepository:
                     FROM headlines h
                     LEFT JOIN sources s ON h.source_id = s.id
                     WHERE h.created_at >= NOW() - %(interval)s::INTERVAL
-                    GROUP BY s.name
+                    GROUP BY s.id, s.name
                     ORDER BY count DESC
                     """,
                     params,
@@ -640,8 +648,8 @@ class AnalyticsRepository:
                     SELECT DATE(created_at) AS date, COUNT(*) AS count
                     FROM headlines
                     WHERE created_at >= NOW() - %(interval)s::INTERVAL
-                    GROUP BY day
-                    ORDER BY day ASC
+                    GROUP BY DATE(created_at)
+                    ORDER BY DATE(created_at) ASC
                     """,
                     params,
                 )
