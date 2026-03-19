@@ -43,6 +43,15 @@ export interface AnalyticsData {
   source_breakdown: { source_id: number; name: string; count: number }[];
 }
 
+export interface InsightsSummary {
+  period: string;
+  top_headlines_by_category: Record<string, { title: string; url: string; topic: string; topic_confidence: number; source_name: string }[]>;
+  topic_counts: { topic: string; count: number }[];
+  category_volume: { category: string; count: number }[];
+  top_clusters: { label: string; event_type: string; headline_count: number }[];
+  feed_health: { healthy: number; erroring: number; inactive: number };
+}
+
 export interface Source {
   id: number;
   name: string;
@@ -190,6 +199,15 @@ export const api = {
   search: {
     query(q: string, limit = 10): Promise<SearchResult[]> {
       return request(`/api/search${buildQuery({ q, limit })}`);
+    },
+  },
+
+  insights: {
+    summary(period: string = "24h"): Promise<InsightsSummary> {
+      return request(`/api/insights/summary?period=${period}`);
+    },
+    category(category: string, period: string = "24h"): Promise<any> {
+      return request(`/api/insights/category/${category}?period=${period}`);
     },
   },
 };
