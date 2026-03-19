@@ -194,7 +194,9 @@ export default function PipelinePage() {
                 {">"} Waiting for pipeline output...
               </p>
             ) : (
-              logs.map((log) => (
+              [...logs]
+                .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+                .map((log) => (
                 <div key={log.id} className="flex gap-3 py-0.5 hover:bg-[#2c2c2e] rounded">
                   <span className="text-[#636366] shrink-0 tabular-nums">
                     {new Date(log.timestamp).toLocaleTimeString()}

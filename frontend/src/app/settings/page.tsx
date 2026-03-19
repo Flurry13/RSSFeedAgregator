@@ -220,7 +220,9 @@ export default function SettingsPage() {
                 onValueChange={setScheduleInterval}
               >
                 <SelectTrigger className={`w-32 ${selectCls}`}>
-                  <SelectValue />
+                  <SelectValue placeholder="Select">
+                    {INTERVALS.find((o) => o.value === scheduleInterval)?.label ?? scheduleInterval}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent className={contentCls}>
                   {INTERVALS.map((opt) => (
@@ -319,7 +321,9 @@ export default function SettingsPage() {
             </p>
             <Select value={retentionDays} onValueChange={setRetentionDays}>
               <SelectTrigger className={`w-32 ${selectCls}`}>
-                <SelectValue />
+                <SelectValue placeholder="Select">
+                  {RETENTION_OPTIONS.find((o) => o.value === retentionDays)?.label ?? retentionDays}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent className={contentCls}>
                 {RETENTION_OPTIONS.map((opt) => (

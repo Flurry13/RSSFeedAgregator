@@ -284,6 +284,10 @@ class HeadlineRepository:
             conditions.append("h.sentiment = %(sentiment)s")
             params["sentiment"] = sentiment
 
+        # Default to English-only unless language filter specified
+        if not language:
+            conditions.append("h.language = 'en'")
+
         where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
         offset = (page - 1) * limit
         params.update({"limit": limit, "offset": offset})
