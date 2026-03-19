@@ -17,6 +17,7 @@ from repositories import (
     AnalyticsRepository,
     EventClusterRepository,
     HeadlineRepository,
+    InsightsRepository,
     SourceRepository,
 )
 
@@ -128,6 +129,25 @@ def get_analytics():
         period = "7d"
     result = AnalyticsRepository.get_analytics(period)
     return jsonify(result)
+
+
+# --- Insights ---
+
+
+@app.route("/api/insights/summary")
+def get_insights_summary():
+    period = request.args.get("period", "24h")
+    if period not in ("24h", "7d", "30d"):
+        period = "24h"
+    return jsonify(InsightsRepository.get_summary(period))
+
+
+@app.route("/api/insights/category/<category>")
+def get_insights_category(category):
+    period = request.args.get("period", "24h")
+    if period not in ("24h", "7d", "30d"):
+        period = "24h"
+    return jsonify(InsightsRepository.get_category_detail(category, period))
 
 
 # --- Sources CRUD ---

@@ -660,3 +660,251 @@ class AnalyticsRepository:
 
         result["period"] = period
         return result
+
+
+# ---------------------------------------------------------------------------
+
+
+class InsightsRepository:
+    """Aggregation queries for AI agent consumption."""
+
+    _PERIOD_MAP = {
+        "24h": "24 hours",
+        "7d": "7 days",
+        "30d": "30 days",
+    }
+
+    @staticmethod
+    def get_summary(period: str = "24h") -> Dict[str, Any]:
+        """
+        Return structured financial intelligence for the requested time window.
+
+        Returned structure:
+            {
+                "top_headlines_by_category": {
+                    "<category>": [
+                        {"title", "url", "topic", "topic_confidence", "source_name"},
+                        ...
+                    ],
+                    ...
+                },
+                "topic_counts":     [{"topic": str, "count": int}, ...],
+                "category_volume":  [{"category": str, "count": int}, ...],
+                "top_clusters":     [{"label", "event_type", "headline_count"}, ...],
+                "feed_health":      {"healthy": int, "erroring": int, "inactive": int},
+                "period":           str,
+            }
+        """
+        interval = InsightsRepository._PERIOD_MAP.get(period, "24 hours")
+        params = {"interval": interval}
+        result: Dict[str, Any] = {
+            "top_headlines_by_category": {},
+            "topic_counts": [],
+            "category_volume": [],
+            "top_clusters": [],
+            "feed_health": {"healthy": 0, "erroring": 0, "inactive": 0},
+        }
+        try:
+            with get_db_cursor() as cursor:
+                # Top 5 headlines per source category (excluding "general" topic)
+                cursor.execute(
+                    """
+                    SELECT s.category,
+                           h.title,
+                           h.url,
+                           h.topic,
+                           h.topic_confidence,
+                           s.name AS source_name,
+                           ROW_NUMBER() OVER (
+                               PARTITION BY s.category
+                               ORDER BY h.topic_confidence DESC
+                           ) AS rn
+                    FROM headlines h
+                    JOIN sources s ON h.source_id = s.id
+                    WHERE h.topic IS NOT NULL
+                      AND h.topic <> 'general'
+                      AND h.created_at >= NOW() - %(interval)s::INTERVAL
+                      AND s.category IS NOT NULL
+                    """,
+                    params,
+                )
+                rows = cursor.fetchall()
+                by_category: Dict[str, List[Dict]] = {}
+                for row in rows:
+                    if row["rn"] > 5:
+                        continue
+                    cat = row["category"]
+                    if cat not in by_category:
+                        by_category[cat] = []
+                    by_category[cat].append(
+                        {
+                            "title": row["title"],
+                            "url": row["url"],
+                            "topic": row["topic"],
+                            "topic_confidence": row["topic_confidence"],
+                            "source_name": row["source_name"],
+                        }
+                    )
+                result["top_headlines_by_category"] = by_category
+
+                # Topic counts
+                cursor.execute(
+                    """
+                    SELECT topic, COUNT(*) AS count
+                    FROM headlines
+                    WHERE topic IS NOT NULL
+                      AND created_at >= NOW() - %(interval)s::INTERVAL
+                    GROUP BY topic
+                    ORDER BY count DESC
+                    """,
+                    params,
+                )
+                result["topic_counts"] = [dict(r) for r in cursor.fetchall()]
+
+                # Category volume
+                cursor.execute(
+                    """
+                    SELECT s.category, COUNT(h.id) AS count
+                    FROM headlines h
+                    JOIN sources s ON h.source_id = s.id
+                    WHERE h.created_at >= NOW() - %(interval)s::INTERVAL
+                      AND s.category IS NOT NULL
+                    GROUP BY s.category
+                    ORDER BY count DESC
+                    """,
+                    params,
+                )
+                result["category_volume"] = [dict(r) for r in cursor.fetchall()]
+
+                # Top 10 event clusters by member count
+                cursor.execute(
+                    """
+                    SELECT c.label,
+                           c.event_type,
+                           COUNT(m.headline_id) AS headline_count
+                    FROM event_clusters c
+                    JOIN event_cluster_members m ON m.cluster_id = c.id
+                    WHERE c.created_at >= NOW() - %(interval)s::INTERVAL
+                    GROUP BY c.id, c.label, c.event_type
+                    ORDER BY headline_count DESC
+                    LIMIT 10
+                    """,
+                    params,
+                )
+                result["top_clusters"] = [dict(r) for r in cursor.fetchall()]
+
+                # Feed health
+                cursor.execute(
+                    """
+                    SELECT
+                        COUNT(*) FILTER (
+                            WHERE active = TRUE AND (fetch_error IS NULL OR fetch_error = '')
+                        ) AS healthy,
+                        COUNT(*) FILTER (
+                            WHERE active = TRUE AND fetch_error IS NOT NULL AND fetch_error <> ''
+                        ) AS erroring,
+                        COUNT(*) FILTER (WHERE active = FALSE) AS inactive
+                    FROM sources
+                    """
+                )
+                row = cursor.fetchone()
+                if row:
+                    result["feed_health"] = {
+                        "healthy": row["healthy"],
+                        "erroring": row["erroring"],
+                        "inactive": row["inactive"],
+                    }
+
+        except Exception as e:
+            print(f"Error fetching insights summary: {e}")
+
+        result["period"] = period
+        return result
+
+    @staticmethod
+    def get_category_detail(category: str, period: str = "24h") -> Dict[str, Any]:
+        """
+        Return detailed insights for a single source category.
+
+        Returned structure:
+            {
+                "category":             str,
+                "period":               str,
+                "headlines":            [top 25, ordered by topic_confidence DESC],
+                "topic_distribution":   [{"topic": str, "count": int}, ...],
+                "sources":              [{"source_id", "name", "headline_count",
+                                          "active", "fetch_error"}, ...],
+            }
+        """
+        interval = InsightsRepository._PERIOD_MAP.get(period, "24 hours")
+        params = {"interval": interval, "category": category}
+        result: Dict[str, Any] = {
+            "category": category,
+            "headlines": [],
+            "topic_distribution": [],
+            "sources": [],
+        }
+        try:
+            with get_db_cursor() as cursor:
+                # Top 25 headlines for this category
+                cursor.execute(
+                    """
+                    SELECT h.id,
+                           h.title,
+                           h.url,
+                           h.topic,
+                           h.topic_confidence,
+                           h.published_at,
+                           s.name AS source_name
+                    FROM headlines h
+                    JOIN sources s ON h.source_id = s.id
+                    WHERE s.category = %(category)s
+                      AND h.created_at >= NOW() - %(interval)s::INTERVAL
+                    ORDER BY h.topic_confidence DESC NULLS LAST
+                    LIMIT 25
+                    """,
+                    params,
+                )
+                result["headlines"] = [dict(r) for r in cursor.fetchall()]
+
+                # Topic distribution within this category
+                cursor.execute(
+                    """
+                    SELECT h.topic, COUNT(*) AS count
+                    FROM headlines h
+                    JOIN sources s ON h.source_id = s.id
+                    WHERE s.category = %(category)s
+                      AND h.topic IS NOT NULL
+                      AND h.created_at >= NOW() - %(interval)s::INTERVAL
+                    GROUP BY h.topic
+                    ORDER BY count DESC
+                    """,
+                    params,
+                )
+                result["topic_distribution"] = [dict(r) for r in cursor.fetchall()]
+
+                # Sources in this category with headline count and health info
+                cursor.execute(
+                    """
+                    SELECT s.id AS source_id,
+                           s.name,
+                           s.active,
+                           s.fetch_error,
+                           COUNT(h.id) AS headline_count
+                    FROM sources s
+                    LEFT JOIN headlines h
+                        ON h.source_id = s.id
+                        AND h.created_at >= NOW() - %(interval)s::INTERVAL
+                    WHERE s.category = %(category)s
+                    GROUP BY s.id, s.name, s.active, s.fetch_error
+                    ORDER BY headline_count DESC
+                    """,
+                    params,
+                )
+                result["sources"] = [dict(r) for r in cursor.fetchall()]
+
+        except Exception as e:
+            print(f"Error fetching category detail for '{category}': {e}")
+
+        result["period"] = period
+        return result
