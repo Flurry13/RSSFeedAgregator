@@ -65,6 +65,8 @@ CREATE TABLE headlines (
     topic_confidence FLOAT,
     entities JSONB,
     event_type TEXT,
+    sentiment TEXT,
+    sentiment_score FLOAT,
     embedding_id TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
@@ -76,6 +78,7 @@ CREATE INDEX idx_headlines_published_at ON headlines(published_at);
 CREATE INDEX idx_headlines_language ON headlines(language);
 CREATE INDEX idx_headlines_topic ON headlines(topic);
 CREATE INDEX idx_headlines_title_fts ON headlines USING gin(to_tsvector('simple', title));
+CREATE INDEX idx_headlines_sentiment ON headlines(sentiment);
 
 -- Event clusters table
 CREATE TABLE event_clusters (
