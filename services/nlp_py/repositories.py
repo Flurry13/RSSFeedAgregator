@@ -675,6 +675,7 @@ class AnalyticsRepository:
             "category_breakdown": [],
             "daily_volume": [],
             "sentiment_distribution": [],
+            "topic_category_heatmap": [],
         }
         try:
             with get_db_cursor() as cursor:
@@ -760,6 +761,22 @@ class AnalyticsRepository:
                     params,
                 )
                 result["sentiment_distribution"] = [dict(r) for r in cursor.fetchall()]
+
+                # Topic x Category heatmap
+                cursor.execute(
+                    """
+                    SELECT h.topic, s.category, COUNT(*) AS count
+                    FROM headlines h
+                    JOIN sources s ON h.source_id = s.id
+                    WHERE h.created_at >= NOW() - %(interval)s::INTERVAL
+                      AND h.topic IS NOT NULL
+                      AND s.category IS NOT NULL
+                    GROUP BY h.topic, s.category
+                    ORDER BY count DESC
+                    """,
+                    params,
+                )
+                result["topic_category_heatmap"] = [dict(r) for r in cursor.fetchall()]
 
         except Exception as e:
             print(f"Error fetching analytics: {e}")

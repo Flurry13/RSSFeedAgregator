@@ -79,6 +79,7 @@ CREATE INDEX idx_headlines_language ON headlines(language);
 CREATE INDEX idx_headlines_topic ON headlines(topic);
 CREATE INDEX idx_headlines_title_fts ON headlines USING gin(to_tsvector('simple', title));
 CREATE INDEX idx_headlines_sentiment ON headlines(sentiment);
+CREATE INDEX idx_headlines_topic_source ON headlines(topic, source_id);
 
 -- Event clusters table
 CREATE TABLE event_clusters (
