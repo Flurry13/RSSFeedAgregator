@@ -186,6 +186,14 @@ def get_insights_category(category):
     return jsonify(InsightsRepository.get_category_detail(category, period))
 
 
+@app.route("/api/insights/predictions")
+def get_prediction_signals():
+    period = request.args.get("period", "24h")
+    if period not in ("24h", "7d", "30d"):
+        period = "24h"
+    return jsonify(InsightsRepository.get_prediction_signals(period))
+
+
 # --- Settings ---
 
 

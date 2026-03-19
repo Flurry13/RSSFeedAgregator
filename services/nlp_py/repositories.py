@@ -981,6 +981,117 @@ class InsightsRepository:
         result["period"] = period
         return result
 
+    STOP_WORDS = {
+        'the', 'and', 'for', 'with', 'from', 'that', 'this', 'have', 'will',
+        'been', 'more', 'about', 'into', 'than', 'also', 'over', 'after',
+        'its', 'are', 'was', 'were', 'has', 'had', 'but', 'not', 'what',
+        'all', 'can', 'her', 'his', 'one', 'our', 'out', 'you', 'new',
+        'could', 'would', 'should', 'their', 'there', 'when', 'who', 'how',
+        'may', 'says', 'said', 'just', 'like', 'make', 'does',
+    }
+
+    @staticmethod
+    def _significant_words(text: str) -> set:
+        if not text:
+            return set()
+        return {w for w in text.lower().split() if len(w) > 3 and w not in InsightsRepository.STOP_WORDS}
+
+    @staticmethod
+    def get_prediction_signals(period: str = "24h") -> Dict[str, Any]:
+        interval = InsightsRepository._PERIOD_MAP.get(period, "24 hours")
+        params = {"interval": interval}
+        result: Dict[str, Any] = {
+            "period": period,
+            "prediction_headlines": [],
+            "cross_references": [],
+            "divergences": [],
+            "stats": {"pm_headline_count": 0, "cross_references_found": 0, "divergences_found": 0},
+        }
+        try:
+            with get_db_cursor() as cursor:
+                cursor.execute("""
+                    SELECT h.title, h.url, h.sentiment, h.sentiment_score,
+                           h.topic, s.name AS source_name
+                    FROM headlines h
+                    JOIN sources s ON h.source_id = s.id
+                    WHERE s.category = 'prediction_markets'
+                      AND h.created_at >= NOW() - %(interval)s::INTERVAL
+                    ORDER BY h.created_at DESC
+                """, params)
+                pm_headlines = [dict(r) for r in cursor.fetchall()]
+                result["prediction_headlines"] = pm_headlines
+                result["stats"]["pm_headline_count"] = len(pm_headlines)
+
+                if not pm_headlines:
+                    return result
+
+                cursor.execute("""
+                    SELECT h.title, h.url, h.sentiment, h.sentiment_score,
+                           h.topic, s.name AS source_name, s.category
+                    FROM headlines h
+                    JOIN sources s ON h.source_id = s.id
+                    WHERE s.category != 'prediction_markets'
+                      AND h.created_at >= NOW() - %(interval)s::INTERVAL
+                      AND h.sentiment IS NOT NULL
+                    ORDER BY h.created_at DESC
+                """, params)
+                other_headlines = [dict(r) for r in cursor.fetchall()]
+
+            # Pre-compute significant words
+            for oh in other_headlines:
+                oh["_words"] = InsightsRepository._significant_words(oh["title"])
+
+            cross_refs = []
+            divergences = []
+
+            for pm in pm_headlines:
+                pm_words = InsightsRepository._significant_words(pm["title"])
+                if not pm_words:
+                    continue
+
+                matches = []
+                for oh in other_headlines:
+                    shared = pm_words & oh["_words"]
+                    if len(shared) >= 2:
+                        matches.append({
+                            "title": oh["title"], "url": oh["url"],
+                            "sentiment": oh["sentiment"], "source_name": oh["source_name"],
+                            "category": oh["category"], "shared_words": len(shared),
+                        })
+
+                matches.sort(key=lambda m: m["shared_words"], reverse=True)
+                top_matches = matches[:3]
+
+                if top_matches:
+                    pm_ref = {"title": pm["title"], "url": pm["url"],
+                              "sentiment": pm["sentiment"], "source_name": pm["source_name"]}
+                    cross_refs.append({"pm_headline": pm_ref, "related": top_matches})
+
+                    pm_sent = pm.get("sentiment")
+                    if pm_sent and pm_sent != "neutral":
+                        related_sentiments = [m["sentiment"] for m in top_matches if m.get("sentiment") and m["sentiment"] != "neutral"]
+                        if related_sentiments:
+                            from collections import Counter
+                            majority = Counter(related_sentiments).most_common(1)[0][0]
+                            if majority != pm_sent:
+                                divergences.append({
+                                    "pm_headline": pm_ref,
+                                    "related_headlines": top_matches,
+                                    "pm_sentiment": pm_sent,
+                                    "market_sentiment": majority,
+                                    "type": f"pm_{pm_sent}_market_{majority}",
+                                })
+
+            result["cross_references"] = cross_refs
+            result["divergences"] = divergences
+            result["stats"]["cross_references_found"] = len(cross_refs)
+            result["stats"]["divergences_found"] = len(divergences)
+
+        except Exception as e:
+            print(f"Error fetching prediction signals: {e}")
+            result["error"] = str(e)
+        return result
+
     @staticmethod
     def get_category_detail(category: str, period: str = "24h") -> Dict[str, Any]:
         """
