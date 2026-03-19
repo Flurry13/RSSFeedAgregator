@@ -59,6 +59,12 @@ const tooltipStyle = {
 
 const labelStyle = { color: "#777", fontSize: 10, fontFamily: "'Space Mono', monospace" };
 
+const SENTIMENT_COLORS: Record<string, string> = {
+  bullish: "#00ff88",
+  bearish: "#ff3333",
+  neutral: "#666",
+};
+
 function TopicsChart({ data }: { data: AnalyticsData["topic_distribution"] }) {
   return (
     <div>
@@ -176,6 +182,49 @@ function VolumeChart({ data }: { data: AnalyticsData["daily_volume"] }) {
   );
 }
 
+function SentimentChart({ data }: { data: { sentiment: string; count: number }[] }) {
+  const total = data.reduce((sum, d) => sum + d.count, 0);
+  return (
+    <div>
+      <h2 className="font-mono text-[10px] uppercase tracking-widest text-[#555] mb-4">
+        Sentiment Distribution
+      </h2>
+      {total === 0 ? (
+        <p className="text-[#555] font-mono text-xs">No sentiment data yet.</p>
+      ) : (
+        <div>
+          <div className="flex h-8 w-full overflow-hidden border-2 border-[#333]">
+            {data.map((d) => (
+              <div
+                key={d.sentiment}
+                style={{
+                  width: `${(d.count / total) * 100}%`,
+                  backgroundColor: SENTIMENT_COLORS[d.sentiment] ?? "#444",
+                }}
+              />
+            ))}
+          </div>
+          <div className="flex gap-6 mt-3 font-mono text-[11px]">
+            {data.map((d) => (
+              <div key={d.sentiment} className="flex items-center gap-2">
+                <span
+                  className="w-2 h-2 shrink-0"
+                  style={{ background: SENTIMENT_COLORS[d.sentiment] ?? "#444" }}
+                />
+                <span className="text-[#777] uppercase">{d.sentiment}</span>
+                <span className="font-bold" style={{ color: SENTIMENT_COLORS[d.sentiment] ?? "#777" }}>
+                  {d.count}
+                </span>
+                <span className="text-[#555]">({Math.round((d.count / total) * 100)}%)</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SourcesChart({ data }: { data: AnalyticsData["source_breakdown"] }) {
   return (
     <div>
@@ -267,13 +316,16 @@ export default function AnalyticsPage() {
                 <div className="border-2 border-[#333] bg-[#111] p-5 animate-fade-in-up" style={{ animationDelay: "0ms" }}>
                   <TopicsChart data={data.topic_distribution} />
                 </div>
+                <div className="border-2 border-[#333] bg-[#111] p-5 animate-fade-in-up" style={{ animationDelay: "30ms" }}>
+                  <SentimentChart data={data.sentiment_distribution ?? []} />
+                </div>
                 <div className="border-2 border-[#333] bg-[#111] p-5 animate-fade-in-up" style={{ animationDelay: "60ms" }}>
                   <CategoryChart data={data.category_breakdown ?? []} />
                 </div>
-                <div className="border-2 border-[#333] bg-[#111] p-5 animate-fade-in-up" style={{ animationDelay: "120ms" }}>
+                <div className="border-2 border-[#333] bg-[#111] p-5 animate-fade-in-up" style={{ animationDelay: "90ms" }}>
                   <VolumeChart data={data.daily_volume} />
                 </div>
-                <div className="border-2 border-[#333] bg-[#111] p-5 animate-fade-in-up" style={{ animationDelay: "180ms" }}>
+                <div className="border-2 border-[#333] bg-[#111] p-5 animate-fade-in-up" style={{ animationDelay: "120ms" }}>
                   <SourcesChart data={data.source_breakdown} />
                 </div>
               </div>
