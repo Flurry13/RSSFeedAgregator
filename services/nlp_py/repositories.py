@@ -250,6 +250,7 @@ class HeadlineRepository:
         language: Optional[str] = None,
         source_id: Optional[int] = None,
         q: Optional[str] = None,
+        sentiment: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Return paginated headlines joined with source name.
@@ -279,6 +280,9 @@ class HeadlineRepository:
                 "to_tsvector('simple', h.title) @@ plainto_tsquery('simple', %(q)s)"
             )
             params["q"] = q
+        if sentiment:
+            conditions.append("h.sentiment = %(sentiment)s")
+            params["sentiment"] = sentiment
 
         where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
         offset = (page - 1) * limit
@@ -394,6 +398,26 @@ class HeadlineRepository:
                 return True
         except Exception as e:
             print(f"Error updating entities for headline {headline_id}: {e}")
+            return False
+
+    @staticmethod
+    def update_sentiment(headline_id: int, sentiment: str, score: float) -> bool:
+        """Persist sentiment analysis result for a headline."""
+        try:
+            with get_db_cursor() as cursor:
+                cursor.execute(
+                    """
+                    UPDATE headlines
+                    SET sentiment = %(sentiment)s,
+                        sentiment_score = %(score)s,
+                        updated_at = NOW()
+                    WHERE id = %(headline_id)s
+                    """,
+                    {"headline_id": headline_id, "sentiment": sentiment, "score": score},
+                )
+                return True
+        except Exception as e:
+            print(f"Error updating sentiment for headline {headline_id}: {e}")
             return False
 
     @staticmethod
@@ -610,6 +634,7 @@ class AnalyticsRepository:
             "language_breakdown": [],
             "category_breakdown": [],
             "daily_volume": [],
+            "sentiment_distribution": [],
         }
         try:
             with get_db_cursor() as cursor:
@@ -682,6 +707,20 @@ class AnalyticsRepository:
                 )
                 result["daily_volume"] = [dict(r) for r in cursor.fetchall()]
 
+                # Sentiment distribution
+                cursor.execute(
+                    """
+                    SELECT sentiment, COUNT(*) AS count
+                    FROM headlines
+                    WHERE sentiment IS NOT NULL
+                      AND created_at >= NOW() - %(interval)s::INTERVAL
+                    GROUP BY sentiment
+                    ORDER BY count DESC
+                    """,
+                    params,
+                )
+                result["sentiment_distribution"] = [dict(r) for r in cursor.fetchall()]
+
         except Exception as e:
             print(f"Error fetching analytics: {e}")
 
@@ -730,6 +769,8 @@ class InsightsRepository:
             "category_volume": [],
             "top_clusters": [],
             "feed_health": {"healthy": 0, "erroring": 0, "inactive": 0},
+            "sentiment_breakdown": {},
+            "sentiment_by_category": {},
         }
         try:
             with get_db_cursor() as cursor:
@@ -841,6 +882,41 @@ class InsightsRepository:
                         "erroring": row["erroring"],
                         "inactive": row["inactive"],
                     }
+
+                # Sentiment breakdown
+                cursor.execute(
+                    """
+                    SELECT sentiment, COUNT(*) AS count
+                    FROM headlines
+                    WHERE sentiment IS NOT NULL
+                      AND created_at >= NOW() - %(interval)s::INTERVAL
+                    GROUP BY sentiment
+                    """,
+                    params,
+                )
+                result["sentiment_breakdown"] = {
+                    r["sentiment"]: r["count"] for r in cursor.fetchall()
+                }
+
+                # Sentiment by category
+                cursor.execute(
+                    """
+                    SELECT s.category, h.sentiment, COUNT(*) AS count
+                    FROM headlines h
+                    JOIN sources s ON h.source_id = s.id
+                    WHERE h.sentiment IS NOT NULL
+                      AND h.created_at >= NOW() - %(interval)s::INTERVAL
+                    GROUP BY s.category, h.sentiment
+                    ORDER BY s.category
+                    """,
+                    params,
+                )
+                by_cat: Dict[str, Dict[str, int]] = {}
+                for row in cursor.fetchall():
+                    cat = row["category"]
+                    by_cat.setdefault(cat, {"bullish": 0, "bearish": 0, "neutral": 0})
+                    by_cat[cat][row["sentiment"]] = row["count"]
+                result["sentiment_by_category"] = by_cat
 
         except Exception as e:
             print(f"Error fetching insights summary: {e}")

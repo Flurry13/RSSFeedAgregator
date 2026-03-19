@@ -84,6 +84,7 @@ def get_headlines():
     language = request.args.get("language")
     source_id = request.args.get("source_id", type=int)
     q = request.args.get("q")
+    sentiment = request.args.get("sentiment")
     result = HeadlineRepository.get_paginated(
         page=page,
         limit=limit,
@@ -93,6 +94,7 @@ def get_headlines():
         language=language,
         source_id=source_id,
         q=q,
+        sentiment=sentiment,
     )
     return jsonify(result)
 
@@ -467,6 +469,10 @@ def run_full_pipeline():
                 if h.get("entities"):
                     HeadlineRepository.update_entities(
                         hid, h["entities"], h.get("event_type", "other")
+                    )
+                if h.get("sentiment"):
+                    HeadlineRepository.update_sentiment(
+                        hid, h["sentiment"], h.get("sentiment_score", 0.5)
                     )
                 db_headlines.append(h)
             emit_log("info", f"ML results persisted for {len(db_headlines)} headlines")
