@@ -73,12 +73,23 @@ export default function FeedPage() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [search, setSearch] = useState("");
-  const [topic, setTopic] = useState("all");
+  const [topic, setTopic] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState("");
-  const [sentiment, setSentiment] = useState("all");
+  const [sentiment, setSentiment] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.settings.get().then((s) => {
+      setTopic(s.default_topic || "all");
+      setSentiment(s.default_sentiment || "all");
+    }).catch(() => {
+      setTopic("all");
+      setSentiment("all");
+    });
+  }, []);
 
   const fetchHeadlines = useCallback(
     async (nextPage: number, replace: boolean) => {
+      if (topic === null || sentiment === null) return;
       if (nextPage === 1) setLoading(true);
       else setLoadingMore(true);
       try {
@@ -147,7 +158,7 @@ export default function FeedPage() {
           </Button>
         </form>
 
-        <Select value={topic} onValueChange={(v) => setTopic(v ?? "all")}>
+        <Select value={topic ?? "all"} onValueChange={(v) => setTopic(v ?? "all")}>
           <SelectTrigger className="w-36 bg-[#111] border-2 border-[#333] text-[#e8e8e0] text-[10px] uppercase tracking-wider h-8">
             <SelectValue placeholder="Topic" />
           </SelectTrigger>
@@ -164,7 +175,7 @@ export default function FeedPage() {
           </SelectContent>
         </Select>
 
-        <Select value={sentiment} onValueChange={(v) => { setSentiment(v); }}>
+        <Select value={sentiment ?? "all"} onValueChange={(v) => { setSentiment(v); }}>
           <SelectTrigger className="w-[130px] bg-[#111] border-2 border-[#333] text-[#e8e8e0] font-mono text-xs rounded-none">
             <SelectValue placeholder="Sentiment" />
           </SelectTrigger>
