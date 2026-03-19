@@ -102,6 +102,23 @@ CREATE TABLE event_cluster_members (
 
 CREATE INDEX idx_ecm_headline_id ON event_cluster_members(headline_id);
 
+-- Pipeline runs table (tracks each full pipeline execution)
+CREATE TABLE IF NOT EXISTS pipeline_runs (
+    id SERIAL PRIMARY KEY,
+    started_at TIMESTAMPTZ NOT NULL,
+    completed_at TIMESTAMPTZ,
+    status TEXT NOT NULL DEFAULT 'running',
+    headlines_gathered INTEGER DEFAULT 0,
+    headlines_inserted INTEGER DEFAULT 0,
+    feeds_success INTEGER DEFAULT 0,
+    feeds_failed INTEGER DEFAULT 0,
+    duration_ms INTEGER,
+    error TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_pipeline_runs_started_at ON pipeline_runs(started_at);
+
 -- Views
 CREATE VIEW v_recent_headlines AS
 SELECT

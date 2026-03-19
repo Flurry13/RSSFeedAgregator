@@ -67,6 +67,20 @@ export interface PipelineStatus {
   last_duration_ms?: number;
 }
 
+export interface PipelineRun {
+  id: number;
+  started_at: string;
+  completed_at?: string | null;
+  status: "running" | "completed" | "error";
+  headlines_gathered: number;
+  headlines_inserted: number;
+  feeds_success: number;
+  feeds_failed: number;
+  duration_ms?: number | null;
+  error?: string | null;
+  created_at: string;
+}
+
 export interface SearchResult {
   id: number;
   title: string;
@@ -155,6 +169,9 @@ export const api = {
   pipeline: {
     status(): Promise<PipelineStatus> {
       return request("/api/pipeline/status");
+    },
+    history(limit = 10): Promise<PipelineRun[]> {
+      return request(`/api/pipeline/history${buildQuery({ limit })}`);
     },
     gather(): Promise<{ ok: boolean }> {
       return request("/api/gather", { method: "POST" });

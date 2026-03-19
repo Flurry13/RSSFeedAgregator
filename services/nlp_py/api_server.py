@@ -18,6 +18,7 @@ from repositories import (
     EventClusterRepository,
     HeadlineRepository,
     InsightsRepository,
+    PipelineRunRepository,
     SourceRepository,
 )
 
@@ -223,6 +224,12 @@ def get_pipeline_status():
     return jsonify(pipeline_status)
 
 
+@app.route("/api/pipeline/history")
+def get_pipeline_history():
+    limit = min(request.args.get("limit", 10, type=int), 50)
+    return jsonify(PipelineRunRepository.get_recent(limit))
+
+
 @app.route("/api/gather", methods=["POST"])
 def start_gather():
     if pipeline_status["status"] == "running":
@@ -383,14 +390,25 @@ def run_full_pipeline():
         )
 
         start = time.time()
+        run_id = PipelineRunRepository.create_run()
         emit_log("info", "Starting full pipeline")
+
+        _run_stats: dict = {
+            "gathered": 0,
+            "inserted": 0,
+            "feeds_success": 0,
+            "feeds_failed": 0,
+            "duration_ms": 0,
+        }
 
         try:
             # Stage 1: Gather
             emit_status("gather", "running", message="Gathering RSS feeds...")
             headlines = gather()
+            _run_stats["gathered"] = len(headlines)
             emit_log("info", f"Gathered {len(headlines)} headlines")
             result = HeadlineRepository.bulk_insert(headlines)
+            _run_stats["inserted"] = result["inserted"]
             emit_log(
                 "info", f"Inserted {result['inserted']}, skipped {result['skipped']}"
             )
@@ -499,8 +517,12 @@ def run_full_pipeline():
                 emit_log("warn", f"Event clustering failed (non-fatal): {e}")
 
             elapsed = int((time.time() - start) * 1000)
+            _run_stats["duration_ms"] = elapsed
             pipeline_status["last_run"] = datetime.utcnow().isoformat()
             pipeline_status["last_duration_ms"] = elapsed
+
+            if run_id is not None:
+                PipelineRunRepository.complete_run(run_id, _run_stats)
 
             emit_status(None, "idle", message="Pipeline complete")
             socketio.emit(
@@ -520,6 +542,10 @@ def run_full_pipeline():
             )
 
         except Exception as e:
+            elapsed = int((time.time() - start) * 1000)
+            _run_stats["duration_ms"] = elapsed
+            if run_id is not None:
+                PipelineRunRepository.complete_run(run_id, _run_stats, error=str(e))
             emit_status(None, "error", message=str(e))
             emit_log("error", f"Pipeline failed: {e}")
 

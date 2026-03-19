@@ -935,3 +935,65 @@ class InsightsRepository:
 
         result["period"] = period
         return result
+
+
+# ---------------------------------------------------------------------------
+
+
+class PipelineRunRepository:
+    """Repository for tracking pipeline execution history."""
+
+    @staticmethod
+    def create_run() -> Optional[int]:
+        try:
+            with get_db_cursor() as cursor:
+                cursor.execute(
+                    "INSERT INTO pipeline_runs (started_at, status) VALUES (NOW(), 'running') RETURNING id"
+                )
+                row = cursor.fetchone()
+                return row["id"] if row else None
+        except Exception as e:
+            print(f"Error creating pipeline run: {e}")
+            return None
+
+    @staticmethod
+    def complete_run(run_id: int, stats: Dict[str, Any], error: Optional[str] = None):
+        try:
+            with get_db_cursor() as cursor:
+                cursor.execute(
+                    """UPDATE pipeline_runs
+                       SET completed_at = NOW(),
+                           status = %(status)s,
+                           headlines_gathered = %(gathered)s,
+                           headlines_inserted = %(inserted)s,
+                           feeds_success = %(feeds_ok)s,
+                           feeds_failed = %(feeds_err)s,
+                           duration_ms = %(duration)s,
+                           error = %(error)s
+                       WHERE id = %(run_id)s""",
+                    {
+                        "run_id": run_id,
+                        "status": "error" if error else "completed",
+                        "gathered": stats.get("gathered", 0),
+                        "inserted": stats.get("inserted", 0),
+                        "feeds_success": stats.get("feeds_success", 0),
+                        "feeds_failed": stats.get("feeds_failed", 0),
+                        "duration": stats.get("duration_ms", 0),
+                        "error": error,
+                    },
+                )
+        except Exception as e:
+            print(f"Error completing pipeline run: {e}")
+
+    @staticmethod
+    def get_recent(limit: int = 10) -> List[Dict]:
+        try:
+            with get_db_cursor() as cursor:
+                cursor.execute(
+                    "SELECT * FROM pipeline_runs ORDER BY started_at DESC LIMIT %s",
+                    (limit,),
+                )
+                return [dict(r) for r in cursor.fetchall()]
+        except Exception as e:
+            print(f"Error fetching pipeline runs: {e}")
+            return []
