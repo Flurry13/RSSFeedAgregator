@@ -1,5 +1,4 @@
 """RSSFeed2 API Server — Flask + Flask-SocketIO."""
-import json
 import logging
 import os
 import sys
@@ -14,7 +13,6 @@ from flask_socketio import SocketIO, emit
 sys.path.append(os.path.join(os.path.dirname(__file__), "pipeline"))
 
 from database import init_connection_pool, get_db_cursor
-from model_loader import preload_models
 from repositories import (
     AnalyticsRepository,
     EventClusterRepository,
@@ -146,12 +144,16 @@ def list_sources():
     )
     language = request.args.get("language")
     group_name = request.args.get("group_name")
+    category = request.args.get("category")
+    subcategory = request.args.get("subcategory")
     result = SourceRepository.get_paginated(
         page=page,
         limit=limit,
         active=active,
         language=language,
         group_name=group_name,
+        category=category,
+        subcategory=subcategory,
     )
     return jsonify(result)
 
@@ -312,17 +314,11 @@ def start_classify():
 
             for i, h in enumerate(headlines):
                 text = h.get("translated_title") or h["title"]
-                classification = classifier.classify_single(text)
-                topic = (
-                    classification.get("labels", ["other"])[0]
-                    if classification.get("labels")
-                    else "other"
-                )
-                confidence = (
-                    classification.get("scores", [0.0])[0]
-                    if classification.get("scores")
-                    else 0.0
-                )
+                source_category = h.get("category")
+                classification = classifier.classify_single(text, source_category=source_category)
+                top = classification.get("topTopics", [{}])[0]
+                topic = top.get("topic", "general")
+                confidence = top.get("confidence", 0.0)
                 HeadlineRepository.update_topic(h["id"], topic, confidence)
                 emit_status(
                     "classify",
@@ -364,7 +360,6 @@ def run_full_pipeline():
             run_parallel_ml,
             classify_batch_wrapper,
             extract_batch_wrapper,
-            embed_batch_wrapper,
         )
 
         start = time.time()
@@ -392,29 +387,41 @@ def run_full_pipeline():
             headlines = translator.translate_headlines(headlines)
             emit_log("info", "Translation complete")
 
-            # Stage 3: Parallel ML (classify + extract + embed)
+            # Stage 3: Parallel ML (classify + extract)
             emit_status(
                 "ml_parallel",
                 "running",
                 progress=0,
-                total=3,
-                message="Running classify, extract, embed in parallel...",
+                total=2,
+                message="Running classify + extract in parallel...",
             )
             headlines = run_parallel_ml(
                 headlines,
                 classify_fn=classify_batch_wrapper,
                 extract_fn=extract_batch_wrapper,
-                embed_fn=embed_batch_wrapper,
                 progress_callback=lambda **kw: emit_status(**kw),
             )
             emit_log("info", "Parallel ML stage complete")
 
-            # Stage 4: Store ML results to DB
+            # Stage 4: Store ML results to DB + collect real headline IDs
             emit_status("store", "running", message="Persisting ML results...")
+            db_headlines = []
             for h in headlines:
-                hid = h.get("id") or h.get("source_id")
-                if not hid:
+                url = h.get("url") or h.get("link")
+                source_id = h.get("source_id")
+                if not url or not source_id:
                     continue
+                # Look up the real DB id by unique (url, source_id)
+                with get_db_cursor() as cur:
+                    cur.execute(
+                        "SELECT id FROM headlines WHERE url = %s AND source_id = %s",
+                        (url, source_id),
+                    )
+                    row = cur.fetchone()
+                if not row:
+                    continue
+                hid = row["id"]
+                h["id"] = hid
                 if h.get("topic"):
                     HeadlineRepository.update_topic(
                         hid, h["topic"], h.get("topic_confidence", 0.0)
@@ -423,9 +430,8 @@ def run_full_pipeline():
                     HeadlineRepository.update_entities(
                         hid, h["entities"], h.get("event_type", "other")
                     )
-                if h.get("embedding_id"):
-                    HeadlineRepository.update_embedding_id(hid, h["embedding_id"])
-            emit_log("info", "ML results persisted to DB")
+                db_headlines.append(h)
+            emit_log("info", f"ML results persisted for {len(db_headlines)} headlines")
 
             # Stage 5: Group events into clusters
             emit_status("group", "running", message="Clustering events...")
@@ -433,36 +439,42 @@ def run_full_pipeline():
                 from group_by_event import EventGrouper
 
                 grouper = EventGrouper()
-                texts = [h.get("translated_title") or h["title"] for h in headlines]
-                h_ids = [str(h.get("id", i)) for i, h in enumerate(headlines)]
+                texts = [h.get("translated_title") or h["title"] for h in db_headlines]
+                h_ids = [str(h["id"]) for h in db_headlines]
                 grouping_result = grouper.create_event_groups(
                     texts, headline_ids=h_ids
                 )
 
                 groups = grouping_result.get("groups", [])
+                created = 0
                 for g in groups:
+                    if g["group_id"].startswith("noise_"):
+                        continue
+                    events = g.get("events", [])
                     member_ids = [
-                        int(mid)
-                        for mid in g.get("member_ids", [])
-                        if str(mid).isdigit()
+                        int(ev["headline_id"])
+                        for ev in events
+                        if str(ev.get("headline_id", "")).isdigit()
                     ]
-                    scores = g.get("similarity_scores", [0.5] * len(member_ids))
-                    if member_ids:
-                        EventClusterRepository.create_cluster(
-                            label=g.get("summary", {}).get("keywords", ["Event"])[0]
-                            if isinstance(g.get("summary"), dict)
-                            else "Event cluster",
-                            event_type=g.get("event_type", "other"),
-                            key_entities=g.get("summary", {}).get(
-                                "top_entities", {}
-                            ),
-                            summary=str(g.get("summary", "")),
-                            start_time=g.get("time_span", {}).get("start"),
-                            end_time=g.get("time_span", {}).get("end"),
-                            headline_ids=member_ids,
-                            similarity_scores=scores[: len(member_ids)],
-                        )
-                emit_log("info", f"Created {len(groups)} event clusters")
+                    if not member_ids:
+                        continue
+                    summary = g.get("summary", {})
+                    common_ents = summary.get("common_entities", [])
+                    label = common_ents[0]["text"] if common_ents else "Event cluster"
+                    cohesion = summary.get("cohesion_score", 0.5)
+                    time_span = summary.get("time_span", {})
+                    EventClusterRepository.create_cluster(
+                        label=label,
+                        event_type=summary.get("dominant_event_type", "other"),
+                        key_entities=common_ents,
+                        summary=str(summary),
+                        start_time=time_span.get("start"),
+                        end_time=time_span.get("end"),
+                        headline_ids=member_ids,
+                        similarity_scores=[cohesion] * len(member_ids),
+                    )
+                    created += 1
+                emit_log("info", f"Created {created} event clusters")
             except Exception as e:
                 emit_log("warn", f"Event clustering failed (non-fatal): {e}")
 
@@ -506,36 +518,25 @@ def search():
         return jsonify({"error": "q parameter required"}), 400
 
     try:
-        from model_loader import get_embedder
-
-        embedder = get_embedder()
-        query_embedding = embedder.embed_single_text(q)
-
-        from qdrant_client import QdrantClient
-
-        qdrant = QdrantClient(
-            host=os.getenv("QDRANT_HOST", "localhost"),
-            port=int(os.getenv("QDRANT_PORT", 6333)),
-        )
-        results = qdrant.search(
-            collection_name="headlines",
-            query_vector=query_embedding.tolist(),
-            limit=limit,
-        )
-        data = []
-        for r in results:
-            headline_id = r.payload.get("headline_id") if r.payload else None
-            if headline_id:
-                with get_db_cursor() as cur:
-                    cur.execute(
-                        """SELECT h.*, s.name as source_name, s.country
-                           FROM headlines h JOIN sources s ON h.source_id = s.id
-                           WHERE h.id = %s""",
-                        (headline_id,),
-                    )
-                    headline = cur.fetchone()
-                if headline:
-                    data.append({"headline": dict(headline), "score": r.score})
+        with get_db_cursor() as cur:
+            cur.execute(
+                """
+                SELECT h.*, s.name AS source_name, s.country,
+                       ts_rank(
+                           to_tsvector('simple', coalesce(h.translated_title, '') || ' ' || h.title),
+                           plainto_tsquery('simple', %(q)s)
+                       ) AS score
+                FROM headlines h
+                LEFT JOIN sources s ON h.source_id = s.id
+                WHERE to_tsvector('simple', coalesce(h.translated_title, '') || ' ' || h.title)
+                      @@ plainto_tsquery('simple', %(q)s)
+                ORDER BY score DESC
+                LIMIT %(limit)s
+                """,
+                {"q": q, "limit": limit},
+            )
+            rows = [dict(r) for r in cur.fetchall()]
+        data = [{"headline": row, "score": row.pop("score", 0)} for row in rows]
         return jsonify({"data": data, "query": q})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -569,9 +570,6 @@ def handle_unsubscribe():
 if __name__ == "__main__":
     logger.info("Initializing database connection pool...")
     init_connection_pool()
-
-    logger.info("Preloading ML models...")
-    preload_models()
 
     port = int(os.getenv("NLP_PORT", 8081))
     logger.info("Starting server on port %d", port)

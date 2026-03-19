@@ -13,6 +13,20 @@ DEFAULT_TOPICS = [
     'real_estate', 'regulation', 'fintech', 'prediction_markets', 'mergers'
 ]
 
+# Maps source category names (from RSS feed metadata) to topic labels
+CATEGORY_TO_TOPIC: Dict[str, str] = {
+    'equities': 'markets',
+    'macro': 'economy',
+    'crypto': 'crypto',
+    'prediction_markets': 'prediction_markets',
+    'commodities': 'commodities',
+    'real_estate': 'real_estate',
+    'regulation': 'regulation',
+    'fintech': 'fintech',
+    'earnings': 'earnings',
+    'international': 'markets',
+}
+
 # Keyword rules: topic -> list of keywords/phrases (matched case-insensitively)
 TOPIC_KEYWORDS: Dict[str, List[str]] = {
     'markets': [
@@ -200,7 +214,12 @@ class TopicClassifier:
     def __init__(self, topics: Optional[List[str]] = None):
         self.topics = topics or DEFAULT_TOPICS
 
-    def classify_single(self, text: str, candidate_labels: Optional[List[str]] = None) -> Dict[str, Any]:
+    def classify_single(
+        self,
+        text: str,
+        candidate_labels: Optional[List[str]] = None,
+        source_category: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Classify a single text into topics using keyword matching."""
         labels = candidate_labels or self.topics
         start_time = time.time()
@@ -220,9 +239,9 @@ class TopicClassifier:
             for t, s in ranked[:3]
         ]
 
-        # If no keywords matched at all, fall back to 'general'
+        # If no keywords matched at all, fall back to source category or 'general'
         if ranked[0][1] == 0:
-            return self._fallback_classification(text)
+            return self._fallback_classification(text, source_category)
 
         processing_time = time.time() - start_time
         return {
@@ -234,15 +253,16 @@ class TopicClassifier:
             'model_version': 'keyword-v1',
         }
 
-    def _fallback_classification(self, text: str) -> Dict[str, Any]:
-        """Fallback when no keywords match."""
+    def _fallback_classification(self, text: str, source_category: Optional[str] = None) -> Dict[str, Any]:
+        """Fallback when no keywords match. Uses source category if available."""
+        fallback_topic = CATEGORY_TO_TOPIC.get(source_category, 'general') if source_category else 'general'
         return {
             'text': text,
-            'topics': ['general'],
-            'scores': [1.0],
-            'topTopics': [{'topic': 'general', 'confidence': 1.0}],
+            'topics': [fallback_topic],
+            'scores': [0.5],
+            'topTopics': [{'topic': fallback_topic, 'confidence': 0.5}],
             'processing_time': 0.0,
-            'model_version': 'keyword-v1',
+            'model_version': 'keyword-v1-fallback',
         }
 
 
@@ -257,5 +277,5 @@ def get_classifier() -> TopicClassifier:
     return _classifier
 
 
-def classify(text: str, candidate_labels: Optional[List[str]] = None) -> Dict[str, Any]:
-    return get_classifier().classify_single(text, candidate_labels)
+def classify(text: str, candidate_labels: Optional[List[str]] = None, source_category: Optional[str] = None) -> Dict[str, Any]:
+    return get_classifier().classify_single(text, candidate_labels, source_category)
