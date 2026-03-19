@@ -66,6 +66,24 @@ export interface AppSettings {
   default_sentiment: string;
 }
 
+export interface PredictionSignals {
+  period: string;
+  prediction_headlines: {
+    title: string; url: string; sentiment: string;
+    sentiment_score: number; source_name: string; topic: string;
+  }[];
+  cross_references: {
+    pm_headline: { title: string; url: string; sentiment: string; source_name: string };
+    related: { title: string; url: string; sentiment: string; source_name: string; category: string; shared_words: number }[];
+  }[];
+  divergences: {
+    pm_headline: { title: string; url: string; sentiment: string; source_name: string };
+    related_headlines: { title: string; url: string; sentiment: string; source_name: string; category: string }[];
+    pm_sentiment: string; market_sentiment: string; type: string;
+  }[];
+  stats: { pm_headline_count: number; cross_references_found: number; divergences_found: number };
+}
+
 export interface Source {
   id: number;
   name: string;
@@ -236,6 +254,9 @@ export const api = {
     },
     category(category: string, period: string = "24h"): Promise<any> {
       return request(`/api/insights/category/${category}?period=${period}`);
+    },
+    predictions(period: string = "24h"): Promise<PredictionSignals> {
+      return request(`/api/insights/predictions?period=${period}`);
     },
   },
 };
