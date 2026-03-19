@@ -22,6 +22,8 @@ export interface Headline {
   language?: string;
   published_at?: string;
   created_at: string;
+  sentiment?: string;
+  sentiment_score?: number;
 }
 
 export interface Event {
@@ -41,6 +43,7 @@ export interface AnalyticsData {
   category_breakdown: { category: string; count: number }[];
   daily_volume: { date: string; count: number }[];
   source_breakdown: { source_id: number; name: string; count: number }[];
+  sentiment_distribution: { sentiment: string; count: number }[];
 }
 
 export interface InsightsSummary {
@@ -50,6 +53,8 @@ export interface InsightsSummary {
   category_volume: { category: string; count: number }[];
   top_clusters: { label: string; event_type: string; headline_count: number }[];
   feed_health: { healthy: number; erroring: number; inactive: number };
+  sentiment_breakdown: Record<string, number>;
+  sentiment_by_category: Record<string, { bullish: number; bearish: number; neutral: number }>;
 }
 
 export interface Source {
@@ -131,6 +136,7 @@ export const api = {
       topic?: string;
       language?: string;
       q?: string;
+      sentiment?: string;
     } = {}): Promise<ListResponse<Headline>> {
       return request(`/api/headlines${buildQuery(params)}`);
     },
