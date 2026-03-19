@@ -31,12 +31,14 @@ export interface Event {
   headline_count: number;
   created_at: string;
   headlines?: Headline[];
+  members?: Headline[];
 }
 
 export interface AnalyticsData {
   period: string;
   topic_distribution: { topic: string; count: number }[];
   language_breakdown: { language: string; count: number }[];
+  category_breakdown: { category: string; count: number }[];
   daily_volume: { date: string; count: number }[];
   source_breakdown: { source_id: number; name: string; count: number }[];
 }

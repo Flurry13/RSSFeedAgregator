@@ -597,6 +597,7 @@ class AnalyticsRepository:
             "topic_distribution": [],
             "source_breakdown": [],
             "language_breakdown": [],
+            "category_breakdown": [],
             "daily_volume": [],
         }
         try:
@@ -641,6 +642,21 @@ class AnalyticsRepository:
                     params,
                 )
                 result["language_breakdown"] = [dict(r) for r in cursor.fetchall()]
+
+                # Category breakdown
+                cursor.execute(
+                    """
+                    SELECT s.category, COUNT(h.id) AS count
+                    FROM headlines h
+                    JOIN sources s ON h.source_id = s.id
+                    WHERE h.created_at >= NOW() - %(interval)s::INTERVAL
+                      AND s.category IS NOT NULL
+                    GROUP BY s.category
+                    ORDER BY count DESC
+                    """,
+                    params,
+                )
+                result["category_breakdown"] = [dict(r) for r in cursor.fetchall()]
 
                 # Daily volume
                 cursor.execute(

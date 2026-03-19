@@ -94,11 +94,11 @@ function TopicsChart({ data }: { data: AnalyticsData["topic_distribution"] }) {
   );
 }
 
-function LanguagesChart({ data }: { data: AnalyticsData["language_breakdown"] }) {
+function CategoryChart({ data }: { data: { category: string; count: number }[] }) {
   return (
     <div>
       <h2 className="font-mono text-[10px] uppercase tracking-widest text-[#555] mb-4">
-        Language Breakdown
+        Category Breakdown
       </h2>
       <div className="flex items-center gap-6">
         <ResponsiveContainer width="60%" height={200}>
@@ -106,7 +106,7 @@ function LanguagesChart({ data }: { data: AnalyticsData["language_breakdown"] })
             <Pie
               data={data}
               dataKey="count"
-              nameKey="language"
+              nameKey="category"
               cx="50%"
               cy="50%"
               outerRadius={80}
@@ -114,21 +114,24 @@ function LanguagesChart({ data }: { data: AnalyticsData["language_breakdown"] })
               strokeWidth={2}
               stroke="#050505"
             >
-              {data.map((_, i) => (
-                <Cell key={i} fill={COLORS[i % COLORS.length]} />
+              {data.map((entry) => (
+                <Cell
+                  key={entry.category}
+                  fill={TOPIC_COLORS[entry.category] ?? COLORS[0]}
+                />
               ))}
             </Pie>
             <Tooltip contentStyle={tooltipStyle} />
           </PieChart>
         </ResponsiveContainer>
         <div className="flex flex-col gap-2 font-mono text-[11px]">
-          {data.map((d, i) => (
-            <div key={d.language} className="flex items-center gap-2">
+          {data.map((d) => (
+            <div key={d.category} className="flex items-center gap-2">
               <span
                 className="w-2 h-2 shrink-0"
-                style={{ background: COLORS[i % COLORS.length] }}
+                style={{ background: TOPIC_COLORS[d.category] ?? "#555" }}
               />
-              <span className="text-[#777] uppercase">{d.language}</span>
+              <span className="text-[#777] uppercase">{d.category.replace('_', ' ')}</span>
               <span className="text-[#00ff88] ml-1 font-bold">{d.count}</span>
             </div>
           ))}
@@ -265,7 +268,7 @@ export default function AnalyticsPage() {
                   <TopicsChart data={data.topic_distribution} />
                 </div>
                 <div className="border-2 border-[#333] bg-[#111] p-5 animate-fade-in-up" style={{ animationDelay: "60ms" }}>
-                  <LanguagesChart data={data.language_breakdown} />
+                  <CategoryChart data={data.category_breakdown ?? []} />
                 </div>
                 <div className="border-2 border-[#333] bg-[#111] p-5 animate-fade-in-up" style={{ animationDelay: "120ms" }}>
                   <VolumeChart data={data.daily_volume} />
