@@ -64,8 +64,8 @@ function MarketSentiment({
               .map(([cat, counts]) => {
                 const catTotal = counts.bullish + counts.bearish + counts.neutral;
                 return (
-                  <div key={cat} className="flex items-center gap-3 text-[11px]">
-                    <span className="text-[#98989d] w-28 shrink-0">{cat.replace(/_/g, ' ')}</span>
+                  <div key={cat} className="flex items-center gap-2 sm:gap-3 text-[11px]">
+                    <span className="text-[#98989d] w-20 sm:w-28 shrink-0 truncate">{cat.replace(/_/g, ' ')}</span>
                     <div className="flex h-3 flex-1 overflow-hidden rounded border border-[#3a3a3c]">
                       <div style={{ width: `${(counts.bullish / catTotal) * 100}%`, backgroundColor: "#30d158" }} />
                       <div style={{ width: `${(counts.bearish / catTotal) * 100}%`, backgroundColor: "#ff453a" }} />
@@ -192,12 +192,12 @@ function CategoryVolume({ data }: { data: InsightsSummary["category_volume"] }) 
       ) : (
         <div className="space-y-2.5">
           {data.map((d) => (
-            <div key={d.category} className="flex items-center gap-3">
+            <div key={d.category} className="flex items-center gap-2 sm:gap-3">
               <span
                 className="w-2 h-2 rounded-full shrink-0"
                 style={{ background: topicColor(d.category) }}
               />
-              <span className="text-[11px] text-[#98989d] w-28 shrink-0">
+              <span className="text-[11px] text-[#98989d] w-20 sm:w-28 shrink-0 truncate">
                 {d.category.replace(/_/g, " ")}
               </span>
               <div className="flex-1 h-1.5 bg-[#1c1c1e] rounded-full">
@@ -379,8 +379,8 @@ export default function InsightsPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-8">
-      <div className="flex items-baseline justify-between gap-4 mb-6">
+    <div className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
+      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3 sm:gap-4 mb-6">
         <div className="flex items-baseline gap-4">
           <h1 className="text-2xl font-semibold text-[#e5e5e7]">
             Insights

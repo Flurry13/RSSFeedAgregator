@@ -17,17 +17,17 @@ function sentimentIcon(s?: string) {
 /* -- Stats Bar ----------------------------------------------------------- */
 function StatsBar({ stats }: { stats: PredictionSignals["stats"] }) {
   return (
-    <div className="flex items-center gap-6 text-[11px] text-[#636366] border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] px-4 py-2.5 mb-6">
+    <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-[11px] text-[#636366] border border-[#3a3a3c] bg-[#2c2c2e] rounded-[10px] px-4 py-2.5 mb-6">
       <span>
         <span className="text-[#e5e5e7] font-semibold">{stats.pm_headline_count}</span>{" "}
         headlines
       </span>
-      <span className="text-[#3a3a3c]">|</span>
+      <span className="text-[#3a3a3c] hidden sm:inline">|</span>
       <span>
         <span className="text-[#e5e5e7] font-semibold">{stats.cross_references_found}</span>{" "}
         cross-references
       </span>
-      <span className="text-[#3a3a3c]">|</span>
+      <span className="text-[#3a3a3c] hidden sm:inline">|</span>
       <span>
         <span
           className="font-semibold"
@@ -75,7 +75,7 @@ function DivergenceAlerts({
             return (
               <div
                 key={i}
-                className="border border-[#3a3a3c] rounded-lg flex items-stretch overflow-hidden"
+                className="border border-[#3a3a3c] rounded-lg flex flex-col sm:flex-row sm:items-stretch overflow-hidden"
                 style={{
                   animationDelay: `${i * 40}ms`,
                   borderLeftWidth: 3,
@@ -83,7 +83,7 @@ function DivergenceAlerts({
                 }}
               >
                 {/* Left: PM headline */}
-                <div className="flex-1 p-3 min-w-0 border-r border-[#3a3a3c]">
+                <div className="flex-1 p-3 min-w-0 border-b sm:border-b-0 sm:border-r border-[#3a3a3c]">
                   <div className="flex items-start gap-2 mb-1.5">
                     {sentimentIcon(div.pm_sentiment)}
                     <a
@@ -101,7 +101,7 @@ function DivergenceAlerts({
                 </div>
 
                 {/* VS divider */}
-                <div className="flex flex-col items-center justify-center px-3 gap-1.5 shrink-0">
+                <div className="flex flex-row sm:flex-col items-center justify-center px-3 py-2 sm:py-0 gap-1.5 shrink-0 border-b sm:border-b-0 border-[#3a3a3c]">
                   <span
                     className="text-[9px] font-semibold px-1.5 py-0.5 rounded"
                     style={{
@@ -310,7 +310,7 @@ export default function PredictionsPage() {
   }, [period]);
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-8">
+    <div className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
       <div className="flex items-baseline gap-4 mb-6">
         <h1 className="text-2xl font-semibold text-[#e5e5e7]">
           Predictions

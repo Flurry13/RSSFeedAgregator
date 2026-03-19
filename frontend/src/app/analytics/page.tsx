@@ -106,8 +106,8 @@ function CategoryChart({ data }: { data: { category: string; count: number }[] }
       <h2 className="text-xs text-[#636366] uppercase tracking-wide mb-4">
         Category Breakdown
       </h2>
-      <div className="flex items-center gap-6">
-        <ResponsiveContainer width="60%" height={200}>
+      <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+        <ResponsiveContainer width="100%" height={200} className="sm:!w-[60%]">
           <PieChart>
             <Pie
               data={data}
@@ -130,7 +130,7 @@ function CategoryChart({ data }: { data: { category: string; count: number }[] }
             <Tooltip contentStyle={tooltipStyle} />
           </PieChart>
         </ResponsiveContainer>
-        <div className="flex flex-col gap-2 text-[11px]">
+        <div className="flex flex-wrap sm:flex-col gap-2 text-[11px]">
           {data.map((d) => (
             <div key={d.category} className="flex items-center gap-2">
               <span
@@ -330,7 +330,7 @@ export default function AnalyticsPage() {
   }, [period]);
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-8">
+    <div className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
       <div className="flex items-baseline gap-4 mb-6">
         <h1 className="text-2xl font-semibold text-[#e5e5e7]">
           Analytics

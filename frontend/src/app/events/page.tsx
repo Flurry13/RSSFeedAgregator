@@ -199,14 +199,14 @@ export default function EventsPage() {
 
   if (selected) {
     return (
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="max-w-4xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
         <EventDetail event={selected} onBack={() => setSelected(null)} />
       </div>
     );
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-8">
+    <div className="max-w-5xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
       <div className="flex items-baseline gap-4 mb-6">
         <h1 className="text-[28px] font-bold text-[#e5e5e7]">
           Events

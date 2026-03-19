@@ -158,7 +158,7 @@ export default function SettingsPage() {
     "text-[#e5e5e7] focus:bg-[#3a3a3c] text-sm rounded-lg";
 
   return (
-    <div className="max-w-xl mx-auto px-6 py-8">
+    <div className="max-w-xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
       {/* Header */}
       <div className="flex items-baseline gap-4 mb-8">
         <h1 className="text-2xl font-bold text-[#e5e5e7]">
@@ -259,7 +259,7 @@ export default function SettingsPage() {
                 Default topic
               </p>
               <Select value={defaultTopic} onValueChange={setDefaultTopic}>
-                <SelectTrigger className={`w-44 ${selectCls}`}>
+                <SelectTrigger className={`w-36 sm:w-44 ${selectCls}`}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className={contentCls}>
@@ -281,7 +281,7 @@ export default function SettingsPage() {
                 value={defaultSentiment}
                 onValueChange={setDefaultSentiment}
               >
-                <SelectTrigger className={`w-44 ${selectCls}`}>
+                <SelectTrigger className={`w-36 sm:w-44 ${selectCls}`}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className={contentCls}>
@@ -381,7 +381,7 @@ export default function SettingsPage() {
             </div>
 
             {/* Download buttons */}
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <a
                 href={exportUrl("csv")}
                 download

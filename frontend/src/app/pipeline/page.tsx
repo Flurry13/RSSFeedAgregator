@@ -77,7 +77,7 @@ export default function PipelinePage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+    <div className="max-w-4xl mx-auto px-3 sm:px-6 py-6 sm:py-8 space-y-6">
       <div className="flex items-baseline gap-4">
         <h1 className="text-2xl font-bold text-[#e5e5e7]">
           Pipeline
@@ -240,7 +240,7 @@ export default function PipelinePage() {
             runs.map((run) => (
               <div
                 key={run.id}
-                className="px-4 py-3 flex items-center gap-4 hover:bg-[#3a3a3c]/40 transition-colors"
+                className="px-4 py-3 flex flex-wrap items-center gap-2 sm:gap-4 hover:bg-[#3a3a3c]/40 transition-colors"
               >
                 {/* Status badge */}
                 <span

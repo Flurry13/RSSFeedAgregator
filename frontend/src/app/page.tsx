@@ -141,7 +141,7 @@ function FeedPageInner() {
   };
 
   return (
-    <div className="px-4 py-6">
+    <div className="px-3 sm:px-4 py-6">
       {/* Header */}
       <div className="flex items-baseline gap-3 mb-4">
         <h1 className="text-[28px] font-bold text-[#e5e5e7]">
@@ -153,7 +153,7 @@ function FeedPageInner() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-2 mb-4">
+      <div className="flex flex-col sm:flex-row gap-2 mb-4">
         <form onSubmit={handleSearch} className="flex-1 flex gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#636366]" />
@@ -172,35 +172,37 @@ function FeedPageInner() {
           </Button>
         </form>
 
-        <Select value={topic ?? "all"} onValueChange={(v) => setTopic(v ?? "all")}>
-          <SelectTrigger className="w-36 bg-[#1c1c1e] border border-[#48484a] text-[#e5e5e7] text-xs h-8 rounded-lg">
-            <SelectValue placeholder="Topic" />
-          </SelectTrigger>
-          <SelectContent className="bg-[#2c2c2e] border border-[#3a3a3c] rounded-[10px]">
-            {TOPICS.map((t) => (
-              <SelectItem
-                key={t}
-                value={t}
-                className="text-[#e5e5e7] focus:bg-[#3a3a3c] text-xs"
-              >
-                {t === "all" ? "All Topics" : t.replace(/_/g, " ")}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Select value={topic ?? "all"} onValueChange={(v) => setTopic(v ?? "all")}>
+            <SelectTrigger className="w-full sm:w-36 bg-[#1c1c1e] border border-[#48484a] text-[#e5e5e7] text-xs h-8 rounded-lg">
+              <SelectValue placeholder="Topic" />
+            </SelectTrigger>
+            <SelectContent className="bg-[#2c2c2e] border border-[#3a3a3c] rounded-[10px]">
+              {TOPICS.map((t) => (
+                <SelectItem
+                  key={t}
+                  value={t}
+                  className="text-[#e5e5e7] focus:bg-[#3a3a3c] text-xs"
+                >
+                  {t === "all" ? "All Topics" : t.replace(/_/g, " ")}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-        <Select value={sentiment ?? "all"} onValueChange={(v) => { setSentiment(v); }}>
-          <SelectTrigger className="w-[130px] bg-[#1c1c1e] border border-[#48484a] text-[#e5e5e7] text-xs h-8 rounded-lg">
-            <SelectValue placeholder="Sentiment" />
-          </SelectTrigger>
-          <SelectContent className="bg-[#2c2c2e] border border-[#3a3a3c] rounded-[10px]">
-            {["all", "bullish", "bearish", "neutral"].map((s) => (
-              <SelectItem key={s} value={s} className="text-xs text-[#e5e5e7] focus:bg-[#3a3a3c]">
-                {s.charAt(0).toUpperCase() + s.slice(1)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          <Select value={sentiment ?? "all"} onValueChange={(v) => { setSentiment(v); }}>
+            <SelectTrigger className="w-full sm:w-[130px] bg-[#1c1c1e] border border-[#48484a] text-[#e5e5e7] text-xs h-8 rounded-lg">
+              <SelectValue placeholder="Sentiment" />
+            </SelectTrigger>
+            <SelectContent className="bg-[#2c2c2e] border border-[#3a3a3c] rounded-[10px]">
+              {["all", "bullish", "bearish", "neutral"].map((s) => (
+                <SelectItem key={s} value={s} className="text-xs text-[#e5e5e7] focus:bg-[#3a3a3c]">
+                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Headlines */}
@@ -223,9 +225,9 @@ function FeedPageInner() {
                   boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
                 }}
               >
-                <div className="flex items-start gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3">
                   {/* Topic badge + sentiment */}
-                  <div className="shrink-0 w-24 pt-0.5 flex flex-col gap-1.5">
+                  <div className="shrink-0 flex sm:flex-col sm:w-24 items-center sm:items-start gap-1.5 pt-0.5">
                     {h.topic && tc && (
                       <span
                         className="inline-block px-2 py-0.5 text-[11px] font-medium rounded-md w-fit"
@@ -253,7 +255,7 @@ function FeedPageInner() {
                   </div>
 
                   {/* Meta */}
-                  <div className="shrink-0 text-right">
+                  <div className="shrink-0 sm:text-right">
                     <span className="text-[12px] text-[#98989d]">
                       {h.source_name}
                       {(h.published_at || h.created_at) &&
