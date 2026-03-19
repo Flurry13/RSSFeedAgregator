@@ -35,20 +35,20 @@ export function SidebarNav() {
   return (
     <aside
       className={cn(
-        "hidden md:flex flex-col h-screen sticky top-0 bg-[#0a0a0a] border-r-2 border-[#333] transition-all duration-200 shrink-0",
+        "hidden md:flex flex-col h-screen sticky top-0 bg-[#1c1c1e] border-r border-[#3a3a3c] transition-all duration-200 shrink-0",
         collapsed ? "w-14" : "w-52"
       )}
     >
       {/* Logo */}
       <div
         className={cn(
-          "flex items-center gap-2.5 px-4 py-5 border-b-2 border-[#333]",
+          "flex items-center gap-2.5 px-4 py-5 border-b border-[#3a3a3c]",
           collapsed && "justify-center px-0"
         )}
       >
-        <Rss className="w-5 h-5 text-[#00ff88] shrink-0" />
+        <Rss className="w-4 h-4 text-[#0a84ff] shrink-0" />
         {!collapsed && (
-          <span className="text-sm font-bold uppercase tracking-wider text-[#e8e8e0] font-mono">
+          <span className="text-[15px] font-semibold text-[#e5e5e7]">
             RSSFeed2
           </span>
         )}
@@ -64,22 +64,16 @@ export function SidebarNav() {
               key={href}
               href={href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2 font-mono transition-colors relative",
+                "flex items-center gap-3 px-3 py-[7px] rounded-md text-[13px] transition-colors",
                 active
-                  ? "text-[#00ff88] bg-[#00ff8810]"
-                  : "text-[#555] hover:text-[#e8e8e0] hover:bg-[#111]",
+                  ? "text-[#0a84ff] bg-[rgba(10,132,255,0.15)]"
+                  : "text-[#98989d] hover:text-[#e5e5e7] hover:bg-[rgba(255,255,255,0.05)]",
                 collapsed && "justify-center px-0"
               )}
               title={collapsed ? label : undefined}
             >
-              {/* Active indicator bar */}
-              {active && (
-                <span className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#00ff88]" />
-              )}
               <Icon className="w-4 h-4 shrink-0" />
-              {!collapsed && (
-                <span className="text-[10px] uppercase tracking-widest">{label}</span>
-              )}
+              {!collapsed && <span>{label}</span>}
             </Link>
           );
         })}
@@ -88,7 +82,7 @@ export function SidebarNav() {
       {/* Collapse toggle */}
       <button
         onClick={() => setCollapsed((c) => !c)}
-        className="flex items-center justify-center h-10 border-t-2 border-[#333] text-[#444] hover:text-[#00ff88] transition-colors"
+        className="flex items-center justify-center h-10 border-t border-[#3a3a3c] text-[#636366] hover:text-[#e5e5e7] transition-colors"
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
         {collapsed ? (

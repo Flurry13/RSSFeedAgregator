@@ -13,8 +13,8 @@ export function Loading({ message, className }: LoadingProps) {
         className
       )}
     >
-      <div className="w-6 h-6 rounded-full border-2 border-zinc-700 border-t-zinc-300 animate-spin" />
-      {message && <p className="text-zinc-500 text-sm">{message}</p>}
+      <div className="w-5 h-5 rounded-full border-2 border-[#3a3a3c] border-t-[#0a84ff] animate-spin" />
+      <p className="text-[13px] text-[#98989d]">{message ?? "Loading..."}</p>
     </div>
   );
 }
