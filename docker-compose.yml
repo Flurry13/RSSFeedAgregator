@@ -43,6 +43,7 @@ services:
       - REDIS_PORT=6379
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
       - LOG_LEVEL=${LOG_LEVEL:-info}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
     depends_on:
       postgres:
         condition: service_healthy

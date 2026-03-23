@@ -63,19 +63,15 @@ def extract_batch_wrapper(headlines: List[Dict]) -> List[Dict]:
 
 
 def sentiment_batch_wrapper(headlines: List[Dict]) -> List[Dict]:
-    """Analyze sentiment for each headline."""
-    from sentiment import analyze_sentiment
+    """Analyze sentiment for all headlines using batch API (Haiku or keyword fallback)."""
+    from sentiment import analyze_sentiment_batch
 
-    results = []
-    for h in headlines:
-        text = h.get("title") or h.get("text") or ""
-        try:
-            result = analyze_sentiment(text)
-            results.append(result)
-        except Exception as e:
-            logger.warning("sentiment_batch_wrapper error for %r: %s", text[:60], e)
-            results.append({"sentiment": "neutral", "sentiment_score": 0.5})
-    return results
+    texts = [h.get("title") or h.get("text") or "" for h in headlines]
+    try:
+        return analyze_sentiment_batch(texts)
+    except Exception as e:
+        logger.warning("sentiment_batch_wrapper error: %s", e)
+        return [{"sentiment": "neutral", "sentiment_score": 0.5} for _ in headlines]
 
 
 # ---------------------------------------------------------------------------
